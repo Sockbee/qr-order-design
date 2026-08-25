@@ -1,10 +1,10 @@
 import { AppBar } from '../components/AppBar'
 import { Button } from '../components/Button'
+import { OrderLine } from '../components/OrderLine'
 import { PriceBreakdown } from '../components/PriceBreakdown'
 import { TableChip } from '../components/TableChip'
 import { menuItems } from '../data/menu'
 import { calculateCartTotal } from '../utils/cart'
-import { formatPrice } from '../utils/price'
 import type { CartLine } from '../types/menu'
 import './OrderConfirmationPage.css'
 
@@ -40,17 +40,12 @@ export function OrderConfirmationPage({
             if (!item) return null
 
             return (
-              <div
-                className="order-confirmation__row"
+              <OrderLine
                 key={`${line.itemId}-${index}`}
-              >
-                <p className="order-confirmation__item">
-                  {item.name} × {line.quantity}
-                </p>
-                <p className="order-confirmation__price">
-                  {formatPrice(line.unitPrice * line.quantity)}
-                </p>
-              </div>
+                name={item.name}
+                quantity={line.quantity}
+                amount={line.unitPrice * line.quantity}
+              />
             )
           })}
         </div>

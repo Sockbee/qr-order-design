@@ -4,6 +4,7 @@ import { MenuDetailPage } from './pages/MenuDetailPage'
 import { MenuPage } from './pages/MenuPage'
 import { OrderCompletePage } from './pages/OrderCompletePage'
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage'
+import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
 import { initialCart, menuItems } from './data/menu'
 import { tableSession } from './data/session'
@@ -11,16 +12,16 @@ import { calculateCartTotal } from './utils/cart'
 import type { CartLine, MenuItemSummary } from './types/menu'
 import type { PlacedOrder } from './types/order'
 
-type Screen = 'start' | 'menu' | 'cart' | 'confirm' | 'complete'
+type Screen = 'start' | 'menu' | 'cart' | 'confirm' | 'complete' | 'status'
 
 /** Diner-facing order numbers start here in the UI phase. */
 const FIRST_ORDER_NUMBER = 1042
 
 /**
- * Minimal view switching so S01, S02, S04, S05, S06 and S07 are reachable from
- * one another. This is a placeholder for real routing (`/t/{token}/start`,
- * `/menu`, `/menu/{itemId}`, `/cart`, `/cart/confirm`, `/orders/{id}/done` per
- * UX-STRUCTURE §2.1), which lands when a router is introduced.
+ * Minimal view switching so S01, S02, S04, S05, S06, S07 and S08 are reachable
+ * from one another. This is a placeholder for real routing (`/t/{token}/start`,
+ * `/menu`, `/menu/{itemId}`, `/cart`, `/cart/confirm`, `/orders/{id}/done`,
+ * `/orders` per UX-STRUCTURE §2.1), which lands when a router is introduced.
  */
 function App() {
   const [screen, setScreen] = useState<Screen>('start')
@@ -52,6 +53,10 @@ function App() {
       tableNumber: tableSession.tableNumber,
       lines: cart,
       total: calculateCartTotal(cart),
+      placedAt: new Date().toISOString(),
+      // Mock only. The real status arrives from the server poll
+      // (UX-STRUCTURE §5.4); the S08 frame draws this step as the current one.
+      status: 'preparing',
     }
     setOrders((current) => [...current, placed])
     // The cart is a new round once an order is placed (UX-STRUCTURE A3).
@@ -82,10 +87,20 @@ function App() {
     return (
       <OrderCompletePage
         order={latestOrder}
-        onViewStatus={() => {
-          // S08 Order Status is not built yet.
-        }}
+        onViewStatus={() => setScreen('status')}
         onOrderMore={() => setScreen('menu')}
+      />
+    )
+  }
+
+  if (screen === 'status' && orders.length > 0) {
+    return (
+      <OrderStatusPage
+        orders={orders}
+        onOrderMore={() => setScreen('menu')}
+        onCallStaff={() => {
+          // B1 직원 호출 sheet is not built yet.
+        }}
       />
     )
   }

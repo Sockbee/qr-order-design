@@ -1,0 +1,39 @@
+/*
+ * ext/StatusTracker — four flat chips, no progress bar, no shadow, no pulsing
+ * (UX-STRUCTURE §5.4). Blue stays functional: the current step is the only
+ * filled chip.
+ */
+.status-tracker {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.status-tracker__chip {
+  flex: 0 0 auto;
+  padding: var(--space-3) 10px;
+  border-radius: var(--radius-btn-sm);
+  font: var(--type-caption-strong);
+  white-space: nowrap;
+}
+
+.status-tracker__chip--done {
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
+
+.status-tracker__chip--current {
+  background: var(--color-bg-primary);
+  color: var(--color-text-on-primary);
+}
+
+/* Upcoming steps carry no information a diner must read, so text/muted is
+   acceptable here — unlike price, allergen or availability. */
+.status-tracker__chip--upcoming {
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+}
