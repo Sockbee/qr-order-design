@@ -7,6 +7,7 @@ function onOpen() {
   SpreadsheetApp.getUi()
     .createMenu('QR 주문 관리')
     .addItem('초기 구조 생성/복구', 'bootstrapSpreadsheet')
+    .addItem('카테고리/메뉴 초기 데이터 추가', 'seedCatalog')
     .addItem('무결성 진단', 'runDiagnostics')
     .addToUi();
 }

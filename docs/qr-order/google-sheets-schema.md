@@ -106,7 +106,7 @@ Sample:
 | `active` | boolean | Y | `TRUE` | N | Y | 운영진 | 비활성 category와 소속 메뉴는 API에서 제외 |
 | `updated_at` | datetime | Y | `2026-08-25 15:00:00` | N | N | Apps Script/운영진 | 변경 시각 |
 
-초기값은 현재 프론트 목 데이터와 동일하게 `recommended`, `meal`, `anju`, `drink`를 권장한다.
+초기 seed는 행사 메뉴 구분에 맞춰 `main`, `side`, `alcohol`, `beverage`를 사용한다.
 
 ## 6. Menu
 
