@@ -30,6 +30,22 @@ POST {WEB_APP_URL}/exec/orders/get
 POST {WEB_APP_URL}/exec/orders/list
 ```
 
+운영 API는 **별도 배포**의 다른 `/exec`를 쓴다. 고객 앱 번들에 운영 URL이 들어가지 않는다.
+
+```text
+POST {STAFF_WEB_APP_URL}/exec/staff/login
+POST {STAFF_WEB_APP_URL}/exec/staff/calls/list
+POST {STAFF_WEB_APP_URL}/exec/staff/calls/acknowledge
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/bill
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/discount
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/move
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/merge
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/split
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/confirm-payment
+```
+
+`staffToken`은 **request body**에 담는다. `Authorization` header를 쓰지 않는 이유는 위와 같다 — Apps Script event object가 임의 request header를 다루지 못하고, custom header는 CORS preflight를 유발한다.
+
 개념적으로는 `GET /menu`, `POST /orders`, `GET /orders/:id`지만 Apps Script adapter에서는 위처럼 표현한다. 모든 POST는 다음 조건을 지킨다.
 
 - `Content-Type: text/plain;charset=utf-8`: JSON 문자열을 보내되 불필요한 CORS preflight를 만들지 않는다.
@@ -394,7 +410,53 @@ Request:
 - `PENDING`이 아닌 호출은 `CALL_ALREADY_RESOLVED`로 거절한다. 이미 운영진이 확인했다면 취소할 수 없다 — 직원이 이미 출발했을 수 있다.
 - 취소된 호출은 병합 그룹에서 빠지므로 운영 화면의 횟수가 즉시 줄어든다.
 
-### 4.9 `POST /calls/list` — 미확인 호출 병합 조회 (운영 A01)
+### 4.9 `POST /staff/login` — 운영 기기 인증
+
+여기부터는 **운영 배포 전용**이다. 모든 운영 endpoint는 body에 `staffToken`을 요구한다(`/staff/login` 제외).
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "passcode": "gaeul-pub-2026-counter",
+  "deviceLabel": "주방 iPad"
+}
+```
+
+Response `data`:
+
+```json
+{
+  "staffToken": "eyJkIjoi7KO87LCpIGlQYWQiLCJ...Q.9f3ac81b...",
+  "deviceLabel": "주방 iPad",
+  "expiresAt": "2026-08-26T06:00:00.000Z"
+}
+```
+
+토큰 형식은 `base64url(payload) + "." + base64url(HMAC_SHA256(STAFF_TOKEN_SECRET, base64url(payload)))`이며 payload는 다음과 같다.
+
+```json
+{ "deviceLabel": "주방 iPad", "issuedAt": 1756112400, "expiresAt": 1756155600, "epoch": 3 }
+```
+
+검증 규칙:
+
+- 서명이 일치하지 않으면 즉시 거절한다. `Utilities.computeHmacSha256Signature`를 쓰고 비교는 상수 시간으로 한다.
+- `expiresAt`이 지났으면 `STAFF_TOKEN_EXPIRED`. 프론트는 재로그인 화면을 띄운다.
+- payload의 `epoch`가 Settings의 `STAFF_TOKEN_EPOCH`와 다르면 `STAFF_TOKEN_REVOKED`. 이것이 일괄 무효화 스위치다.
+- 검증은 Sheet를 읽지 않는다. `STAFF_TOKEN_EPOCH`만 CacheService에 60초 캐싱해 읽는다.
+
+passcode 검증:
+
+- `SHA-256(pepper + ":" + passcode)`를 Script Properties의 `STAFF_PASSCODE_HASH`와 비교한다.
+- 실패 시도는 CacheService에 누적한다. 10분 내 5회 실패하면 그 `deviceLabel`에 대해 10분간 `STAFF_LOGIN_THROTTLED`로 거절한다. Apps Script는 신뢰할 수 있는 client IP를 주지 않으므로 `deviceLabel` 기준으로 제한하고, 전역 실패 카운터도 함께 둔다.
+- 성공/실패 모두 AuditLog에 남긴다(`STAFF_LOGIN`, `STAFF_LOGIN_FAILED`). `actor_id`는 `deviceLabel`이다.
+- passcode는 응답·로그·`detail_json` 어디에도 남기지 않는다.
+
+세션 길이는 Settings의 `STAFF_SESSION_HOURS`(기본 `14`)다. 행사 하루를 덮되 다음 날까지 살아 있지 않게 한다.
+
+### 4.10 `POST /calls/list` — 미확인 호출 병합 조회 (운영 A01)
 
 운영 화면 전용이다. 고객 토큰이 아니라 운영 인증을 요구한다.
 
@@ -423,7 +485,7 @@ Response `data`:
 - `tableCount`는 `groups.length`다. 호출 건수가 아니라 **호출한 테이블 수**이며, 레일 배지와 헤더 카운트가 이 값을 쓴다.
 - `count`는 파생값이며 Sheet에 저장하지 않는다.
 
-### 4.10 `POST /calls/acknowledge` — 호출 확인 (운영 A01)
+### 4.11 `POST /calls/acknowledge` — 호출 확인 (운영 A01)
 
 Request:
 
@@ -450,7 +512,7 @@ Response `data`:
 - 확인할 `PENDING`이 없으면 `acknowledgedCount: 0`으로 정상 응답한다. 두 명이 동시에 눌러도 오류가 아니다.
 - AuditLog는 그룹당 1건(`CALL_ACKNOWLEDGED`)만 남긴다.
 
-### 4.11 `POST /tables/bill` — 청구 조회 (운영 A02/B03)
+### 4.12 `POST /tables/bill` — 청구 조회 (운영 A02/B03)
 
 Request: `{ "apiVersion": "v1", "tableId": "T08" }`
 
@@ -475,7 +537,7 @@ Response `data`:
 - 합석된 테이블을 조회하면 대표 세션의 청구를 반환하고 `mergedTableIds`로 관계를 알린다.
 - `discountAmount = floor(subtotalAmount * discountRate / 100)`. 버림이다.
 
-### 4.12 `POST /tables/discount` — 할인 적용/해제 (운영 A07)
+### 4.13 `POST /tables/discount` — 할인 적용/해제 (운영 A07)
 
 Request: `{ "apiVersion": "v1", "tableId": "T08", "discountRate": 20 }`
 
@@ -484,7 +546,7 @@ Request: `{ "apiVersion": "v1", "tableId": "T08", "discountRate": 20 }`
 - **할인 적용 이후 추가되는 주문도 할인 대상이다.** 금액이 조회 시점 계산이기 때문이다.
 - `PAID` 세션은 `SESSION_ALREADY_PAID`로 거절한다.
 
-### 4.13 `POST /tables/move` — 테이블 이동 (운영 A04)
+### 4.14 `POST /tables/move` — 테이블 이동 (운영 A04)
 
 Request: `{ "apiVersion": "v1", "fromTableId": "T03", "toTableId": "T08" }`
 
@@ -492,7 +554,7 @@ Request: `{ "apiVersion": "v1", "fromTableId": "T03", "toTableId": "T08" }`
 - 목적지에 `OPEN` 세션이 있으면 `DESTINATION_OCCUPIED`로 거절한다. 이동이 아니라 합석이므로 운영진이 의도를 다시 골라야 한다.
 - 이동 후 고객이 옛 QR(T03)로 들어오면 `origin_table_id` 조회로 세션을 찾아 이동 안내와 함께 주문 내역을 반환한다.
 
-### 4.14 `POST /tables/merge` — 합석 (운영 A05)
+### 4.15 `POST /tables/merge` — 합석 (운영 A05)
 
 Request: `{ "apiVersion": "v1", "primaryTableId": "T03", "secondaryTableId": "T04" }`
 
@@ -501,7 +563,7 @@ Request: `{ "apiVersion": "v1", "primaryTableId": "T03", "secondaryTableId": "T0
 - 어느 한쪽이라도 `PAID`면 `SESSION_ALREADY_PAID`로 거절한다.
 - 할인율은 대표 세션의 것이 그룹 전체에 적용된다. 종속 세션의 `discount_rate`는 무시되며 분리 시 되살아난다.
 
-### 4.15 `POST /tables/split` — 분리 (운영 A06)
+### 4.16 `POST /tables/split` — 분리 (운영 A06)
 
 Request: `{ "apiVersion": "v1", "tableId": "T04" }`
 
@@ -509,7 +571,7 @@ Request: `{ "apiVersion": "v1", "tableId": "T04" }`
 - `PAID` 그룹은 `SESSION_ALREADY_PAID`로 거절한다. 정산이 끝난 금액을 사후에 쪼개면 누가 얼마를 냈는지 복원할 수 없다.
 - 1인별 분할 계산은 지원하지 않는다.
 
-### 4.16 `POST /tables/confirm-payment` — 입금 확인 (운영 B03)
+### 4.17 `POST /tables/confirm-payment` — 입금 확인 (운영 B03)
 
 Request:
 
@@ -551,6 +613,11 @@ Request:
 | `CALL_TOO_FREQUENT` | 방금 호출했어요. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `CALL_NOT_FOUND` | 호출 정보를 찾을 수 없습니다. | N | Y | Y |
 | `CALL_ALREADY_RESOLVED` | 이미 직원이 확인한 호출입니다. | N | Y | Y |
+| `STAFF_AUTH_REQUIRED` | 운영 인증이 필요합니다. | N | 운영 화면 | Y |
+| `STAFF_TOKEN_INVALID` | 인증 정보가 올바르지 않습니다. | N | 운영 화면 | Y |
+| `STAFF_TOKEN_EXPIRED` | 인증이 만료되었습니다. 다시 로그인해 주세요. | N | 운영 화면 | Y |
+| `STAFF_TOKEN_REVOKED` | 인증이 해제되었습니다. 다시 로그인해 주세요. | N | 운영 화면 | Y |
+| `STAFF_LOGIN_THROTTLED` | 시도가 많습니다. 잠시 후 다시 시도해 주세요. | Y | 운영 화면 | Y |
 | `SESSION_NOT_FOUND` | 테이블 세션을 찾을 수 없습니다. | N | 운영 화면 | Y |
 | `SESSION_ALREADY_PAID` | 이미 결제 완료된 테이블입니다. | N | 운영 화면 | Y |
 | `SESSION_NOT_PRIMARY` | 합석된 테이블입니다. 대표 테이블에서 진행해 주세요. | N | 운영 화면 | Y |

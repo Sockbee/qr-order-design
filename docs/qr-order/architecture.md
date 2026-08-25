@@ -34,7 +34,7 @@ Figma MCP로 `4:11`을 조회해 다음 실제 프레임을 확인했다.
 
 고객 플로우는 S09b까지 존재한다. S00, S02b, T1, D1-D3, B2, E1-E5의 실제 프레임은 아직 없으므로 이들을 Figma 요구사항으로 간주하지 않는다(B1 직원 호출은 S09/S09b로 구현되었다). 다만 `UX-STRUCTURE.md`에 정의된 오류와 복구 상태는 API 오류 계약에 반영한다.
 
-운영진용 iPad POS는 별도 페이지 `Staff POS — iPad`에 A00~A08, B01~B03으로 존재한다. 이 문서의 범위는 고객 API이며, 운영 API는 호출 수신(§4의 `listCalls`/`acknowledgeCall`)만 확정되어 있다. 할인·테이블 이동·합석·분리는 Decision A7의 TableSessions로 스키마에 반영되었다. 운영 API 인증 방식은 미정이다(Open Questions 4).
+운영진용 iPad POS는 별도 페이지 `Staff POS — iPad`에 A00~A08, B01~B03으로 존재한다. 이 문서의 범위는 고객 API이며, 운영 API는 호출 수신(§4의 `listCalls`/`acknowledgeCall`)만 확정되어 있다. 할인·테이블 이동·합석·분리는 Decision A7의 TableSessions로, 운영 API 인증은 Decision A8로 확정되었다.
 
 ## 2. 주요 결정
 
@@ -136,6 +136,47 @@ TableSessions가 Tables와 Orders 사이에 들어가 이를 흡수한다.
 `Orders.session_id`는 열 **U에 추가**한다. 중간 삽입은 A:T 열 문자에 의존하는 기존 View 수식을 전부 깨뜨린다.
 
 이 결정은 기존 행에 대한 backfill을 요구한다. 행사 전 setup에서 각 `table_id`마다 세션 1개를 만들고 기존 Orders를 연결한다. 행사 중에는 적용하지 않는다.
+
+### Decision A8 — 운영 API는 별도 배포 + 공용 passcode에서 발급한 서명 토큰으로 보호한다
+
+운영 API(`/calls/*`의 운영 쪽, `/tables/*`)는 고객 토큰으로 접근할 수 없어야 한다. 결제 확정과 할인은 돈이고, 주문 취소는 되돌리기 어렵다.
+
+#### 위협 모델
+
+하루짜리 학생 행사이고 iPad는 주방·서빙·카운터에 물리적으로 놓인다. 실제로 막아야 하는 것은 다음이다.
+
+- 손님이 운영 URL을 알아내 자기 테이블을 `결제 완료`로 바꾸는 것
+- 손님이 자기 테이블에 20% 할인을 거는 것
+- 장난으로 남의 주문을 취소하는 것
+
+막지 못하는 것도 명시한다. iPad를 물리적으로 집어 든 사람은 그 iPad의 권한을 그대로 갖는다. 이는 인증이 아니라 기기 관리 문제다.
+
+#### 채택하지 않은 방식과 이유
+
+| 방식 | 왜 안 되는가 |
+|---|---|
+| Google 계정 로그인(`access: ANYONE`) | 로그인 게이트가 걸린 `/exec`에 Netlify origin에서 `fetch`하면 `accounts.google.com`으로 redirect되고 CORS에서 차단된다. §1의 "custom header 없음 + redirect follow" 제약과 정면으로 충돌한다 |
+| 배포 URL 자체를 비밀로 (capability URL) | URL은 브라우저 히스토리·스크린샷·어깨너머로 샌다. 게다가 운영 앱 번들에 들어가므로 비밀이 아니다 |
+| 운영진별 개인 계정 | 스테이션 iPad는 공용이다. 주방 iPad가 특정 개인으로 로그인되어 있는 편이 오히려 감사에 부정확하다 |
+
+#### 채택안
+
+네 겹으로 나눈다.
+
+1. **별도 배포.** 운영 API는 고객 API와 다른 `/exec`에 배포한다. 고객 앱 번들에 운영 URL이 존재하지 않으므로, 고객 앱을 아무리 뜯어도 운영 엔드포인트를 찾을 수 없다.
+2. **공용 passcode → 서명 토큰.** 운영진이 기기에서 한 번 passcode를 입력하면 서버가 HMAC 서명 토큰을 발급한다. 이후 요청은 body에 토큰을 담아 보낸다. 상태를 Sheet에 쓰지 않는 stateless 검증이라 요청마다 추가 read가 없다.
+3. **기기 라벨.** 로그인 시 `주방 iPad`처럼 기기 이름을 정하고, 이 값이 AuditLogs의 `actor_id`에 들어간다. 공용 기기 환경에서는 "누가"보다 "어느 스테이션이"가 실제로 유용한 감사 정보다.
+4. **일괄 무효화.** Settings의 `STAFF_TOKEN_EPOCH`를 올리면 발급된 모든 토큰이 즉시 무효가 된다. passcode가 샜을 때 운영진이 Sheet에서 숫자 하나만 바꿔 대응한다.
+
+`STAFF_PASSCODE_HASH`와 `STAFF_TOKEN_SECRET`은 Sheet가 아니라 Script Properties에 둔다. `STAFF_TOKEN_EPOCH`는 비밀이 아니고 급할 때 빨리 올려야 하므로 Settings에 둔다.
+
+#### 남는 한계
+
+- passcode는 공용이므로 개인 단위 부인방지가 없다. 감사 단위는 기기다.
+- passcode 해시는 SHA-256이며 Apps Script에 bcrypt류가 없다. 해시가 Script Properties 밖으로 나가지 않으므로 오프라인 공격은 이미 스크립트 접근 권한을 전제하지만, 그래도 4자리 숫자가 아니라 **12자 이상 문구**를 쓴다.
+- 결제 확정에 별도 2차 passcode를 두지 않았다. 가장 바쁜 순간에 인증을 한 번 더 넣으면 운영 속도를 해치고, 그 대가로 얻는 것은 이미 물리적으로 통제되는 기기에 대한 방어뿐이다. 대신 `expectedFinalAmount` 확인과 AuditLog가 오조작을 잡는다.
+
+개인 신원이 반드시 필요해지면 대안은 운영 앱을 Apps Script HTMLService로 서빙하는 것이다. 그러면 `google.script.run`과 `Session.getActiveUser()`가 그대로 동작하고 CORS 문제도 사라진다. 대신 운영 앱의 빌드·배포 경로가 고객 앱과 완전히 달라진다. 이번 행사 범위에서는 채택하지 않는다.
 
 ## 3. 요청 흐름
 
@@ -353,7 +394,7 @@ Apps Script의 quota와 제한은 계정 유형에 따라 달라지고 예고 �
 2. **직원 호출**: 확정되어 구현 대상이다. 고객 S09/S09b, 운영 A01 호출 스트립·TableCard `Call`·상세 패널 배너가 모두 정의되었고, Calls Sheet와 병합/리셋 규칙은 schema §14, API는 `apps-script-api-design.md` §4.7~4.9에 있다. 남은 것은 운영 화면 polling 주기 하나다 — 주문 상태는 15초지만 호출은 더 짧아야 하는지 현장에서 정해야 한다.
 3. **주방 요청 메모**: `UX-STRUCTURE.md`는 S05 note를 정의하지만 현재 Figma S05에는 보이지 않는다. API/Orders에는 optional `note`를 예약하되 프론트가 보내기 전까지 사용하지 않는다.
 
-4. **운영 API 인증**: `listCalls`/`acknowledgeCall`과 A04~A07 세션 API는 고객 토큰으로 접근하면 안 된다. 운영 인증 방식(별도 배포 URL, 운영 전용 키, Google 계정 검증 중 택1)이 아직 정해지지 않았다. 이것이 정해지기 전까지 운영 API는 구현하지 않는다.
+4. **운영 API 인증**: Decision A8로 확정했다(별도 배포 + 공용 passcode에서 발급한 HMAC 서명 토큰 + 기기 라벨 감사 + epoch 일괄 무효화). 남은 실무 항목은 `STAFF_TOKEN_SECRET` 생성·보관 절차와 행사 당일 passcode 전달 방법이다.
 5. **세션 종료 기준**: 결제 확정이 세션을 `CLOSED`로 만든다. 결제 없이 자리를 뜬 테이블을 운영진이 수동 종료하는 UI는 Figma에 없다.
 
 확정된 QR 형식은 `https://{netlify-domain}/t/{tableId}?token={random-token}`이다. `COMPLETED`는 결제와 무관하게 서빙까지 끝난 주문의 최종 완료를 뜻한다.

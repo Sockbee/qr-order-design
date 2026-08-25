@@ -321,8 +321,12 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `STATUS_POLL_SECONDS` | `15` | INTEGER | 개발자 | 프론트 기본 polling 주기 |
 | `CALL_MIN_INTERVAL_SECONDS` | `60` | INTEGER | 운영진 | 같은 테이블의 연속 직원 호출 최소 간격 |
 | `TABLE_DISCOUNT_RATE` | `20` | INTEGER | 운영진 | 지정 테이블 할인율(%). 할인 적용 시 세션에 복사된다 |
+| `STAFF_TOKEN_EPOCH` | `1` | INTEGER | 운영진 | 올리면 발급된 운영 토큰이 전부 무효가 된다. passcode 유출 시 대응 스위치 |
+| `STAFF_SESSION_HOURS` | `14` | INTEGER | 개발자 | 운영 토큰 유효 시간. 행사 하루를 덮되 다음 날까지 살지 않게 한다 |
 
-`TOKEN_PEPPER`, Spreadsheet ID처럼 비공개/배포 설정인 값은 Settings가 아니라 Script Properties에 저장한다.
+`TOKEN_PEPPER`, `STAFF_PASSCODE_HASH`, `STAFF_TOKEN_SECRET`, Spreadsheet ID처럼 비공개/배포 설정인 값은 Settings가 아니라 Script Properties에 저장한다.
+
+`STAFF_TOKEN_EPOCH`는 예외적으로 Settings에 둔다. 비밀이 아니고, passcode가 샜을 때 운영진이 스크립트 편집기를 열지 않고 Sheet에서 숫자 하나만 올려 즉시 대응해야 하기 때문이다.
 
 ## 13. AuditLogs
 
@@ -331,7 +335,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `log_id` | UUID | Y | `a7bf...` | Y | Y | Apps Script | PK |
 | `occurred_at` | datetime | Y | `2026-08-25 19:30:00` | N | Y | Apps Script | 사건 시각 |
 | `actor_type` | enum | Y | `STAFF` | N | Y | Apps Script | `SYSTEM/STAFF/CLIENT` |
-| `actor_id` | string | N | `student-council@example.com` | N | N | trigger | 식별 가능할 때만. 단순 trigger에서는 비어 있을 수 있음 |
+| `actor_id` | string | N | `주방 iPad` | N | N | trigger | 운영 API는 로그인 시 정한 `deviceLabel`이 들어간다. 공용 기기 환경에서는 개인보다 스테이션이 유용한 감사 단위다. 단순 trigger에서는 비어 있을 수 있음 |
 | `action` | string enum-like | Y | `ORDER_STATUS_CHANGED` | N | Y | Apps Script | 사건 종류 |
 | `entity_type` | string | Y | `ORDER` | N | Y | Apps Script | 대상 종류 |
 | `entity_id` | string | Y | `d08c...` | N | Y | Apps Script | 대상 ID |
@@ -340,7 +344,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `request_id` | string | N | `8eaf...` | N | Y | Apps Script | clientRequestId/추적 ID |
 | `detail_json` | string JSON | N | `{"reason":"..."}` | N | N | Apps Script | 민감 토큰/stack trace는 저장 금지 |
 
-권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`, `SESSION_OPENED`, `SESSION_CLOSED`, `TABLE_MOVED`, `TABLES_MERGED`, `TABLES_SPLIT`, `DISCOUNT_APPLIED`, `DISCOUNT_CLEARED`, `SESSION_PAYMENT_CONFIRMED`.
+권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`, `SESSION_OPENED`, `SESSION_CLOSED`, `TABLE_MOVED`, `TABLES_MERGED`, `TABLES_SPLIT`, `DISCOUNT_APPLIED`, `DISCOUNT_CLEARED`, `SESSION_PAYMENT_CONFIRMED`, `STAFF_LOGIN`, `STAFF_LOGIN_FAILED`, `STAFF_TOKEN_EPOCH_BUMPED`.
 
 호출 확인은 여러 행을 한 번에 바꾸므로 `CALL_ACKNOWLEDGED`는 그룹 단위로 1건만 기록하고, `entity_type=TABLE`, `entity_id=table_id`, `detail_json`에 `{"callIds":[...],"count":2}`를 담는다. 행마다 로그를 남기면 병합의 의미가 사라진다.
 
@@ -624,5 +628,7 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - `payment_status=PAID`인 대표 세션에 `subtotal_amount`/`discount_amount`/`final_amount`/`paid_at`이 모두 있는가
 - `final_amount = subtotal_amount - discount_amount`인가
 - `discount_amount = floor(subtotal_amount * discount_rate / 100)`인가
+- Settings에 `STAFF_TOKEN_EPOCH`가 1 이상 정수로 존재하는가
+- Script Properties에 `STAFF_PASSCODE_HASH`와 `STAFF_TOKEN_SECRET`이 설정되어 있는가 (값은 검사하지 않고 존재 여부만 확인한다)
 - 청구 그룹의 종속 세션이 대표와 동일한 `payment_status`를 갖는가
 - 세션이 `PAID`인 그룹의 모든 Orders `payment_status`가 `PAID`로 mirror되어 있는가
