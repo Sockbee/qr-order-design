@@ -27,31 +27,6 @@
   width: 100%;
 }
 
-.order-confirmation__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-}
-
-.order-confirmation__item {
-  flex: 1 1 0;
-  min-width: 0;
-  font: var(--type-body-default);
-  color: var(--color-text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Price stays at text/strong — never demoted to text/muted. */
-.order-confirmation__price {
-  flex: 0 0 auto;
-  font: var(--type-body-strong);
-  color: var(--color-text-strong);
-  white-space: nowrap;
-}
-
 .order-confirmation__payment-note {
   width: 100%;
   font: var(--type-caption-default);

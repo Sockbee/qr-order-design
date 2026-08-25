@@ -1,0 +1,18 @@
+/*
+ * One round of orders within the session. Rounds stack, newest first, and are
+ * separated by hairlines rather than cards (DESIGN.md §6).
+ */
+.order-round {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--color-border-default);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.order-round__label {
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+}

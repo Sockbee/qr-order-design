@@ -1,0 +1,29 @@
+/*
+ * One read-only "이름 × 수량 / 금액" row.
+ * Drawn as SummaryRow on S06 and as Line on S08 — the same row, so one
+ * component rather than two.
+ */
+.order-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.order-line__name {
+  flex: 1 1 0;
+  min-width: 0;
+  font: var(--type-body-default);
+  color: var(--color-text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Price stays at text/strong — never demoted to text/muted. */
+.order-line__amount {
+  flex: 0 0 auto;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+  white-space: nowrap;
+}
