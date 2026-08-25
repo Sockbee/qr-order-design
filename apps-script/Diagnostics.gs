@@ -3,6 +3,8 @@
  * Diagnostics are read-only and can safely run during the event.
  */
 
+const QR_ORDER_DIAGNOSTIC_ISSUE_LIMIT = 100;
+
 function runDiagnostics() {
   let report;
   try {
@@ -92,15 +94,27 @@ function newDiagnosticsReport_() {
     errors: [],
     warnings: [],
     stats: {},
+    _counts: { errorCount: 0, warningCount: 0 },
   };
 }
 
 function finishDiagnosticsReport_(report) {
-  report.ok = report.errors.length === 0;
-  report.summary = {
+  const counts = report._counts || {
     errorCount: report.errors.length,
     warningCount: report.warnings.length,
   };
+  report.ok = counts.errorCount === 0;
+  report.summary = {
+    errorCount: counts.errorCount,
+    warningCount: counts.warningCount,
+    returnedErrorCount: report.errors.length,
+    returnedWarningCount: report.warnings.length,
+  };
+  report.truncated = {
+    errorCount: Math.max(counts.errorCount - report.errors.length, 0),
+    warningCount: Math.max(counts.warningCount - report.warnings.length, 0),
+  };
+  delete report._counts;
 }
 
 function addDiagnostic_(report, severity, code, message, sheetName, rowNumber, column) {
@@ -108,7 +122,11 @@ function addDiagnostic_(report, severity, code, message, sheetName, rowNumber, c
   if (sheetName) issue.sheet = sheetName;
   if (rowNumber) issue.row = rowNumber;
   if (column) issue.column = column;
-  (severity === 'ERROR' ? report.errors : report.warnings).push(issue);
+  const isError = severity === 'ERROR';
+  const target = isError ? report.errors : report.warnings;
+  const countKey = isError ? 'errorCount' : 'warningCount';
+  report._counts[countKey] += 1;
+  if (target.length < QR_ORDER_DIAGNOSTIC_ISSUE_LIMIT) target.push(issue);
 }
 
 function checkScriptProperties_(spreadsheet, report) {
@@ -652,10 +670,12 @@ function groupRows_(rows, header) {
 }
 
 function showDiagnosticsReport_(report) {
+  const errorCount = report.summary ? report.summary.errorCount : report.errors.length;
+  const warningCount = report.summary ? report.summary.warningCount : report.warnings.length;
   const lines = [
     report.ok ? '무결성 진단 통과' : '무결성 진단 실패',
-    '오류: ' + report.errors.length + '개',
-    '경고: ' + report.warnings.length + '개',
+    '오류: ' + errorCount + '개',
+    '경고: ' + warningCount + '개',
   ];
   report.errors.slice(0, 8).forEach(issue => {
     lines.push('[ERROR] ' + issue.code + ': ' + issue.message);
@@ -663,8 +683,14 @@ function showDiagnosticsReport_(report) {
   report.warnings.slice(0, 5).forEach(issue => {
     lines.push('[WARN] ' + issue.code + ': ' + issue.message);
   });
-  if (report.errors.length > 8 || report.warnings.length > 5) {
-    lines.push('전체 내용은 실행 로그를 확인하세요.');
+  if (errorCount > 8 || warningCount > 5) {
+    lines.push('상세 내용은 실행 로그를 확인하세요.');
+  }
+  if (report.truncated && (report.truncated.errorCount || report.truncated.warningCount)) {
+    lines.push(
+      '로그 생략: 오류 ' + report.truncated.errorCount + '개 / 경고 ' +
+        report.truncated.warningCount + '개'
+    );
   }
   try {
     SpreadsheetApp.getUi().alert(lines.join('\n'));

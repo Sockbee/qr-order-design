@@ -30,12 +30,15 @@ function readSheetTable_(spreadsheet, sheetName) {
   const sheet = getCanonicalSheet_(spreadsheet, sheetName);
   const lastRow = sheet.getLastRow();
   const headerValues = sheet.getRange(1, 1, 1, schema.headers.length).getDisplayValues()[0];
+  const checkboxColumns = new Set(
+    schema.checkboxes.map(header => schema.headers.indexOf(header))
+  );
   const rows = [];
 
   if (lastRow > 1) {
     const values = sheet.getRange(2, 1, lastRow - 1, schema.headers.length).getValues();
     values.forEach((row, offset) => {
-      if (row.every(isBlankValue_)) return;
+      if (isEffectivelyBlankRow_(row, checkboxColumns)) return;
       const object = { __rowNumber: offset + 2 };
       schema.headers.forEach((header, index) => { object[header] = row[index]; });
       rows.push(object);
@@ -47,6 +50,12 @@ function readSheetTable_(spreadsheet, sheetName) {
     headers: headerValues,
     rows: rows,
   };
+}
+
+function isEffectivelyBlankRow_(row, checkboxColumns) {
+  return row.every((value, index) => {
+    return isBlankValue_(value) || (value === false && checkboxColumns.has(index));
+  });
 }
 
 function appendObjectsBySchema_(spreadsheet, sheetName, objects) {
