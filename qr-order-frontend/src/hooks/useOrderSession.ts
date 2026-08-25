@@ -1,0 +1,69 @@
+import { usePersistentState } from './usePersistentState'
+import { initialCart } from '../data/menu'
+import { calculateCartTotal } from '../utils/cart'
+import { sessionScopedKey } from '../utils/storage'
+import type { CartLine } from '../types/menu'
+import type { PlacedOrder } from '../types/order'
+
+/** Diner-facing order numbers start here in the UI phase. */
+const FIRST_ORDER_NUMBER = 1042
+
+/**
+ * Cart and order history for one table session, persisted under the session
+ * token. Re-entering with the same token rejoins the session rather than
+ * starting a new one (UX-STRUCTURE §5.1) — otherwise a diner who reloads
+ * loses their order history.
+ */
+export interface OrderSession {
+  cart: CartLine[]
+  orders: PlacedOrder[]
+  addToCart: (line: CartLine) => void
+  changeQuantity: (index: number, next: number) => void
+  /** Returns the placed order so the caller can route to its completion page. */
+  placeOrder: () => PlacedOrder
+}
+
+export function useOrderSession(
+  token: string,
+  tableNumber: number,
+): OrderSession {
+  const [cart, setCart] = usePersistentState<CartLine[]>(
+    sessionScopedKey(token, 'cart'),
+    initialCart,
+  )
+  const [orders, setOrders] = usePersistentState<PlacedOrder[]>(
+    sessionScopedKey(token, 'orders'),
+    [],
+  )
+
+  const addToCart = (line: CartLine) => {
+    setCart((current) => [...current, line])
+  }
+
+  const changeQuantity = (index: number, next: number) => {
+    setCart((current) =>
+      current.map((line, lineIndex) =>
+        lineIndex === index ? { ...line, quantity: next } : line,
+      ),
+    )
+  }
+
+  const placeOrder = (): PlacedOrder => {
+    const placed: PlacedOrder = {
+      number: `A-${FIRST_ORDER_NUMBER + orders.length}`,
+      tableNumber,
+      lines: cart,
+      total: calculateCartTotal(cart),
+      placedAt: new Date().toISOString(),
+      // Mock only. The real status arrives from the server poll
+      // (UX-STRUCTURE §5.4); the S08 frame draws this step as the current one.
+      status: 'preparing',
+    }
+    setOrders((current) => [...current, placed])
+    // The cart is a new round once an order is placed (UX-STRUCTURE A3).
+    setCart([])
+    return placed
+  }
+
+  return { cart, orders, addToCart, changeQuantity, placeOrder }
+}
