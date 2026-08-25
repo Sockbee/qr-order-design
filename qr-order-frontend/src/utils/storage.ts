@@ -14,6 +14,7 @@ export function sessionScopedKey(token: string, name: string): string {
 
 /** The last session the device joined, so `/` can resume it. */
 export const LAST_TOKEN_KEY = `${PREFIX}:last-token`
+export const LAST_TABLE_ID_KEY = `${PREFIX}:last-table-id`
 
 export function readStored<T>(key: string, fallback: T): T {
   try {

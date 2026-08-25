@@ -1,7 +1,9 @@
 import type { OrderStatus } from '../types/order'
 import './StatusTracker.css'
 
-const STEPS: { status: OrderStatus; label: string }[] = [
+type TrackableOrderStatus = Exclude<OrderStatus, 'cancelled'>
+
+const STEPS: { status: TrackableOrderStatus; label: string }[] = [
   { status: 'accepted', label: '접수됨' },
   { status: 'preparing', label: '조리 중' },
   { status: 'served', label: '서빙 완료' },
@@ -9,7 +11,7 @@ const STEPS: { status: OrderStatus; label: string }[] = [
 ]
 
 interface StatusTrackerProps {
-  status: OrderStatus
+  status: TrackableOrderStatus
 }
 
 export function StatusTracker({ status }: StatusTrackerProps) {

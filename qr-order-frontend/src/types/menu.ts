@@ -46,8 +46,12 @@ export interface MenuItemDetail extends MenuItemSummary {
 
 export interface CartLine {
   itemId: MenuItemSummary['id']
+  /** Immutable server snapshot used when the current catalog has changed. */
+  nameSnapshot?: string
   quantity: number
   /** Unit price at the time the line was added, selected options included. */
   unitPrice: number
   selectedOptionIds?: MenuOption['id'][]
+  /** Immutable option labels returned by order history. */
+  selectedOptionNames?: string[]
 }

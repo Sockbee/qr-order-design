@@ -6,6 +6,7 @@ import {
   Routes,
   useNavigate,
   useParams,
+  useSearchParams,
 } from 'react-router-dom'
 import { CartPage } from './pages/CartPage'
 import { MenuDetailPage } from './pages/MenuDetailPage'
@@ -15,14 +16,18 @@ import { OrderConfirmationPage } from './pages/OrderConfirmationPage'
 import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
 import { useOrderSession } from './hooks/useOrderSession'
+import { useOrderPolling } from './hooks/useOrderPolling'
 import type { OrderSession } from './hooks/useOrderSession'
+import { mapRemoteOrders } from './api/orders'
 import { menuItems } from './data/menu'
 import { tableSession } from './data/session'
 import {
+  LAST_TABLE_ID_KEY,
   LAST_TOKEN_KEY,
   readStoredString,
   writeStoredString,
 } from './utils/storage'
+import type { TableCredentials } from './types/session'
 
 /**
  * Routes follow UX-STRUCTURE §2.1. Screens not yet built (S00 session resolve,
@@ -39,24 +44,48 @@ interface RouteProps {
   session: OrderSession
 }
 
+function parseCredentials(
+  tableId: string | null | undefined,
+  tableToken: string | null | undefined,
+): TableCredentials | null {
+  if (!tableId || !tableToken || !/^T\d{2,}$/.test(tableId) ||
+      !/^[0-9a-f]{64}$/i.test(tableToken)) {
+    return null
+  }
+  return { tableId, tableToken }
+}
+
 /** `/` resumes the last session this device joined, or the mock one. */
 function SessionEntry() {
   const token = readStoredString(LAST_TOKEN_KEY) ?? tableSession.token
-  return <Navigate to={`/t/${token}/start`} replace />
+  const tableId = readStoredString(LAST_TABLE_ID_KEY) ?? 'T07'
+  return <Navigate to={`/t/${tableId}?token=${encodeURIComponent(token)}`} replace />
 }
 
-function TableConfirmationRoute() {
-  const { token } = useParams()
+function TableConfirmationRoute({
+  onCredentials,
+}: {
+  onCredentials: (credentials: TableCredentials) => void
+}) {
+  const { tableId } = useParams()
+  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const token = searchParams.get('token')
 
   // Re-scanning the same QR rejoins the existing session (UX-STRUCTURE §5.1).
   useEffect(() => {
-    if (token) writeStoredString(LAST_TOKEN_KEY, token)
-  }, [token])
+    const credentials = parseCredentials(tableId, token)
+    if (!credentials) return
+    writeStoredString(LAST_TABLE_ID_KEY, credentials.tableId)
+    writeStoredString(LAST_TOKEN_KEY, credentials.tableToken)
+    onCredentials(credentials)
+  }, [onCredentials, tableId, token])
+
+  const tableNumber = Number(tableId?.slice(1)) || tableSession.tableNumber
 
   return (
     <TableConfirmationPage
-      session={tableSession}
+      session={{ ...tableSession, token: token ?? tableSession.token, tableNumber }}
       onStart={() => navigate('/menu')}
     />
   )
@@ -155,14 +184,28 @@ function OrderCompleteRoute({ session }: RouteProps) {
   )
 }
 
-function OrderStatusRoute({ session }: RouteProps) {
+function OrderStatusRoute({
+  session,
+  remote,
+}: RouteProps & {
+  remote: ReturnType<typeof useOrderPolling>
+}) {
   const navigate = useNavigate()
+  const tableNumber = Number(remote.data?.table.tableId.slice(1)) ||
+    session.orders.at(-1)?.tableNumber ||
+    tableSession.tableNumber
+  const remoteOrders = remote.data
+    ? mapRemoteOrders(remote.data, tableNumber)
+    : null
+  const orders = remoteOrders ?? session.orders
 
-  if (session.orders.length === 0) return <Navigate to="/menu" replace />
+  if (!remote.enabled && orders.length === 0) return <Navigate to="/menu" replace />
 
   return (
     <OrderStatusPage
-      orders={session.orders}
+      orders={orders}
+      latestPublicStatus={remote.data?.latestPublicStatus}
+      sessionTotalAmount={remote.data?.sessionTotalAmount}
       onOrderMore={() => navigate('/menu')}
       onCallStaff={() => {
         // B1 직원 호출 sheet is not built yet.
@@ -172,16 +215,29 @@ function OrderStatusRoute({ session }: RouteProps) {
 }
 
 function App() {
+  const location = window.location
+  const initialTableMatch = location.pathname.match(/^\/t\/(T\d{2,})\/?$/)
+  const initialToken = new URLSearchParams(location.search).get('token')
+  const storedTableId = readStoredString(LAST_TABLE_ID_KEY)
+  const storedToken = readStoredString(LAST_TOKEN_KEY)
+  const [credentials, setCredentials] = useState<TableCredentials | null>(() => {
+    return parseCredentials(initialTableMatch?.[1], initialToken) ??
+      parseCredentials(storedTableId, storedToken)
+  })
   const session = useOrderSession(
-    tableSession.token,
-    tableSession.tableNumber,
+    credentials?.tableToken ?? tableSession.token,
+    Number(credentials?.tableId.slice(1)) || tableSession.tableNumber,
   )
+  const remote = useOrderPolling(credentials)
 
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SessionEntry />} />
-        <Route path="/t/:token/start" element={<TableConfirmationRoute />} />
+        <Route
+          path="/t/:tableId"
+          element={<TableConfirmationRoute onCredentials={setCredentials} />}
+        />
         <Route path="/menu" element={<MenuRoute session={session} />} />
         <Route
           path="/menu/:itemId"
@@ -192,7 +248,10 @@ function App() {
           path="/cart/confirm"
           element={<OrderConfirmationRoute session={session} />}
         />
-        <Route path="/orders" element={<OrderStatusRoute session={session} />} />
+        <Route
+          path="/orders"
+          element={<OrderStatusRoute session={session} remote={remote} />}
+        />
         <Route
           path="/orders/:orderNumber/done"
           element={<OrderCompleteRoute session={session} />}
