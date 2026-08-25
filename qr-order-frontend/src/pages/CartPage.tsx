@@ -3,12 +3,12 @@ import { BottomOrderBar } from '../components/BottomOrderBar'
 import { Button } from '../components/Button'
 import { CartLine } from '../components/CartLine'
 import { PriceBreakdown } from '../components/PriceBreakdown'
-import { menuItems } from '../data/menu'
 import { calculateCartTotal, describeCartLineOptions } from '../utils/cart'
-import type { CartLine as CartLineModel } from '../types/menu'
+import type { CartLine as CartLineModel, MenuItemDetail } from '../types/menu'
 import './CartPage.css'
 
 interface CartPageProps {
+  menuItems: MenuItemDetail[]
   cart: CartLineModel[]
   onBack: () => void
   onAddMore: () => void
@@ -17,6 +17,7 @@ interface CartPageProps {
 }
 
 export function CartPage({
+  menuItems,
   cart,
   onBack,
   onAddMore,
@@ -35,16 +36,19 @@ export function CartPage({
             const item = menuItems.find(
               (candidate) => candidate.id === line.itemId,
             )
-            if (!item) return null
+            const name = line.nameSnapshot ?? item?.name
+            if (!name) return null
+            const options = line.selectedOptionNames?.join(' · ') ??
+              (item ? describeCartLineOptions(item, line) : '')
 
             return (
               <CartLine
                 key={`${line.itemId}-${index}`}
-                name={item.name}
-                options={describeCartLineOptions(item, line)}
+                name={name}
+                options={options}
                 lineTotal={line.unitPrice * line.quantity}
                 quantity={line.quantity}
-                imageUrl={item.imageUrl}
+                imageUrl={item?.imageUrl}
                 onQuantityChange={(next) => onQuantityChange(index, next)}
               />
             )

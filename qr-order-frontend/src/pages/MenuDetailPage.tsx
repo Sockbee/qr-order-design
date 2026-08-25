@@ -25,7 +25,13 @@ function sortGroups(groups: MenuItemDetail['optionGroups']) {
 function initialSelection(groups: MenuItemDetail['optionGroups']) {
   const selection: Record<string, MenuOption['id'][]> = {}
   for (const group of groups) {
-    selection[group.id] = group.defaultOptionIds ?? []
+    const availableOptionIds = new Set(
+      group.options
+        .filter((option) => !option.soldOut)
+        .map((option) => option.id),
+    )
+    selection[group.id] = (group.defaultOptionIds ?? [])
+      .filter((optionId) => availableOptionIds.has(optionId))
   }
   return selection
 }
@@ -40,7 +46,7 @@ export function MenuDetailPage({
     [item.optionGroups],
   )
   const [selection, setSelection] = useState(() => initialSelection(groups))
-  const [quantity, setQuantity] = useState(1)
+  const [quantity, setQuantity] = useState(item.minQuantity ?? 1)
 
   const toggleOption = (groupId: string, optionId: MenuOption['id']) => {
     const group = groups.find((candidate) => candidate.id === groupId)
@@ -78,8 +84,19 @@ export function MenuDetailPage({
   // Incomplete required groups disable the action — never hide it
   // (UX-STRUCTURE §5.3).
   const canAdd = groups.every(
-    (group) => !group.required || (selection[group.id] ?? []).length > 0,
+    (group) => {
+      const count = (selection[group.id] ?? []).length
+      return count >= (group.minSelections ?? (group.required ? 1 : 0)) &&
+        count <= (group.maxSelections ?? Number.POSITIVE_INFINITY)
+    },
   )
+
+  const selectedOptionNames = groups.flatMap((group) => {
+    const selected = selection[group.id] ?? []
+    return group.options
+      .filter((option) => selected.includes(option.id))
+      .map((option) => option.label)
+  })
 
   const originLine = [
     item.allergens?.length ? `알레르기: ${item.allergens.join(', ')}` : null,
@@ -124,6 +141,8 @@ export function MenuDetailPage({
           <QuantitySelector
             value={quantity}
             onChange={setQuantity}
+            min={item.minQuantity ?? 1}
+            max={item.maxQuantity ?? 99}
             labelledBy={QUANTITY_LABEL_ID}
           />
         </div>
@@ -140,9 +159,11 @@ export function MenuDetailPage({
             onClick={() =>
               onAddToCart({
                 itemId: item.id,
+                nameSnapshot: item.name,
                 quantity,
                 unitPrice,
                 selectedOptionIds,
+                selectedOptionNames,
               })
             }
           />

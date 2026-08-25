@@ -47,6 +47,11 @@ Apps Script `orders/list` action every 15 seconds, pauses while the document is 
 retains the last successful response during retry backoff. Configure the deployment through
 `VITE_APPS_SCRIPT_URL`; never commit a real table token.
 
+S01, S02 and S04 use the session-level `useStorefront` data source. It resolves the real
+store/table and menu catalog from Apps Script, then passes the same mapped menu objects to
+the cart and confirmation screens. `src/data` is fallback content only when the API is not
+configured; production paths must never silently fall back after an API or QR error.
+
 ---
 
 ## Sources of Truth
@@ -190,7 +195,7 @@ Current structure:
 src/
 ├── assets/       # exported Figma assets
 ├── components/   # reusable components (Component.tsx + Component.css)
-├── data/         # mock content for the UI phase
+├── data/         # fallback content for API-free UI development
 ├── hooks/        # shared hooks
 ├── pages/        # one file per screen
 ├── styles/       # tokens.css
@@ -198,8 +203,8 @@ src/
 └── utils/        # formatting helpers
 ```
 
-`src/hooks/` holds shared hooks (`useOrderSession`, `usePersistentState`). `src/data/` holds
-mock content only and goes away once the API lands.
+`src/hooks/` holds shared hooks (`useOrderSession`, `usePersistentState`, `useStorefront`,
+`useOrderPolling`). `src/data/` is used only when `VITE_APPS_SCRIPT_URL` is absent.
 
 Do not over-engineer abstractions for components used only once.
 
@@ -343,12 +348,13 @@ Keep component props small and explicit.
 
 ## 8. State and Data
 
-For the current UI implementation phase, prefer simple local/mock data unless integration requirements explicitly require otherwise.
+Store/table, menu catalog and order status use the Apps Script API when
+`VITE_APPS_SCRIPT_URL` is configured. Fallback content lives in `src/data/`, typed against
+`src/types/`, and is only for API-free UI development. Components and pages take mapped
+domain types as props and must not import fallback data directly.
 
-Mock content lives in `src/data/`, typed against `src/types/`. Components take domain types as
-props and never import mock data directly — only page components do.
-
-Separate UI representation from future API integration where practical.
+Keep Apps Script response types and mapping inside `src/api/`; UI components must not depend
+on backend field names.
 
 Do not introduce a global state library unless the application's actual complexity requires one.
 Cart and order history live in `useOrderSession`, persisted to `localStorage` under

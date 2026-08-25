@@ -17,9 +17,13 @@ import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
 import { useOrderSession } from './hooks/useOrderSession'
 import { useOrderPolling } from './hooks/useOrderPolling'
+import { useStorefront } from './hooks/useStorefront'
 import type { OrderSession } from './hooks/useOrderSession'
 import { mapRemoteOrders } from './api/orders'
-import { menuItems } from './data/menu'
+import {
+  categories as mockCategories,
+  menuItems as mockMenuItems,
+} from './data/menu'
 import { tableSession } from './data/session'
 import {
   LAST_TABLE_ID_KEY,
@@ -44,6 +48,12 @@ interface RouteProps {
   session: OrderSession
 }
 
+interface CatalogRouteProps {
+  categories: typeof mockCategories
+  menuItems: typeof mockMenuItems
+  storefront: ReturnType<typeof useStorefront>
+}
+
 function parseCredentials(
   tableId: string | null | undefined,
   tableToken: string | null | undefined,
@@ -64,8 +74,10 @@ function SessionEntry() {
 
 function TableConfirmationRoute({
   onCredentials,
+  storefront,
 }: {
   onCredentials: (credentials: TableCredentials) => void
+  storefront: ReturnType<typeof useStorefront>
 }) {
   const { tableId } = useParams()
   const [searchParams] = useSearchParams()
@@ -81,31 +93,71 @@ function TableConfirmationRoute({
     onCredentials(credentials)
   }, [onCredentials, tableId, token])
 
-  const tableNumber = Number(tableId?.slice(1)) || tableSession.tableNumber
+  const fallbackSession = storefront.configured ? null : {
+    ...tableSession,
+    token: token ?? tableSession.token,
+    tableNumber: Number(tableId?.slice(1)) || tableSession.tableNumber,
+  }
 
   return (
     <TableConfirmationPage
-      session={{ ...tableSession, token: token ?? tableSession.token, tableNumber }}
+      session={storefront.data?.session ?? fallbackSession}
+      loading={storefront.loading}
+      errorMessage={storefront.error?.message}
+      retryable={storefront.retryable}
+      onRetry={storefront.retry}
       onStart={() => navigate('/menu')}
     />
   )
 }
 
-function MenuRoute({ session }: RouteProps) {
+function MenuRoute({
+  session,
+  categories,
+  menuItems,
+  storefront,
+}: RouteProps & CatalogRouteProps) {
   const navigate = useNavigate()
 
   return (
     <MenuPage
+      categories={categories}
+      menuItems={menuItems}
       cart={session.cart}
+      loading={storefront.loading}
+      errorMessage={storefront.error?.message}
+      retryable={storefront.retryable}
+      onRetry={storefront.retry}
       onSelectItem={(id) => navigate(`/menu/${id}`)}
       onOpenCart={() => navigate('/cart')}
     />
   )
 }
 
-function MenuDetailRoute({ session }: RouteProps) {
+function MenuDetailRoute({
+  session,
+  categories,
+  menuItems,
+  storefront,
+}: RouteProps & CatalogRouteProps) {
   const { itemId } = useParams()
   const navigate = useNavigate()
+
+  if (storefront.loading || storefront.error) {
+    return (
+      <MenuPage
+        categories={categories}
+        menuItems={menuItems}
+        cart={session.cart}
+        loading={storefront.loading}
+        errorMessage={storefront.error?.message}
+        retryable={storefront.retryable}
+        onRetry={storefront.retry}
+        onSelectItem={(id) => navigate(`/menu/${id}`)}
+        onOpenCart={() => navigate('/cart')}
+      />
+    )
+  }
 
   const item = menuItems.find((candidate) => candidate.id === itemId)
   if (!item) return <Navigate to="/menu" replace />
@@ -122,11 +174,15 @@ function MenuDetailRoute({ session }: RouteProps) {
   )
 }
 
-function CartRoute({ session }: RouteProps) {
+function CartRoute({
+  session,
+  menuItems,
+}: RouteProps & Pick<CatalogRouteProps, 'menuItems'>) {
   const navigate = useNavigate()
 
   return (
     <CartPage
+      menuItems={menuItems}
       cart={session.cart}
       onBack={() => navigate('/menu')}
       onAddMore={() => navigate('/menu')}
@@ -136,7 +192,11 @@ function CartRoute({ session }: RouteProps) {
   )
 }
 
-function OrderConfirmationRoute({ session }: RouteProps) {
+function OrderConfirmationRoute({
+  session,
+  menuItems,
+  tableNumber,
+}: RouteProps & Pick<CatalogRouteProps, 'menuItems'> & { tableNumber: number }) {
   const navigate = useNavigate()
   /*
    * Placing an order empties the cart, and react-router runs navigation in a
@@ -151,8 +211,9 @@ function OrderConfirmationRoute({ session }: RouteProps) {
 
   return (
     <OrderConfirmationPage
+      menuItems={menuItems}
       cart={session.cart}
-      tableNumber={tableSession.tableNumber}
+      tableNumber={tableNumber}
       onBack={() => navigate('/cart')}
       onEdit={() => navigate('/cart')}
       onConfirm={() => {
@@ -224,11 +285,19 @@ function App() {
     return parseCredentials(initialTableMatch?.[1], initialToken) ??
       parseCredentials(storedTableId, storedToken)
   })
+  const storefront = useStorefront(credentials)
   const session = useOrderSession(
     credentials?.tableToken ?? tableSession.token,
     Number(credentials?.tableId.slice(1)) || tableSession.tableNumber,
+    storefront.configured,
   )
   const remote = useOrderPolling(credentials)
+  const categories = storefront.data?.categories ??
+    (storefront.configured ? [] : mockCategories)
+  const menuItems = storefront.data?.menuItems ??
+    (storefront.configured ? [] : mockMenuItems)
+  const tableNumber = storefront.data?.session.tableNumber ??
+    (Number(credentials?.tableId.slice(1)) || tableSession.tableNumber)
 
   return (
     <BrowserRouter>
@@ -236,17 +305,48 @@ function App() {
         <Route path="/" element={<SessionEntry />} />
         <Route
           path="/t/:tableId"
-          element={<TableConfirmationRoute onCredentials={setCredentials} />}
+          element={(
+            <TableConfirmationRoute
+              onCredentials={setCredentials}
+              storefront={storefront}
+            />
+          )}
         />
-        <Route path="/menu" element={<MenuRoute session={session} />} />
+        <Route
+          path="/menu"
+          element={(
+            <MenuRoute
+              session={session}
+              categories={categories}
+              menuItems={menuItems}
+              storefront={storefront}
+            />
+          )}
+        />
         <Route
           path="/menu/:itemId"
-          element={<MenuDetailRoute session={session} />}
+          element={(
+            <MenuDetailRoute
+              session={session}
+              categories={categories}
+              menuItems={menuItems}
+              storefront={storefront}
+            />
+          )}
         />
-        <Route path="/cart" element={<CartRoute session={session} />} />
+        <Route
+          path="/cart"
+          element={<CartRoute session={session} menuItems={menuItems} />}
+        />
         <Route
           path="/cart/confirm"
-          element={<OrderConfirmationRoute session={session} />}
+          element={(
+            <OrderConfirmationRoute
+              session={session}
+              menuItems={menuItems}
+              tableNumber={tableNumber}
+            />
+          )}
         />
         <Route
           path="/orders"

@@ -26,13 +26,14 @@ export interface OrderSession {
 export function useOrderSession(
   token: string,
   tableNumber: number,
+  liveMode = false,
 ): OrderSession {
   const [cart, setCart] = usePersistentState<CartLine[]>(
-    sessionScopedKey(token, 'cart'),
-    initialCart,
+    sessionScopedKey(token, liveMode ? 'live-cart' : 'cart'),
+    liveMode ? [] : initialCart,
   )
   const [orders, setOrders] = usePersistentState<PlacedOrder[]>(
-    sessionScopedKey(token, 'orders'),
+    sessionScopedKey(token, liveMode ? 'live-orders' : 'orders'),
     [],
   )
 

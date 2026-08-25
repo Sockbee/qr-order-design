@@ -14,6 +14,9 @@ export interface MenuItemSummary {
   price: number
   soldOut: boolean
   imageUrl?: string
+  minQuantity?: number
+  maxQuantity?: number
+  badgeTags?: string[]
 }
 
 export interface MenuOption {
@@ -34,6 +37,7 @@ export interface MenuOptionGroup {
   options: MenuOption[]
   /** Pre-selected option ids when the detail screen opens. */
   defaultOptionIds?: string[]
+  minSelections?: number
   /** Cap on simultaneous selections for a `check` group. */
   maxSelections?: number
 }

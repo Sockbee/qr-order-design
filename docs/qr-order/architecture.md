@@ -149,11 +149,11 @@ sequenceDiagram
 |---|---|---|---|---|
 | S01 매장명/영업 칩 | `storeName`, `eventOpen` | `resolveTable` | Settings | 이벤트 전체 영업 상태 |
 | S01 TableChip/안내 | `tableId`, `displayName`, `notice` | `resolveTable` | Tables, Settings | token 검증 성공 후만 노출 |
-| S02 카테고리 탭 | id, label, heading, 순서 | `getMenu` | Categories | 활성 카테고리만 |
-| S02 메뉴 행 | name, description, price, imageUrl, available | `getMenu` | Menu | 품절도 목록에는 남기고 비활성 표시 |
+| S02 카테고리 탭 | id, label, heading, 순서 | `menu` | Categories | 활성 카테고리만 |
+| S02 메뉴 행 | name, description, price, imageUrl, available | `menu` | Menu | 품절도 목록에는 남기고 비활성 표시 |
 | S02 BottomOrderBar | 장바구니 수량·합계 | 없음 | - | 클라이언트 상태, 최종 가격 아님 |
-| S04 메뉴 상세 | allergens, origin, basePrice | `getMenu` | Menu | 동일 응답을 상세 화면에서 재사용 가능 |
-| S04 옵션 그룹 | required, selectionType, min/max, options | `getMenu` | MenuOptionGroups, MenuOptions | 옵션별 `available`, `priceDelta` 포함 |
+| S04 메뉴 상세 | allergens, origin, basePrice | `menu` | Menu | 동일 응답을 상세 화면에서 재사용 가능 |
+| S04 옵션 그룹 | required, selectionType, min/max, options | `menu` | MenuOptionGroups, MenuOptions | 옵션별 `available`, `priceDelta` 포함 |
 | S05 장바구니 | 선택 ID, 수량, 표시 단가 | 없음 | - | localStorage; 서버 데이터가 바뀌면 주문 시 거절 가능 |
 | S06 확인 | 테이블, 읽기 전용 주문 요약 | `resolveTable` 결과 + client state | - | 확정 클릭 시 `createOrder` |
 | S07 완료 | table, displayCode, totalAmount, status | `createOrder` | Orders | 반드시 서버 응답 금액 사용 |

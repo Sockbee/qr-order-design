@@ -1,6 +1,6 @@
 import type { TableSession } from '../types/session'
 
-/** Mock session for the UI phase. Values match the S01 Figma frame. */
+/** Fallback session for API-free UI development. Values match the S01 Figma frame. */
 export const tableSession: TableSession = {
   token: 'demo-t7',
   storeName: '행복식당 본점',
