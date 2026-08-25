@@ -1,8 +1,8 @@
 # QR Order Apps Script bootstrap
 
 Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, validation,
-보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 첫 고객 API인
-`resolve-table`도 포함하는 Apps Script V8 프로젝트다.
+보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 고객용
+`resolve-table`, `menu` API를 포함하는 Apps Script V8 프로젝트다.
 
 ## 포함 파일
 
@@ -12,7 +12,7 @@ Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, va
 - `CatalogSeed.gs`: 카테고리 4개와 메뉴 19개의 idempotent 초기 데이터
 - `Diagnostics.gs`: `runDiagnostics()`와 FK/금액/snapshot 무결성 검사
 - `TableProvisioning.gs`: 테이블 생성, token 회전, 일회성 QR CSV export
-- `TableCatalogService.gs`: SHA-256 token 검증, Settings parse, `resolveTable()`
+- `TableCatalogService.gs`: SHA-256 token 검증, Settings parse, `resolveTable()`, `getMenu()`
 - `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
 - `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
@@ -53,7 +53,8 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 
 - `GET {WEB_APP_URL}/exec/health`
 - `POST {WEB_APP_URL}/exec/resolve-table`
-- path routing이 제한된 환경에서는 `POST {WEB_APP_URL}/exec?action=resolve-table`도 지원
+- `POST {WEB_APP_URL}/exec/menu`
+- path routing이 제한된 환경에서는 `?action=resolve-table`, `?action=menu`도 지원
 
 POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
 
@@ -64,6 +65,10 @@ POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열�
 `EVENT_OPEN=FALSE`인 동안 유효한 QR도 `EVENT_CLOSED`를 반환한다. 행사 전 성공 응답을
 시험할 때만 잠시 `TRUE`로 바꾼 뒤 다시 `FALSE`로 돌린다. API 응답에는 stack trace,
 Spreadsheet ID, 원본 token, token hash가 포함되지 않는다.
+
+`menu` 요청 body는 `resolve-table`과 동일하다. 활성 카테고리와 그 카테고리에 속한
+메뉴를 sort order 순으로 반환하며, `available=false`인 메뉴와 옵션도 품절 UI 표시를
+위해 응답에 포함한다. 비활성 category와 option group은 제외한다.
 
 진단 결과는 오류와 경고를 각각 최대 100개까지 로그에 포함하고, 전체 개수와 생략된
 개수는 `summary`, `truncated`에 별도로 기록한다. 대량 오류가 있어도 실행 로그 전체가
