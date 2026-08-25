@@ -3,7 +3,7 @@
  * Keep this file aligned with docs/qr-order/google-sheets-schema.md.
  */
 const QR_ORDER_APP = Object.freeze({
-  BOOTSTRAP_VERSION: '1.0.1',
+  BOOTSTRAP_VERSION: '1.1.0',
   PROTECTION_PREFIX: 'QR Order bootstrap:',
   HEADER_BACKGROUND: '#1b64da',
   HEADER_FOREGROUND: '#ffffff',

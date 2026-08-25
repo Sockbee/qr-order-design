@@ -52,6 +52,7 @@ OrderService.gs      # 주문 생성/조회/idempotency/snapshot
 Validation.gs        # 주문/옵션/상태 전이 검증
 AdminTriggers.gs     # onOpen, 설치형 edit trigger, 운영진 상태 변경 guard
 Setup.gs             # Sheet/header/validation/bootstrap/diagnostics
+CatalogSeed.gs       # 초기 Categories/Menu idempotent seed
 Diagnostics.gs       # runDiagnostics, FK/금액/snapshot 무결성 검사
 ```
 

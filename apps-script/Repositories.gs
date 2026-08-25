@@ -61,13 +61,25 @@ function isEffectivelyBlankRow_(row, checkboxColumns) {
 function appendObjectsBySchema_(spreadsheet, sheetName, objects) {
   if (!objects.length) return null;
   const schema = getSchema_(sheetName);
-  const sheet = getCanonicalSheet_(spreadsheet, sheetName);
-  const startRow = sheet.getLastRow() + 1;
+  const table = readSheetTable_(spreadsheet, sheetName);
+  const sheet = table.sheet;
+  const startRow = nextAppendRow_(table.rows);
   const values = objects.map(object => schema.headers.map(header => {
     return Object.prototype.hasOwnProperty.call(object, header) ? object[header] : '';
   }));
+  const requiredLastRow = startRow + values.length - 1;
+  if (sheet.getMaxRows() < requiredLastRow) {
+    sheet.insertRowsAfter(sheet.getMaxRows(), requiredLastRow - sheet.getMaxRows());
+  }
   sheet.getRange(startRow, 1, values.length, schema.headers.length).setValues(values);
   return { startRow: startRow, rowCount: values.length };
+}
+
+function nextAppendRow_(rows) {
+  const lastDataRow = rows.reduce((maximum, row) => {
+    return Math.max(maximum, Number(row.__rowNumber) || 1);
+  }, 1);
+  return lastDataRow + 1;
 }
 
 function updateObjectRowBySchema_(spreadsheet, sheetName, rowNumber, patch) {
