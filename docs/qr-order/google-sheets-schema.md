@@ -27,6 +27,7 @@
 | Orders | 주문 header, 상태, 결제, idempotency | Apps Script; 상태/결제만 운영진 |
 | OrderItems | 주문 당시 메뉴 snapshot | Apps Script 전용 |
 | OrderItemOptions | 주문 당시 선택 옵션 snapshot | Apps Script 전용 |
+| Calls | 직원 호출 접수와 확인 | Apps Script; 확인만 운영진 |
 | Settings | 행사 단위 설정과 순번 counter | 운영진; counter는 Apps Script |
 | AuditLogs | 상태 변경과 오류 기록 | Apps Script 전용 |
 
@@ -45,11 +46,19 @@ erDiagram
     MENU ||--o{ ORDER_ITEMS : references
     MENU_OPTIONS ||--o{ ORDER_ITEM_OPTIONS : references
     ORDERS ||--o{ AUDIT_LOGS : audited
+    TABLES ||--o{ CALLS : raises
 
     TABLES {
       string table_id PK
       string token_hash
       boolean active
+    }
+    CALLS {
+      uuid call_id PK
+      string table_id FK
+      enum reason
+      enum status
+      datetime created_at
     }
     MENU {
       string menu_id PK
@@ -293,6 +302,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `DEFAULT_MAX_QUANTITY` | `10` | INTEGER | 개발자 | 메뉴 값 누락 시 fail-safe 참조 |
 | `TIME_ZONE` | `Asia/Seoul` | STRING | 개발자 | 표시 시각 |
 | `STATUS_POLL_SECONDS` | `15` | INTEGER | 개발자 | 프론트 기본 polling 주기 |
+| `CALL_MIN_INTERVAL_SECONDS` | `60` | INTEGER | 운영진 | 같은 테이블의 연속 직원 호출 최소 간격 |
 
 `TOKEN_PEPPER`, Spreadsheet ID처럼 비공개/배포 설정인 값은 Settings가 아니라 Script Properties에 저장한다.
 
@@ -312,9 +322,71 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `request_id` | string | N | `8eaf...` | N | Y | Apps Script | clientRequestId/추적 ID |
 | `detail_json` | string JSON | N | `{"reason":"..."}` | N | N | Apps Script | 민감 토큰/stack trace는 저장 금지 |
 
-권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`.
+권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`.
 
-## 14. repository 인덱스와 조회 규칙
+호출 확인은 여러 행을 한 번에 바꾸므로 `CALL_ACKNOWLEDGED`는 그룹 단위로 1건만 기록하고, `entity_type=TABLE`, `entity_id=table_id`, `detail_json`에 `{"callIds":[...],"count":2}`를 담는다. 행마다 로그를 남기면 병합의 의미가 사라진다.
+
+## 14. Calls
+
+고객 S09 `직원 호출`의 접수 단위다. 주문과 생명주기가 다르므로 Orders에 열을 붙이지 않고 별도 Sheet로 둔다. 주문이 없는 테이블도 호출할 수 있고, 한 테이블이 한 세션에 여러 번 호출할 수 있다.
+
+| column | type | 필수 | 예시 | unique | index | 변경 주체 | 설명 |
+|---|---|---:|---|---:|---:|---|---|
+| `call_id` | UUID | Y | `c41e...` | Y | Y | Apps Script | PK |
+| `table_id` | string | Y | `T12` | N | Y | Apps Script | Tables FK |
+| `reason` | enum | Y | `WATER_UTENSIL` | N | N | Apps Script | 고객이 S09에서 고른 사유 |
+| `status` | enum | Y | `PENDING` | N | Y | Apps Script/운영진 | 호출 처리 상태 |
+| `client_request_id` | string | N | `7c2a...` | Y | Y | Apps Script | 재전송 방지. 동일 값 재요청은 정상 성공 |
+| `created_at` | datetime | Y | `2026-08-25 19:24:00` | N | Y | Apps Script | 호출 시각. **병합 그룹의 경과 시간 기준** |
+| `acknowledged_at` | datetime | N | `2026-08-25 19:28:00` | N | N | Apps Script | 확인 시각 |
+| `acknowledged_by` | string | N | `staff-03` | N | N | Apps Script | 식별 가능할 때만 |
+| `cancelled_at` | datetime | N | `2026-08-25 19:26:00` | N | N | Apps Script | 고객이 S09b에서 호출 취소한 시각 |
+| `updated_at` | datetime | Y | `2026-08-25 19:28:00` | N | N | Apps Script | 마지막 변경 시각 |
+
+enum:
+
+- `reason`: `WATER_UTENSIL`, `SIDE_PLATE`, `ORDER_INQUIRY`, `PAYMENT_REQUEST`, `OTHER`
+- `status`: `PENDING`, `ACKNOWLEDGED`, `CANCELLED`
+
+인덱스 map: `byTableId`(status=`PENDING`만), `byClientRequestId`.
+
+### 중복 호출 병합
+
+운영 화면(A01 호출 스트립)은 호출 행을 그대로 나열하지 않는다. 같은 테이블의 호출은 한 행으로 묶어 보여준다.
+
+- **병합 단위**: `(table_id, status='PENDING')`
+- **횟수**: 그룹의 행 수
+- **경과 시간**: 그룹의 `MIN(created_at)`. 손님이 실제로 기다린 시간이므로 최신 호출이 아니라 최초 호출을 쓴다
+- **사유**: 그룹 내 `reason`을 `created_at` 오름차순으로 중복 제거해 나열
+- **확인**: 그 테이블의 `PENDING` 행 **전부**를 한 번에 `ACKNOWLEDGED`로 바꾸고 동일한 `acknowledged_at`을 기록
+- **정렬**: 그룹의 `MIN(created_at)` 오름차순. 오래 기다린 테이블이 위로 온다
+
+### 확인 이후 재호출은 카운트를 리셋한다
+
+확인이 그 테이블의 `PENDING` 행을 모두 비우므로, 이후 새 호출은 **자동으로 1회짜리 새 그룹**이 된다.
+
+- `repeat_count` 같은 파생 컬럼을 두지 않는다. 그룹 조건 자체가 리셋을 만들기 때문에 리셋 로직도, 값이 어긋날 여지도 없다. 이는 §1의 "canonical Sheet에 수식/파생값을 넣지 않는다"와 같은 원칙이다.
+- 리셋이 맞는 이유: 직원이 다녀온 뒤의 대기 시간이 실제 긴급도다. 누적하면 이미 해결된 대기가 긴급도에 계속 섞인다.
+- 확인 직후의 재호출은 오히려 더 급한 신호다(다녀왔는데 또 불렀다). 카운트는 1이지만 `created_at`이 최신이라 정렬 위치는 낮아지므로, 운영 화면에서는 이 경우를 `acknowledged_at`이 있는 직전 그룹과 함께 읽어야 한다. 자동 상향 조정은 하지 않는다.
+
+### 호출 빈도 제한
+
+병합은 표시 문제를 풀지 저장 문제를 풀지는 않는다. 한 탭이 계속 호출하면 Calls 행이 무한히 늘어난다.
+
+- 같은 `table_id`의 마지막 `created_at`으로부터 `CALL_MIN_INTERVAL_SECONDS` 이내의 신규 호출은 거절한다(`CALL_TOO_FREQUENT`).
+- 이 값은 병합 규칙과 독립이다. 간격을 지킨 3회 호출은 정상적으로 3회로 묶인다.
+
+Sample:
+
+| call_id | table_id | reason | status | client_request_id | created_at | acknowledged_at | cancelled_at | updated_at |
+|---|---|---|---|---|---|---|---|---|
+| c41e… | T12 | WATER_UTENSIL | ACKNOWLEDGED | 7c2a… | 2026-08-25 19:20:00 | 2026-08-25 19:28:00 | | 2026-08-25 19:28:00 |
+| d90b… | T12 | SIDE_PLATE | ACKNOWLEDGED | 8f11… | 2026-08-25 19:24:00 | 2026-08-25 19:28:00 | | 2026-08-25 19:28:00 |
+| e02c… | T12 | PAYMENT_REQUEST | PENDING | 9a37… | 2026-08-25 19:41:00 | | | 2026-08-25 19:41:00 |
+
+위 예시에서 19:28 확인 시점의 표시는 `T12 · 2회 · 19:20 첫 호출`이었고, 19:41 재호출은 리셋되어 `T12 · 1회 · 19:41 호출`로 표시된다.
+
+## 15. repository 인덱스와 조회 규칙
 
 Google Sheets에는 index가 없다. 한 API 실행에서 필요한 범위를 한 번씩 `getValues()`로 읽고 JavaScript Map을 만든다.
 
@@ -329,10 +401,11 @@ Google Sheets에는 index가 없다. 한 API 실행에서 필요한 범위를 �
 | 테이블 주문 | Orders `table_id`, created_at 내림차순 |
 | 주문 항목 | OrderItems `order_id` |
 | 선택 옵션 | OrderItemOptions `order_item_id` |
+| 미확인 호출 병합 | Calls `status='PENDING'`을 `table_id`로 group, 그룹별 `MIN(created_at)` 오름차순 |
 
 Orders가 수천 행을 넘기 시작하면 당일 Sheet만 활성 데이터로 두고 과거 행사는 별도 파일로 archive한다. 행마다 `getRange().getValue()`를 반복하지 않는다.
 
-## 15. 운영 View와 통계
+## 16. 운영 View와 통계
 
 View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:T를 기준으로 한다.
 
@@ -374,7 +447,15 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 =QUERY(Orders!A:T,"select * where N <> 'COMMITTED' order by P asc",1)
 ```
 
-운영진이 View Sheet를 수정하면 안 된다. 상태 변경은 Orders 원본의 `status` dropdown 또는 Apps Script 커스텀 메뉴에서 수행한다.
+`View_Calls!A1` — Calls 열 순서 A:J 기준
+
+```gs
+=QUERY(Calls!A:J,"select B, C, F where D = 'PENDING' order by F asc",1)
+```
+
+이 View는 병합 전 원본 행이다. 같은 `table_id`가 여러 줄로 보이는 것이 정상이며, 묶어서 보여주는 것은 운영 화면의 책임이다. Sheet 수식으로 group 집계를 만들지 않는다.
+
+운영진이 View Sheet를 수정하면 안 된다. 상태 변경은 Orders 원본의 `status` dropdown 또는 Apps Script 커스텀 메뉴에서 수행한다. 호출 확인도 같은 이유로 Sheet 직접 편집이 아니라 커스텀 메뉴/운영 화면에서 수행한다 — 한 테이블의 `PENDING` 행을 전부 함께 바꿔야 하기 때문이다.
 
 ### 통계 예시
 
@@ -398,7 +479,7 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 
 시간대별 주문량은 helper View에서 `=HOUR(Orders!P2)`를 만든 뒤 QUERY로 집계하거나 Pivot Table을 권장한다. 취소 주문은 `status=CANCELLED`, `write_state=COMMITTED` Filter View로 확인한다.
 
-## 16. 무결성 체크리스트
+## 17. 무결성 체크리스트
 
 setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가 있으면 주문 오픈을 막는다.
 
@@ -414,3 +495,7 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - OrderItems `line_total = unit_price_snapshot * quantity`인가
 - OrderItems의 base + option delta 합이 unit snapshot과 일치하는가
 - terminal status의 timestamp와 cancel reason 정책이 충족되는가
+- Calls의 `status=ACKNOWLEDGED`인 행에 `acknowledged_at`이 모두 있는가
+- Calls의 `status=CANCELLED`인 행에 `cancelled_at`이 모두 있는가
+- Calls의 `status=PENDING`인 행에 `acknowledged_at`/`cancelled_at`이 비어 있는가
+- 같은 `table_id`의 `ACKNOWLEDGED` 그룹이 동일한 `acknowledged_at`을 공유하는가 (확인은 그룹 단위 1회 동작이다)

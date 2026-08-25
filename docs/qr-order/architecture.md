@@ -27,9 +27,14 @@ Figma MCP로 `4:11`을 조회해 다음 실제 프레임을 확인했다.
 | S05 Cart | `15:95` | 선택 옵션, 수량, 행별 금액, 총액 |
 | S06 Order Confirmation | `16:80` | 테이블, 주문 요약, 총액, 후불 안내 |
 | S07 Order Complete | `16:106` | 테이블, 서버 확정 총액, 주문번호 `A-1042` 형식 |
-| S08 Order Status | `16:121` | 공개 상태 4단계, 회차별 주문·시각·항목, 누적 합계 |
+| S08 Order History | `16:121` | 공개 상태 4단계, **회차별 상태 칩**, 회차별 주문·시각·항목, 누적 합계 |
+| S08b Order History 비어 있음 | `105:189` | 주문 전 진입 시 빈 상태 |
+| S09 Call Staff | `105:92` | 호출 사유 선택 시트 |
+| S09b Call Staff 호출 완료 | `105:146` | 호출 접수 확인, 호출 취소 |
 
-Figma 파일은 S08에서 끝난다. S00, S02b, T1, D1-D3, B1-B2, E1-E5의 실제 프레임은 없으므로 이들을 Figma 요구사항으로 간주하지 않는다. 다만 `UX-STRUCTURE.md`에 정의된 오류와 복구 상태는 API 오류 계약에 반영한다.
+고객 플로우는 S09b까지 존재한다. S00, S02b, T1, D1-D3, B2, E1-E5의 실제 프레임은 아직 없으므로 이들을 Figma 요구사항으로 간주하지 않는다(B1 직원 호출은 S09/S09b로 구현되었다). 다만 `UX-STRUCTURE.md`에 정의된 오류와 복구 상태는 API 오류 계약에 반영한다.
+
+운영진용 iPad POS는 별도 페이지 `Staff POS — iPad`에 A00~A08, B01~B03으로 존재한다. 이 문서의 범위는 고객 API이며, 운영 API는 호출 수신(§4의 `listCalls`/`acknowledgeCall`)만 확정되어 있다. 할인·테이블 이동·합석·분리는 Figma에 화면이 있으나 아직 스키마에 반영되지 않았다.
 
 ## 2. 주요 결정
 
@@ -92,6 +97,21 @@ Figma와 현재 프론트 타입이 `A-1042`를 사용하므로 이를 기본값
 | `CANCELLED` | 취소됨 | `cancelled` | 정상 트래커 대신 취소 안내 |
 
 `SERVING`이라는 내부 이름은 “서빙 대상/서빙 처리 단계”를 뜻한다. Figma의 `서빙 완료`로 보이게 하려면 운영진은 실제 전달 후에만 이 값으로 바꿔야 한다. `COMPLETED`는 서빙까지 끝난 주문을 최종 종료한 상태이며 결제 완료를 뜻하지 않는다. 후불 결제는 별도의 `payment_status`로 관리한다.
+
+### Decision A6 — 직원 호출은 주문과 별도 엔티티다
+
+고객 S09 `직원 호출`을 Orders의 열로 붙이지 않고 Calls Sheet로 분리한다.
+
+근거:
+
+- 호출은 주문 없이도 발생한다. 착석 직후 물을 요청하는 테이블에는 붙일 `order_id`가 없다.
+- 한 테이블이 한 세션에 여러 번 호출한다. Orders에 붙이면 어느 주문에 매달지 결정할 수 없다.
+- 생명주기가 다르다. 주문은 `RECEIVED → … → COMPLETED`로 진행하지만 호출은 `PENDING → ACKNOWLEDGED` 한 번으로 끝난다.
+- 호출은 주문 취소/변경의 영향을 받지 않아야 한다.
+
+호출 상태는 `PENDING`, `ACKNOWLEDGED`, `CANCELLED` 세 가지다. 운영 화면은 `PENDING` 행을 `table_id`로 묶어 한 줄로 보여주며, 병합·리셋 규칙 전체는 schema 문서 §14에 있다.
+
+핵심은 **파생 카운터를 두지 않는다**는 것이다. "몇 회 호출"은 `(table_id, status='PENDING')` 그룹의 행 수이고, 확인이 그 그룹을 비우므로 다음 호출은 자연히 1회부터 다시 센다. 리셋을 위한 별도 컬럼도, 리셋 로직도, 값이 어긋날 여지도 없다.
 
 ## 3. 요청 흐름
 
@@ -160,7 +180,13 @@ sequenceDiagram
 | S08 StatusTracker | latest `publicStatus` | `listOrders` | Orders | 15초 polling, 실패 시 마지막 값 유지 |
 | S08 회차 카드 | displayCode, createdAt, item snapshots | `listOrders` | Orders, OrderItems, OrderItemOptions | 최신 회차부터 표시 |
 | S08 누적 합계 | `sessionTotalAmount` | `listOrders` | Orders | `COMMITTED`, 비취소 주문 합계 |
-| S08 직원 호출 | 현재 Figma에는 버튼만 존재 | 미정 | - | B1 프레임/운영 방식 결정 전 API를 만들지 않음 |
+| S02/S04/S08 직원 호출 | `tableId`, `reason` | `createCall` | Calls | 머무는 화면에만 노출. 결제 단계(S05~S07)에는 없음 |
+| S09 호출 시트 | 사유 목록 | 없음 | - | `reason` enum은 클라이언트 상수. Sheet 조회 불필요 |
+| S09b 호출 완료 | `callId`, `createdAt` | `createCall` 응답 | Calls | `호출 취소`는 `cancelCall` |
+| S08b 빈 주문 내역 | 빈 `orders` 배열 | `listOrders` | Orders | 주문 전에도 진입 가능하므로 빈 응답이 정상이다 |
+| A01 호출 스트립 | 미확인 호출 병합 그룹 | `listCalls` | Calls | `PENDING`을 `table_id`로 group |
+| A01/A02 TableCard `Call` | 그 테이블의 `PENDING` 존재 여부 | `listCalls` | Calls | boolean. 카드 상태와 독립적으로 겹쳐짐 |
+| A01 호출 `확인` | 그룹 전체 확인 | `acknowledgeCall` | Calls | `table_id` 단위 1회 동작 |
 
 Figma의 S05에는 테이블 번호가 실제로 그려져 있지 않지만 `UX-STRUCTURE.md` §6.1은 S05에도 표시하도록 요구한다. 프론트엔드가 Figma를 우선하는 현재 규칙에 따라 백엔드는 추가 필드를 만들지 않고 이미 해석한 테이블 정보를 유지한다.
 
@@ -293,7 +319,7 @@ Apps Script의 quota와 제한은 계정 유형에 따라 달라지고 예고 �
 ## 11. Open Questions
 
 1. **Netlify와 CORS**: 프론트 호스팅은 Netlify로 확정했다. Apps Script 배포 URL을 대상으로 실제 브라우저 `fetch` GET/POST/redirect 테스트를 먼저 통과해야 한다. 실패하면 Netlify Function proxy 또는 HTMLService + 라우터 변경 중 하나를 선택한다.
-2. **직원 호출**: S08에 버튼은 있으나 B1 프레임과 운영 수신 방식이 없다. 호출 API/Sheet는 요구사항이 확정될 때 별도 추가한다.
+2. **직원 호출**: 확정되어 구현 대상이다. 고객 S09/S09b, 운영 A01 호출 스트립·TableCard `Call`·상세 패널 배너가 모두 정의되었고, Calls Sheet와 병합/리셋 규칙은 schema §14, API는 `apps-script-api-design.md` §4.7~4.9에 있다. 남은 것은 운영 화면 polling 주기 하나다 — 주문 상태는 15초지만 호출은 더 짧아야 하는지 현장에서 정해야 한다.
 3. **주방 요청 메모**: `UX-STRUCTURE.md`는 S05 note를 정의하지만 현재 Figma S05에는 보이지 않는다. API/Orders에는 optional `note`를 예약하되 프론트가 보내기 전까지 사용하지 않는다.
 
 확정된 QR 형식은 `https://{netlify-domain}/t/{tableId}?token={random-token}`이다. `COMPLETED`는 결제와 무관하게 서빙까지 끝난 주문의 최종 완료를 뜻한다.

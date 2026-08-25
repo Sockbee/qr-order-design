@@ -345,6 +345,111 @@ Response `data`:
 - 고객 status tracker는 가장 최근 비취소 주문의 `publicStatus`를 사용한다.
 - polling은 기본 15초, 탭이 hidden이면 중단, 실패 시 마지막 성공 값을 유지하고 exponential backoff+jitter를 적용한다.
 
+### 4.7 `POST /calls/create` — 직원 호출 (고객 S09)
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "tableId": "T12",
+  "tableToken": "...",
+  "reason": "WATER_UTENSIL",
+  "clientRequestId": "7c2a9f81-..."
+}
+```
+
+Response `data`:
+
+```json
+{
+  "callId": "c41e...",
+  "tableId": "T12",
+  "reason": "WATER_UTENSIL",
+  "status": "PENDING",
+  "createdAt": "2026-08-25T10:41:00.000Z",
+  "idempotentReplay": false
+}
+```
+
+- `reason`은 `WATER_UTENSIL`, `SIDE_PLATE`, `ORDER_INQUIRY`, `PAYMENT_REQUEST`, `OTHER` 중 하나다. 고객이 사유를 고르지 않고 바로 호출하면 `OTHER`를 보낸다.
+- `clientRequestId`가 이미 존재하면 새 행을 만들지 않고 기존 호출을 그대로 반환한다(`idempotentReplay: true`). 주문과 동일한 재전송 규칙이다.
+- 같은 `table_id`의 마지막 `created_at`으로부터 `CALL_MIN_INTERVAL_SECONDS` 이내면 `CALL_TOO_FREQUENT`로 거절한다. 이 검사는 재전송(replay)에는 적용하지 않는다.
+- 주문이 없는 테이블도 호출할 수 있다. `active=FALSE` 테이블과 `EVENT_OPEN=FALSE`일 때는 거절한다.
+
+### 4.8 `POST /calls/cancel` — 호출 취소 (고객 S09b)
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "tableId": "T12",
+  "tableToken": "...",
+  "callId": "c41e..."
+}
+```
+
+- `status`를 `CANCELLED`로 바꾸고 `cancelled_at`을 기록한다.
+- `PENDING`이 아닌 호출은 `CALL_ALREADY_RESOLVED`로 거절한다. 이미 운영진이 확인했다면 취소할 수 없다 — 직원이 이미 출발했을 수 있다.
+- 취소된 호출은 병합 그룹에서 빠지므로 운영 화면의 횟수가 즉시 줄어든다.
+
+### 4.9 `POST /calls/list` — 미확인 호출 병합 조회 (운영 A01)
+
+운영 화면 전용이다. 고객 토큰이 아니라 운영 인증을 요구한다.
+
+Response `data`:
+
+```json
+{
+  "groups": [
+    {
+      "tableId": "T03",
+      "displayName": "테이블 3",
+      "count": 3,
+      "reasons": ["WATER_UTENSIL", "SIDE_PLATE", "PAYMENT_REQUEST"],
+      "firstCalledAt": "2026-08-25T10:37:00.000Z",
+      "lastCalledAt": "2026-08-25T10:41:00.000Z",
+      "callIds": ["c41e...", "d90b...", "e02c..."]
+    }
+  ],
+  "tableCount": 2
+}
+```
+
+- `groups`는 `status='PENDING'` 행을 `table_id`로 묶은 것이다. 원본 행을 그대로 반환하지 않는다.
+- 정렬은 `firstCalledAt` 오름차순이다. 가장 오래 기다린 테이블이 먼저 온다.
+- `reasons`는 `created_at` 오름차순 중복 제거 결과다.
+- `tableCount`는 `groups.length`다. 호출 건수가 아니라 **호출한 테이블 수**이며, 레일 배지와 헤더 카운트가 이 값을 쓴다.
+- `count`는 파생값이며 Sheet에 저장하지 않는다.
+
+### 4.10 `POST /calls/acknowledge` — 호출 확인 (운영 A01)
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "tableId": "T03"
+}
+```
+
+Response `data`:
+
+```json
+{
+  "tableId": "T03",
+  "acknowledgedCount": 3,
+  "acknowledgedAt": "2026-08-25T10:42:00.000Z"
+}
+```
+
+- **`callId`가 아니라 `tableId`를 받는다.** 확인은 그 테이블의 `PENDING` 행 전부를 한 번에 처리하는 그룹 단위 동작이다. 개별 행 확인 API는 만들지 않는다 — 운영 화면에 개별 행이 노출되지 않으므로 부를 방법도 없다.
+- 그룹의 모든 행이 **동일한** `acknowledged_at`을 갖는다. 무결성 체크리스트가 이를 검사한다.
+- 확인 후 그룹이 비므로 이후 새 호출은 `count: 1`인 새 그룹이 된다. 카운트 리셋을 위한 별도 필드나 로직은 없다.
+- 확인할 `PENDING`이 없으면 `acknowledgedCount: 0`으로 정상 응답한다. 두 명이 동시에 눌러도 오류가 아니다.
+- AuditLog는 그룹당 1건(`CALL_ACKNOWLEDGED`)만 남긴다.
+
 ## 5. 오류 코드
 
 | code | 고객 메시지 | retryable | UI 공개 | 운영 로그 |
@@ -366,6 +471,9 @@ Response `data`:
 | `DUPLICATE_REQUEST` | 이전 주문 요청과 정보가 달라 처리할 수 없습니다. | N | 일반적으로 숨김 | Y |
 | `ORDER_NOT_FOUND` | 주문 정보를 찾을 수 없습니다. | N | Y | Y |
 | `INVALID_ORDER_STATUS_TRANSITION` | 주문 상태를 변경할 수 없습니다. | N | 운영 화면 | Y |
+| `CALL_TOO_FREQUENT` | 방금 호출했어요. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
+| `CALL_NOT_FOUND` | 호출 정보를 찾을 수 없습니다. | N | Y | Y |
+| `CALL_ALREADY_RESOLVED` | 이미 직원이 확인한 호출입니다. | N | Y | Y |
 | `INTERNAL_ERROR` | 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `ORDER_WRITE_IN_PROGRESS` | 주문 처리 결과를 확인하고 있습니다. | Y | Y | Y |
 | `LOCK_TIMEOUT` | 주문이 몰리고 있습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
