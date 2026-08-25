@@ -39,7 +39,7 @@ POST {WEB_APP_URL}/exec/orders/list
 
 ## 2. Apps Script 프로젝트 구조
 
-Apps Script V8의 `.gs` 파일은 실행 시 하나의 전역 namespace로 합쳐지고 ESM import/export를 사용하지 않는다. IDE에서 폴더 계층도 실질적인 module 경계가 아니므로 다음처럼 9개 파일 정도로만 나눈다.
+Apps Script V8의 `.gs` 파일은 실행 시 하나의 전역 namespace로 합쳐지고 ESM import/export를 사용하지 않는다. IDE에서 폴더 계층도 실질적인 module 경계가 아니므로 다음처럼 역할별 파일로 나눈다.
 
 ```text
 appsscript.json
@@ -48,6 +48,7 @@ Config.gs            # Sheet 이름, enum, limits
 Http.gs              # envelope, ApiError, parse/serialize
 Repositories.gs      # header 기반 batch read/write/update
 TableCatalogService.gs # table 인증, Settings, menu 조립
+TableProvisioning.gs # table token 발급/회전, 일회성 QR CSV export
 OrderService.gs      # 주문 생성/조회/idempotency/snapshot
 Validation.gs        # 주문/옵션/상태 전이 검증
 AdminTriggers.gs     # onOpen, 설치형 edit trigger, 운영진 상태 변경 guard
@@ -154,7 +155,7 @@ Request:
 {
   "apiVersion": "v1",
   "tableId": "T12",
-  "tableToken": "raw-random-token-from-qr"
+  "tableToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
 }
 ```
 
@@ -175,7 +176,7 @@ Response `data`:
 }
 ```
 
-검증 순서: 형식 → Tables에 ID 존재 → token hash constant-time 비교 → table active → `EVENT_OPEN`. 존재하지 않는 table과 token mismatch를 외부에서 구분시키면 table ID enumeration에 도움이 될 수 있지만, Figma/UX 복구 문구가 다르므로 계약상 코드는 구분한다. 고객 UI는 둘 다 “유효하지 않은 QR”로 표현해도 된다.
+검증 순서: 형식 → Tables에 ID 존재 → token hash constant-time 비교 → table active → `EVENT_OPEN`. 존재하지 않는 table과 token mismatch는 table ID enumeration을 막기 위해 모두 `INVALID_TABLE_TOKEN`과 같은 고객 문구로 응답한다.
 
 ### 4.3 `POST /menu` — 메뉴 조회
 
@@ -233,7 +234,7 @@ Request:
 {
   "apiVersion": "v1",
   "tableId": "T12",
-  "tableToken": "raw-random-token-from-qr",
+  "tableToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "clientRequestId": "8eaf87de-7f16-43cb-a7ee-dba5054567cc",
   "note": "",
   "items": [
@@ -349,7 +350,10 @@ Response `data`:
 | code | 고객 메시지 | retryable | UI 공개 | 운영 로그 |
 |---|---|---:|---:|---:|
 | `INVALID_REQUEST` | 요청 정보를 확인해 주세요. | N | Y | Y |
-| `INVALID_TABLE` | 유효하지 않은 테이블 QR입니다. | N | Y | Y |
+| `INVALID_JSON` | JSON 요청 본문을 확인해 주세요. | N | Y | Y |
+| `REQUEST_TOO_LARGE` | 요청 본문이 너무 큽니다. | N | Y | Y |
+| `UNSUPPORTED_API_VERSION` | 지원하지 않는 API 버전입니다. | N | Y | Y |
+| `NOT_FOUND` | 지원하지 않는 API 경로입니다. | N | Y | Y |
 | `INVALID_TABLE_TOKEN` | 유효하지 않은 테이블 QR입니다. | N | Y | Y |
 | `INACTIVE_TABLE` | 현재 이 테이블에서는 주문할 수 없습니다. | N | Y | Y |
 | `EVENT_CLOSED` | 현재 주문을 받고 있지 않습니다. | N | Y | Y |
@@ -362,6 +366,7 @@ Response `data`:
 | `DUPLICATE_REQUEST` | 이전 주문 요청과 정보가 달라 처리할 수 없습니다. | N | 일반적으로 숨김 | Y |
 | `ORDER_NOT_FOUND` | 주문 정보를 찾을 수 없습니다. | N | Y | Y |
 | `INVALID_ORDER_STATUS_TRANSITION` | 주문 상태를 변경할 수 없습니다. | N | 운영 화면 | Y |
+| `INTERNAL_ERROR` | 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `ORDER_WRITE_IN_PROGRESS` | 주문 처리 결과를 확인하고 있습니다. | Y | Y | Y |
 | `LOCK_TIMEOUT` | 주문이 몰리고 있습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `INTERNAL_ERROR` | 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
@@ -587,16 +592,16 @@ function constantTimeEquals_(left, right) {
 }
 
 function validateTable(tableId, tableToken, requireActive) {
-  if (!tableId || !tableToken || String(tableToken).length < 20) {
+  if (!/^T\d{2,}$/.test(String(tableId)) || !/^[0-9a-f]{64}$/i.test(String(tableToken))) {
     throw new ApiError('INVALID_TABLE_TOKEN', '유효하지 않은 테이블 QR입니다.', false);
   }
   const table = readSheet_(SHEET.TABLES).rows.find(row => row.table_id === tableId);
-  if (!table) throw new ApiError('INVALID_TABLE', '유효하지 않은 테이블 QR입니다.', false);
 
   const pepper = PropertiesService.getScriptProperties().getProperty('TOKEN_PEPPER');
   if (!pepper) throw new Error('Missing TOKEN_PEPPER Script Property');
   const actualHash = sha256Hex_(pepper + ':' + tableToken);
-  if (!constantTimeEquals_(actualHash, table.token_hash)) {
+  const expectedHash = table ? table.token_hash : '0'.repeat(64);
+  if (!constantTimeEquals_(actualHash, expectedHash) || !table) {
     throw new ApiError('INVALID_TABLE_TOKEN', '유효하지 않은 테이블 QR입니다.', false);
   }
   if (requireActive && table.active !== true) {
