@@ -1,0 +1,61 @@
+/*
+ * ext/CategoryTabs — sticky category strip for S02.
+ * DESIGN.md documents no tab component; built as an extension per §9.
+ * Interactive, so it is a button-like control and NOT a Badge
+ * (DESIGN.md §7: badges are never actions).
+ */
+.category-tabs {
+  position: sticky;
+  top: var(--layout-app-bar-height);
+  z-index: 2;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  background: var(--color-bg-canvas);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.category-tab {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--layout-category-tabs-height);
+  padding: 14px var(--space-4) 0;
+  border: 0;
+  background: var(--color-bg-canvas);
+  cursor: pointer;
+}
+
+.category-tab__label {
+  font: var(--type-body-default);
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Active uses a blue indicator with neutral text, keeping blue functional
+   rather than decorative. */
+.category-tab[aria-selected='true'] .category-tab__label {
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.category-tab__indicator {
+  width: 100%;
+  height: 2px;
+  background: transparent;
+}
+
+.category-tab[aria-selected='true'] .category-tab__indicator {
+  background: var(--color-bg-primary);
+}
+
+.category-tab:focus-visible {
+  outline-offset: -2px;
+}

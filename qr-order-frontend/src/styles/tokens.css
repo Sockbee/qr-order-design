@@ -1,0 +1,70 @@
+/*
+ * Design tokens.
+ *
+ * Colors, radii and typography are the Figma variables published on the
+ * "ui-ux" file (see DESIGN.md — Toss / TDS Mobile, verified 2026-07-11).
+ * Spacing follows the verified 4 / 6 / 8 / 16 / 24 / 32 cluster.
+ *
+ * No dark-mode block: DESIGN.md supplies no dark values and §7 forbids
+ * inventing them. No shadow tokens: separation is divider, scrim and
+ * whitespace only (DESIGN.md §6).
+ */
+
+:root {
+  /* Color — background */
+  --color-bg-canvas: #ffffff;
+  --color-bg-surface: #f2f4f6;
+  --color-bg-weak: #e8f3ff;
+  --color-bg-primary: #3182f6;
+  --color-bg-primary-pressed: #2272eb;
+
+  /* Color — text */
+  --color-text-strong: #191f28;
+  --color-text-body: #4e5968;
+  --color-text-muted: #8b95a1;
+  --color-text-weak: #1b64da;
+  --color-text-on-primary: #ffffff;
+
+  /* Color — line */
+  --color-border-default: #e5e8eb;
+
+  /* Radius */
+  --radius-sm: 4px;
+  --radius-btn-sm: 8px;
+  --radius-btn-md: 10px;
+  --radius-btn-lg: 14px;
+  --radius-btn-xl: 16px;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  /*
+   * Typography. Toss Product Sans is unlicensed (DESIGN.md §3), so the
+   * build substitutes Noto Sans KR; weight 600 maps to 700 because the
+   * family ships no Semi Bold.
+   */
+  --font-sans: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo',
+    'Malgun Gothic', sans-serif;
+
+  --type-title-screen: 700 24px / 36px var(--font-sans);
+  --type-title-section: 700 22px / 33px var(--font-sans);
+  --type-body-strong: 700 16px / 24px var(--font-sans);
+  --type-body-default: 400 16px / 24px var(--font-sans);
+  --type-label-button-xl: 700 17px / 24px var(--font-sans);
+  --type-caption-strong: 700 14px / 21px var(--font-sans);
+  --type-caption-default: 400 14px / 21px var(--font-sans);
+  --type-micro-badge: 400 12px / 18px var(--font-sans);
+
+  /* Layout constants (UX-STRUCTURE §1) */
+  --layout-max-width: 480px;
+  --layout-side-margin: var(--space-4);
+  --layout-app-bar-height: 56px;
+  --layout-category-tabs-height: 48px;
+  --layout-min-touch-target: 48px;
+  --layout-safe-area: max(34px, env(safe-area-inset-bottom, 0px));
+}

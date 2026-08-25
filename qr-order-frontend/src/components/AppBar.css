@@ -1,0 +1,55 @@
+/* ext/AppBar — 56h, title + cart chip, sticky at the top of the screen. */
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--layout-app-bar-height);
+  padding: 0 var(--layout-side-margin);
+  background: var(--color-bg-canvas);
+}
+
+.app-bar__title {
+  flex: 1 1 0;
+  min-width: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-bar__cart {
+  display: inline-flex;
+  align-items: center;
+  /* 33px visual chip, expanded to the 48px minimum touch target. */
+  min-height: var(--layout-min-touch-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.app-bar__cart-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) 12px;
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+  font: var(--type-caption-strong);
+  white-space: nowrap;
+  transition: background-color 160ms ease-out;
+}
+
+.app-bar__cart:active .app-bar__cart-chip {
+  background: var(--color-bg-surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-bar__cart-chip {
+    transition: none;
+  }
+}

@@ -1,0 +1,22 @@
+/*
+ * tds/Badge — descriptive only, never tappable (DESIGN.md §7).
+ * Sold out is a disabled state, never danger red.
+ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-2);
+  font: var(--type-micro-badge);
+  white-space: nowrap;
+}
+
+.badge--neutral {
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+}
+
+.badge--weak {
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
