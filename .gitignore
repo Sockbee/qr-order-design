@@ -31,3 +31,12 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Google Apps Script 로컬 연결 및 인증 정보
+**/.clasp.json
+**/.clasprc.json
+apps-script/script-properties.json
+apps-script/.script-properties.json
+apps-script/credentials*.json
+apps-script/client_secret*.json
+apps-script/service-account*.json
