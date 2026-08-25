@@ -1,8 +1,11 @@
 /*
- * ext/PriceBreakdown — every fee appears here, on the cart, not on the
- * confirmation screen. DESIGN.md §11 "Value first, cost later": cost becomes
- * fully legible before commitment, never after.
+ * ext/PriceBreakdown — the cart's cost summary.
+ * No VAT is charged (UX-STRUCTURE §3 S05), so this collapses to a single
+ * 총 결제금액 row. DESIGN.md §11 "Value first, cost later": cost becomes fully
+ * legible before commitment, never after — which is why it lives here and not
+ * on the confirmation screen.
  */
+
 /* dl/dd carry UA margins that would break the row rhythm. */
 .price-breakdown,
 .price-breakdown__label,
@@ -24,8 +27,8 @@
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  font: var(--type-caption-default);
-  color: var(--color-text-body);
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
 }
 
 .price-breakdown__label {
@@ -35,15 +38,5 @@
 
 .price-breakdown__value {
   flex: 0 0 auto;
-  font: var(--type-caption-strong);
   white-space: nowrap;
-}
-
-.price-breakdown__row--total {
-  font: var(--type-title-section);
-  color: var(--color-text-strong);
-}
-
-.price-breakdown__row--total .price-breakdown__value {
-  font: inherit;
 }

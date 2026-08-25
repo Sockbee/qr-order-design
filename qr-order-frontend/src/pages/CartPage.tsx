@@ -4,7 +4,7 @@ import { Button } from '../components/Button'
 import { CartLine } from '../components/CartLine'
 import { PriceBreakdown } from '../components/PriceBreakdown'
 import { menuItems } from '../data/menu'
-import { calculateCartTotals, describeCartLineOptions } from '../utils/cart'
+import { calculateCartTotal, describeCartLineOptions } from '../utils/cart'
 import type { CartLine as CartLineModel } from '../types/menu'
 import './CartPage.css'
 
@@ -23,7 +23,7 @@ export function CartPage({
   onQuantityChange,
   onOrder,
 }: CartPageProps) {
-  const totals = calculateCartTotals(cart)
+  const total = calculateCartTotal(cart)
 
   return (
     <div className="cart-page">
@@ -61,11 +61,11 @@ export function CartPage({
           onClick={onAddMore}
         />
 
-        <PriceBreakdown totals={totals} />
+        <PriceBreakdown total={total} />
       </main>
 
       <BottomOrderBar
-        total={totals.total}
+        total={total}
         itemCount={cart.length}
         onOrder={onOrder}
       />

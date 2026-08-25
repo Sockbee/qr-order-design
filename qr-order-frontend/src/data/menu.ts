@@ -179,8 +179,8 @@ export const menuItems: MenuItemDetail[] = [
 
 /**
  * Seeded cart matching the S05 frame: 김치찌개 (보통 · 공기밥 추가) 10,000원 +
- * 제육볶음 (보통) 13,000원 = 23,000원 주문금액, 부가세 2,300원,
- * 총 25,300원 — which is also the figure the S02 sticky bar draws.
+ * 제육볶음 (보통) 13,000원 = 총 23,000원 — which is also the figure the S02
+ * sticky bar draws.
  */
 export const initialCart: CartLine[] = [
   {

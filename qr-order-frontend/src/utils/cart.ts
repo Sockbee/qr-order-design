@@ -1,23 +1,13 @@
 import type { CartLine, MenuItemDetail } from '../types/menu'
 
-/** VAT rate drawn on the S05 price breakdown ("부가세 (10%)"). */
-export const VAT_RATE = 0.1
-
-export interface CartTotals {
-  /** Sum of the line totals, before tax. */
-  subtotal: number
-  vat: number
-  /** What the diner actually owes — the figure shown on every sticky bar. */
-  total: number
-}
-
-export function calculateCartTotals(lines: CartLine[]): CartTotals {
-  const subtotal = lines.reduce(
-    (sum, line) => sum + line.unitPrice * line.quantity,
-    0,
-  )
-  const vat = Math.round(subtotal * VAT_RATE)
-  return { subtotal, vat, total: subtotal + vat }
+/**
+ * What the diner owes. No VAT is charged (UX-STRUCTURE §3 S05, decided
+ * 2026-08-25) — menu prices are final, so the total is just the sum of the
+ * line totals. Any fee introduced later belongs here, and on the cart's
+ * breakdown, never on the confirmation screen.
+ */
+export function calculateCartTotal(lines: CartLine[]): number {
+  return lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
 }
 
 /**

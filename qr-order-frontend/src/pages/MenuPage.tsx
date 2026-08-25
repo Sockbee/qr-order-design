@@ -4,7 +4,7 @@ import { BottomOrderBar } from '../components/BottomOrderBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { MenuItem } from '../components/MenuItem'
 import { categories, menuItems } from '../data/menu'
-import { calculateCartTotals } from '../utils/cart'
+import { calculateCartTotal } from '../utils/cart'
 import type { CartLine, MenuItemSummary } from '../types/menu'
 import './MenuPage.css'
 
@@ -31,9 +31,9 @@ export function MenuPage({ cart, onSelectItem, onOpenCart }: MenuPageProps) {
   )
 
   const cartCount = cart.length
-  // The sticky bar shows what the diner owes, VAT included — the same figure
-  // the cart's 총 결제금액 row carries.
-  const { total: cartTotal } = calculateCartTotals(cart)
+  // The sticky bar shows what the diner owes — the same figure the cart's
+  // 총 결제금액 row carries.
+  const cartTotal = calculateCartTotal(cart)
 
   return (
     <div className="menu-page">
