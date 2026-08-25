@@ -1,0 +1,40 @@
+/* S01 — Table Confirmation */
+.table-confirmation {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--color-bg-canvas);
+}
+
+.table-confirmation__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  /* The 80px top inset is this screen's own framing, not a layout constant —
+     S01 has no app bar. */
+  padding: 80px var(--layout-side-margin) 0;
+}
+
+.table-confirmation__store-name {
+  font: var(--type-title-screen);
+  color: var(--color-text-strong);
+}
+
+/* Notice sits at text/body, never text/muted. */
+.table-confirmation__notice {
+  width: 100%;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.table-confirmation__footer {
+  padding: var(--space-4);
+  background: var(--color-bg-canvas);
+}
+
+.table-confirmation__safe-area {
+  height: var(--layout-safe-area);
+  background: var(--color-bg-canvas);
+}

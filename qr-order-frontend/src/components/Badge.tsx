@@ -4,7 +4,7 @@ import './Badge.css'
 interface BadgeProps {
   children: ReactNode
   tone?: 'neutral' | 'weak'
-  size?: 'xsmall' | 'small'
+  size?: 'xsmall' | 'small' | 'medium'
 }
 
 export function Badge({

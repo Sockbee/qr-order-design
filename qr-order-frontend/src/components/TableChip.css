@@ -1,0 +1,14 @@
+/*
+ * ext/TableChip — the diner's proof that the order routes to their table.
+ * Restated on S05, S06, S07 and S08 (UX-STRUCTURE §6.1).
+ * Blue here is identity, not action: the chip is never interactive.
+ */
+.table-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px var(--space-4);
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+  font: var(--type-title-screen);
+}
