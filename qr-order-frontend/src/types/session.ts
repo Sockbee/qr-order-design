@@ -4,6 +4,8 @@
  * `session_token`.
  */
 export interface TableSession {
+  /** Issued by the server against the scanned QR; scopes all stored state. */
+  token: string
   storeName: string
   /** Drives the store-status badge, and E3 once error screens land. */
   open: boolean

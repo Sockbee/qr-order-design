@@ -19,15 +19,28 @@ The primary design target is a mobile viewport of approximately 390px width.
 
 ### Current status
 
-Implemented:
+Implemented, with routing per `UX-STRUCTURE.md` §2.1:
 
-* `S02 — Menu Browsing` (`src/pages/MenuPage.tsx`) — Figma node `14:15`
+| Screen | Route | Page | Figma node |
+|---|---|---|---|
+| S01 Table Confirmation | `/t/:token/start` | `TableConfirmationPage.tsx` | `14:2` |
+| S02 Menu Browsing | `/menu` | `MenuPage.tsx` | `14:15` |
+| S04 Menu Detail | `/menu/:itemId` | `MenuDetailPage.tsx` | `15:39` |
+| S05 Cart | `/cart` | `CartPage.tsx` | `15:95` |
+| S06 Order Confirmation | `/cart/confirm` | `OrderConfirmationPage.tsx` | `16:80` |
+| S07 Order Complete | `/orders/:orderNumber/done` | `OrderCompletePage.tsx` | `16:106` |
+| S08 Order Status | `/orders` | `OrderStatusPage.tsx` | `16:121` |
 
-Not yet implemented: S00, S01, S02b, S04, S05, S06, S07, S08, overlays T1/D1–D3/B1–B2,
-and error screens E1–E5. See `UX-STRUCTURE.md` §2 for the full screen map.
+`/` resumes the last session; unknown routes redirect there.
 
-There is no router yet. `App.tsx` renders `MenuPage` directly. Introduce routing when the
-second screen lands, not before.
+Not yet implemented: S00, S02b, overlays T1/D1–D3/B1–B2, and error screens E1–E5.
+**No Figma frames exist for these yet** — the file stops at S08. Do not invent them from
+scratch; either wait for the frames or build strictly from `UX-STRUCTURE.md` §4.2/§5 and
+record every judgement call in the PR document.
+
+Routing uses `react-router-dom`. Session state (cart, orders) lives in `App` **above** the
+router and is passed to route elements as props — route elements unmount on navigation, so
+state or persistence effects owned by them would be lost mid-transition.
 
 ---
 
@@ -173,14 +186,15 @@ src/
 ├── assets/       # exported Figma assets
 ├── components/   # reusable components (Component.tsx + Component.css)
 ├── data/         # mock content for the UI phase
+├── hooks/        # shared hooks
 ├── pages/        # one file per screen
 ├── styles/       # tokens.css
 ├── types/        # shared domain types
 └── utils/        # formatting helpers
 ```
 
-Add `src/hooks/` when a hook is actually shared. `src/data/` holds mock content only and
-goes away once the API lands.
+`src/hooks/` holds shared hooks (`useOrderSession`, `usePersistentState`). `src/data/` holds
+mock content only and goes away once the API lands.
 
 Do not over-engineer abstractions for components used only once.
 
@@ -332,8 +346,9 @@ props and never import mock data directly — only page components do.
 Separate UI representation from future API integration where practical.
 
 Do not introduce a global state library unless the application's actual complexity requires one.
-Cart state is currently page-local; `localStorage` persistence (UX-STRUCTURE §6.2) is still
-outstanding and is the natural point to reconsider.
+Cart and order history live in `useOrderSession`, persisted to `localStorage` under
+`qr-order:{token}:*` (UX-STRUCTURE §5.1, §6.2). Every storage call is guarded — Safari private
+mode throws — so losing persistence degrades to in-memory state rather than breaking the flow.
 
 ---
 
