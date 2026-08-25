@@ -280,15 +280,28 @@ function assertStoredChildrenMatch_(currentRows, desiredRows, idField, fields) {
 }
 
 function buildOrderResponseById_(spreadsheet, orderId, table) {
-  const order = readSheetTable_(spreadsheet, 'Orders').rows.find(row => {
+  const snapshot = readOrderSnapshotTables_(spreadsheet);
+  const order = snapshot.orders.find(row => {
     return String(row.order_id) === String(orderId) && row.write_state === 'COMMITTED';
   });
   if (!order) throw new Error('Committed order was not found after write.');
-  const items = readSheetTable_(spreadsheet, 'OrderItems').rows
-    .filter(row => String(row.order_id) === String(orderId))
+  return buildOrderResponseFromSnapshot_(order, table, snapshot.items, snapshot.options);
+}
+
+function readOrderSnapshotTables_(spreadsheet) {
+  return {
+    orders: readSheetTable_(spreadsheet, 'Orders').rows,
+    items: readSheetTable_(spreadsheet, 'OrderItems').rows,
+    options: readSheetTable_(spreadsheet, 'OrderItemOptions').rows,
+  };
+}
+
+function buildOrderResponseFromSnapshot_(order, table, allItems, allOptions) {
+  const orderId = String(order.order_id);
+  const items = allItems
+    .filter(row => String(row.order_id) === orderId)
     .sort((left, right) => Number(left.line_no) - Number(right.line_no));
-  const options = readSheetTable_(spreadsheet, 'OrderItemOptions').rows
-    .filter(row => String(row.order_id) === String(orderId));
+  const options = allOptions.filter(row => String(row.order_id) === orderId);
   const createdAt = new Date(order.created_at);
   if (!Number.isFinite(createdAt.getTime())) throw new Error('Order created_at is invalid.');
   if (!items.length) throw new Error('Committed order has no item snapshots.');
