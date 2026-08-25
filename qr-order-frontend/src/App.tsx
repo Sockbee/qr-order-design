@@ -17,6 +17,7 @@ import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
 import { useOrderSession } from './hooks/useOrderSession'
 import { useOrderPolling } from './hooks/useOrderPolling'
+import { useStorefront } from './hooks/useStorefront'
 import type { OrderSession } from './hooks/useOrderSession'
 import { mapRemoteOrders } from './api/orders'
 import { menuItems } from './data/menu'
@@ -64,8 +65,10 @@ function SessionEntry() {
 
 function TableConfirmationRoute({
   onCredentials,
+  storefront,
 }: {
   onCredentials: (credentials: TableCredentials) => void
+  storefront: ReturnType<typeof useStorefront>
 }) {
   const { tableId } = useParams()
   const [searchParams] = useSearchParams()
@@ -81,11 +84,19 @@ function TableConfirmationRoute({
     onCredentials(credentials)
   }, [onCredentials, tableId, token])
 
-  const tableNumber = Number(tableId?.slice(1)) || tableSession.tableNumber
+  const fallbackSession = storefront.configured ? null : {
+    ...tableSession,
+    token: token ?? tableSession.token,
+    tableNumber: Number(tableId?.slice(1)) || tableSession.tableNumber,
+  }
 
   return (
     <TableConfirmationPage
-      session={{ ...tableSession, token: token ?? tableSession.token, tableNumber }}
+      session={storefront.data?.session ?? fallbackSession}
+      loading={storefront.loading}
+      errorMessage={storefront.error?.message}
+      retryable={storefront.retryable}
+      onRetry={storefront.retry}
       onStart={() => navigate('/menu')}
     />
   )
@@ -229,6 +240,7 @@ function App() {
     Number(credentials?.tableId.slice(1)) || tableSession.tableNumber,
   )
   const remote = useOrderPolling(credentials)
+  const storefront = useStorefront(credentials)
 
   return (
     <BrowserRouter>
@@ -236,7 +248,12 @@ function App() {
         <Route path="/" element={<SessionEntry />} />
         <Route
           path="/t/:tableId"
-          element={<TableConfirmationRoute onCredentials={setCredentials} />}
+          element={(
+            <TableConfirmationRoute
+              onCredentials={setCredentials}
+              storefront={storefront}
+            />
+          )}
         />
         <Route path="/menu" element={<MenuRoute session={session} />} />
         <Route
