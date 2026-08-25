@@ -1,0 +1,110 @@
+/*
+ * TDS Mobile Button — DESIGN.md §4 (verified).
+ * Size ladder: Small 32/r8 · Medium 38/r10 · Large 48/r14 · XLarge 56/r16.
+ * XLarge padding 0 20 is verified component geometry and is deliberately not
+ * bound to the spacing scale (20 is not in the verified cluster).
+ */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 160ms ease-out;
+}
+
+.button--block {
+  display: flex;
+  width: 100%;
+}
+
+/* Sizes */
+.button--small {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-btn-sm);
+  font: var(--type-caption-strong);
+}
+
+.button--medium {
+  height: 38px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-btn-md);
+  font: var(--type-caption-strong);
+}
+
+.button--large {
+  height: var(--layout-min-touch-target);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-btn-lg);
+  font: var(--type-body-strong);
+}
+
+.button--xlarge {
+  height: 56px;
+  padding: 0 20px;
+  border-radius: var(--radius-btn-xl);
+  font: var(--type-label-button-xl);
+}
+
+/* Variants */
+.button--fill {
+  background: var(--color-bg-primary);
+  color: var(--color-text-on-primary);
+}
+
+.button--weak {
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
+
+.button--fill:active:not(:disabled) {
+  background: var(--color-bg-primary-pressed);
+}
+
+/* ext: DESIGN.md publishes no weak-pressed token, so pressed falls back to
+   bg/surface rather than inventing one. */
+.button--weak:active:not(:disabled) {
+  background: var(--color-bg-surface);
+}
+
+.button:disabled {
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+/* Loading preserves button width per DESIGN.md §4 — the spinner is laid over
+   the label rather than replacing it. */
+.button--loading {
+  position: relative;
+}
+
+.button--loading .button__label {
+  visibility: hidden;
+}
+
+.button__spinner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  animation: button-spin 800ms linear infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .button__spinner {
+    animation-duration: 2400ms;
+  }
+}
