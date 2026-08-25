@@ -18,6 +18,12 @@
   padding: 3px var(--space-3);
 }
 
+/* Medium carries the larger 8px radius, as drawn on S01. */
+.badge--medium {
+  padding: var(--space-2) 12px;
+  border-radius: var(--radius-btn-sm);
+}
+
 .badge--neutral {
   background: var(--color-bg-surface);
   color: var(--color-text-body);
