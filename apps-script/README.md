@@ -2,7 +2,8 @@
 
 Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, validation,
 보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 고객용
-`resolve-table`, `menu`, `orders/create` API를 포함하는 Apps Script V8 프로젝트다.
+`resolve-table`, `menu`, `orders/create`, `orders/get`, `orders/list` API를 포함하는
+Apps Script V8 프로젝트다.
 
 ## 포함 파일
 
@@ -15,6 +16,7 @@ Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, va
 - `TableCatalogService.gs`: SHA-256 token 검증, Settings parse, `resolveTable()`, `getMenu()`
 - `OrderValidation.gs`: 주문 payload, 메뉴/옵션/수량/가격 검증과 fingerprint 생성
 - `OrderService.gs`: idempotent 주문 생성, snapshot 저장, 부분 write 복구
+- `OrderQueryService.gs`: 인증된 단건/목록 주문 snapshot 조회
 - `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
 - `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
@@ -57,6 +59,8 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 - `POST {WEB_APP_URL}/exec/resolve-table`
 - `POST {WEB_APP_URL}/exec/menu`
 - `POST {WEB_APP_URL}/exec/orders/create`
+- `POST {WEB_APP_URL}/exec/orders/get`
+- `POST {WEB_APP_URL}/exec/orders/list`
 - path routing이 제한된 환경에서는 각 endpoint를 `?action=...` 형식으로도 지원
 
 POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
@@ -100,6 +104,18 @@ Spreadsheet ID, 원본 token, token hash가 포함되지 않는다.
 원본 table token은 주문 Sheet, snapshot, AuditLogs에 저장하지 않는다. 신규 주문만
 현재 table active, `EVENT_OPEN`, 메뉴/옵션 판매 상태를 확인하며, 이미 성공한 주문의
 재전송은 그 사이 행사가 닫혀도 기존 결과를 반환한다.
+
+## 주문 조회 API
+
+`orders/get`은 `orderId` 또는 `displayCode` 중 하나로 table의 `COMMITTED` 주문을
+조회한다. `orders/list`는 table의 주문을 최신순으로 반환하고 가장 최근 비취소 주문의
+공개 상태와 취소 주문을 제외한 누적 합계를 함께 제공한다. 두 API 모두 QR의 table ID와
+원본 token 인증이 필요하지만, 이미 접수된 주문 복구를 위해 table active와
+`EVENT_OPEN` 상태에는 영향받지 않는다.
+
+조회 결과는 OrderItems와 OrderItemOptions의 주문 시점 snapshot만 사용한다. 현재 Menu
+가격이나 이름을 다시 join하지 않으며 다른 table 및 `WRITING`/`FAILED` 주문은 노출하지
+않는다.
 
 진단 결과는 오류와 경고를 각각 최대 100개까지 로그에 포함하고, 전체 개수와 생략된
 개수는 `summary`, `truncated`에 별도로 기록한다. 대량 오류가 있어도 실행 로그 전체가

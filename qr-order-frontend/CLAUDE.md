@@ -23,7 +23,7 @@ Implemented, with routing per `UX-STRUCTURE.md` §2.1:
 
 | Screen | Route | Page | Figma node |
 |---|---|---|---|
-| S01 Table Confirmation | `/t/:token/start` | `TableConfirmationPage.tsx` | `14:2` |
+| S01 Table Confirmation | `/t/:tableId?token=...` | `TableConfirmationPage.tsx` | `14:2` |
 | S02 Menu Browsing | `/menu` | `MenuPage.tsx` | `14:15` |
 | S04 Menu Detail | `/menu/:itemId` | `MenuDetailPage.tsx` | `15:39` |
 | S05 Cart | `/cart` | `CartPage.tsx` | `15:95` |
@@ -41,6 +41,11 @@ record every judgement call in the PR document.
 Routing uses `react-router-dom`. Session state (cart, orders) lives in `App` **above** the
 router and is passed to route elements as props — route elements unmount on navigation, so
 state or persistence effects owned by them would be lost mid-transition.
+
+The S08 server state uses one session-level `useOrderPolling` instance. It calls the
+Apps Script `orders/list` action every 15 seconds, pauses while the document is hidden, and
+retains the last successful response during retry backoff. Configure the deployment through
+`VITE_APPS_SCRIPT_URL`; never commit a real table token.
 
 ---
 
