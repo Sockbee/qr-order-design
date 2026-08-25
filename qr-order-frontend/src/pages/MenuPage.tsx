@@ -4,6 +4,7 @@ import { BottomOrderBar } from '../components/BottomOrderBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { MenuItem } from '../components/MenuItem'
 import { categories, menuItems } from '../data/menu'
+import { calculateCartTotals } from '../utils/cart'
 import type { CartLine, MenuItemSummary } from '../types/menu'
 import './MenuPage.css'
 
@@ -12,9 +13,10 @@ const CONTENT_PANEL_ID = 'menu-category-panel'
 interface MenuPageProps {
   cart: CartLine[]
   onSelectItem: (id: MenuItemSummary['id']) => void
+  onOpenCart: () => void
 }
 
-export function MenuPage({ cart, onSelectItem }: MenuPageProps) {
+export function MenuPage({ cart, onSelectItem, onOpenCart }: MenuPageProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     categories[0].id,
   )
@@ -29,14 +31,13 @@ export function MenuPage({ cart, onSelectItem }: MenuPageProps) {
   )
 
   const cartCount = cart.length
-  const cartTotal = cart.reduce(
-    (sum, line) => sum + line.unitPrice * line.quantity,
-    0,
-  )
+  // The sticky bar shows what the diner owes, VAT included — the same figure
+  // the cart's 총 결제금액 row carries.
+  const { total: cartTotal } = calculateCartTotals(cart)
 
   return (
     <div className="menu-page">
-      <AppBar title="메뉴" cartCount={cartCount} />
+      <AppBar title="메뉴" cartCount={cartCount} onCartClick={onOpenCart} />
 
       <CategoryTabs
         categories={categories}
@@ -64,7 +65,11 @@ export function MenuPage({ cart, onSelectItem }: MenuPageProps) {
         )}
       </main>
 
-      <BottomOrderBar total={cartTotal} itemCount={cartCount} />
+      <BottomOrderBar
+        total={cartTotal}
+        itemCount={cartCount}
+        onOrder={onOpenCart}
+      />
     </div>
   )
 }

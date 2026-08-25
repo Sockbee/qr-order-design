@@ -7,6 +7,8 @@ interface QuantitySelectorProps {
   max?: number
   /** id of the row label describing what is being counted. */
   labelledBy?: string
+  /** Used instead of `labelledBy` when there is no label element to point at. */
+  ariaLabel?: string
 }
 
 export function QuantitySelector({
@@ -15,12 +17,14 @@ export function QuantitySelector({
   min = 1,
   max = 99,
   labelledBy,
+  ariaLabel,
 }: QuantitySelectorProps) {
   return (
     <div
       className="quantity-selector"
       role="group"
       aria-labelledby={labelledBy}
+      aria-label={ariaLabel}
     >
       <button
         type="button"

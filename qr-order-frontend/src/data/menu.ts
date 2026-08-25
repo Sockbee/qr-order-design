@@ -61,13 +61,14 @@ export const menuItems: MenuItemDetail[] = [
     origin: '국내산',
     optionGroups: [
       {
-        id: 'portion',
-        label: '양 선택',
+        id: 'spiciness',
+        label: '맵기 선택',
         required: true,
         type: 'radio',
+        defaultOptionIds: ['normal'],
         options: [
-          { id: 'regular', label: '2인분', priceDelta: 0 },
-          { id: 'large', label: '3인분', priceDelta: 6000 },
+          { id: 'normal', label: '보통', priceDelta: 0 },
+          { id: 'very-spicy', label: '아주 맵게', priceDelta: 0 },
         ],
       },
       {
@@ -177,10 +178,21 @@ export const menuItems: MenuItemDetail[] = [
 ]
 
 /**
- * Seeded cart so the sticky bar renders its filled state, matching the S02
- * frame's "장바구니 2" and "주문하기 · 25,300원".
+ * Seeded cart matching the S05 frame: 김치찌개 (보통 · 공기밥 추가) 10,000원 +
+ * 제육볶음 (보통) 13,000원 = 23,000원 주문금액, 부가세 2,300원,
+ * 총 25,300원 — which is also the figure the S02 sticky bar draws.
  */
 export const initialCart: CartLine[] = [
-  { itemId: 'kimchi-jjigae', quantity: 1, unitPrice: 9000 },
-  { itemId: 'golbaengi-muchim', quantity: 1, unitPrice: 16300 },
+  {
+    itemId: 'kimchi-jjigae',
+    quantity: 1,
+    unitPrice: 10000,
+    selectedOptionIds: ['normal', 'rice'],
+  },
+  {
+    itemId: 'jeyuk-bokkeum',
+    quantity: 1,
+    unitPrice: 13000,
+    selectedOptionIds: ['normal'],
+  },
 ]
