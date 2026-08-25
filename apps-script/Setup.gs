@@ -8,6 +8,10 @@ function onOpen() {
     .createMenu('QR 주문 관리')
     .addItem('초기 구조 생성/복구', 'bootstrapSpreadsheet')
     .addItem('카테고리/메뉴 초기 데이터 추가', 'seedCatalog')
+    .addSeparator()
+    .addItem('테이블/QR 초기 발급', 'provisionTables')
+    .addItem('선택 테이블 token 재발급', 'rotateSelectedTableToken')
+    .addSeparator()
     .addItem('무결성 진단', 'runDiagnostics')
     .addToUi();
 }
