@@ -32,7 +32,7 @@
   height: 38px;
   padding: 0 var(--space-4);
   border-radius: var(--radius-btn-md);
-  font: var(--type-caption-strong);
+  font: var(--type-label-button-m);
 }
 
 .button--large {

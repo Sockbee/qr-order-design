@@ -55,6 +55,8 @@
   --font-sans: 'Noto Sans KR', system-ui, -apple-system, 'Apple SD Gothic Neo',
     'Malgun Gothic', sans-serif;
 
+  /* The single largest figure in the product — reserved for the S07 total. */
+  --type-display-total: 700 36px / 54px var(--font-sans);
   --type-title-screen: 700 24px / 36px var(--font-sans);
   --type-title-section: 700 22px / 33px var(--font-sans);
   --type-body-strong: 700 16px / 24px var(--font-sans);
