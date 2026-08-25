@@ -1,0 +1,32 @@
+/* Option group: heading with a required/optional chip, then selection rows. */
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.option-group__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.option-group__label {
+  flex: 1 1 0;
+  min-width: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+
+.option-group__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.option-group__hint {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}

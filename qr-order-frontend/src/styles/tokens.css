@@ -27,13 +27,17 @@
 
   /* Color — line */
   --color-border-default: #e5e8eb;
+  --color-border-selected: #3182f6;
 
   /* Radius */
   --radius-sm: 4px;
+  --radius-md: 6px;
   --radius-btn-sm: 8px;
   --radius-btn-md: 10px;
   --radius-btn-lg: 14px;
   --radius-btn-xl: 16px;
+  /* Full-width selection rows use 12; chips use 8 (UX-STRUCTURE §4.3). */
+  --radius-row: 12px;
 
   /* Spacing */
   --space-1: 4px;
@@ -65,6 +69,7 @@
   --layout-side-margin: var(--space-4);
   --layout-app-bar-height: 56px;
   --layout-category-tabs-height: 48px;
+  --layout-hero-height: 160px;
   --layout-min-touch-target: 48px;
   --layout-safe-area: max(34px, env(safe-area-inset-bottom, 0px));
 }

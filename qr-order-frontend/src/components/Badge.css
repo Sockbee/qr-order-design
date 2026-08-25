@@ -6,9 +6,16 @@
   display: inline-flex;
   align-items: center;
   border-radius: var(--radius-sm);
-  padding: 2px var(--space-2);
   font: var(--type-micro-badge);
   white-space: nowrap;
+}
+
+.badge--xsmall {
+  padding: 2px var(--space-2);
+}
+
+.badge--small {
+  padding: 3px var(--space-3);
 }
 
 .badge--neutral {

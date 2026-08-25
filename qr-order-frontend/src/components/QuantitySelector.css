@@ -1,0 +1,50 @@
+/*
+ * ext/QuantitySelector — quantity stepper for S04 and S05.
+ * Visual size is 32×32 per DESIGN.md small-button geometry; the hit area is
+ * expanded to the 48×48 minimum (UX-STRUCTURE §6.8).
+ * Min disables Decrease, Max disables Increase — disabled uses text/muted,
+ * never danger red.
+ */
+.quantity-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.quantity-selector__button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-bg-surface);
+  font: var(--type-body-strong);
+  color: var(--color-text-body);
+  cursor: pointer;
+}
+
+/* Expanded hit area — the visual stays 32×32. */
+.quantity-selector__button::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--layout-min-touch-target);
+  height: var(--layout-min-touch-target);
+  transform: translate(-50%, -50%);
+}
+
+.quantity-selector__button:disabled {
+  color: var(--color-text-muted);
+  cursor: default;
+}
+
+.quantity-selector__value {
+  width: 40px;
+  text-align: center;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
