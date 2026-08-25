@@ -1,4 +1,4 @@
-# Logs
+# 로그
 logs
 *.log
 npm-debug.log*
@@ -7,12 +7,18 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# 의존성 / 빌드 산출물
 node_modules
 dist
 dist-ssr
 *.local
 
-# Editor directories and files
+# 도구 캐시
+.vite
+*.tsbuildinfo
+coverage
+
+# 에디터 / IDE
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -22,3 +28,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Claude Code
+# launch.json(개발 서버 프리뷰 설정)은 공유하고, 개인 로컬 설정만 제외합니다.
+.claude/settings.local.json
+
+# 환경 변수
+.env
+.env.*
+!.env.example

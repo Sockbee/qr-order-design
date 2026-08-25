@@ -17,6 +17,18 @@ Tech stack:
 
 The primary design target is a mobile viewport of approximately 390px width.
 
+### Current status
+
+Implemented:
+
+* `S02 — Menu Browsing` (`src/pages/MenuPage.tsx`) — Figma node `14:15`
+
+Not yet implemented: S00, S01, S02b, S04, S05, S06, S07, S08, overlays T1/D1–D3/B1–B2,
+and error screens E1–E5. See `UX-STRUCTURE.md` §2 for the full screen map.
+
+There is no router yet. `App.tsx` renders `MenuPage` directly. Introduce routing when the
+second screen lands, not before.
+
 ---
 
 ## Sources of Truth
@@ -38,7 +50,30 @@ For the screen currently being implemented, the selected Figma frame is the sour
 * radius
 * interaction structure
 
-Use the Figma Desktop MCP to inspect the currently selected frame and its child nodes before implementation.
+Use the Figma MCP to inspect the target frame and its child nodes before implementation.
+
+**File key:** `u5pXNGrYEdVDbvqmJLglUS` (file `ui-ux`).
+
+The Figma MCP available in this project is the **remote** server, not the Desktop server.
+Every read tool (`get_design_context`, `get_metadata`, `get_screenshot`, `get_variable_defs`)
+requires an explicit `fileKey` **and** `nodeId` — it cannot read "whatever is currently
+selected" in the desktop app.
+
+So a request to implement "the selected frame" must come with a node-specific URL:
+
+```text
+https://www.figma.com/design/u5pXNGrYEdVDbvqmJLglUS/ui-ux?node-id=<node-id>
+```
+
+Confirm the frame name in the response matches the screen being asked for before writing
+code. A node id can easily point at a neighbouring frame.
+
+Known frames:
+
+```text
+14:2   S01 — Table Confirmation
+14:15  S02 — Menu Browsing
+```
 
 Do not approximate the design from screenshots if Figma metadata is available.
 
@@ -59,7 +94,31 @@ Use it for:
 
 If Figma and DESIGN.md appear to conflict, preserve the actual Figma screen while avoiding unnecessary deviations from DESIGN.md.
 
-### 3. Existing Code
+Note: `DESIGN.md` currently exists as two identical copies — repository root and
+`qr-order-frontend/`. Treat them as one document. If they ever diverge, the repository root
+copy wins.
+
+### 3. UX-STRUCTURE.md
+
+`UX-STRUCTURE.md` (repository **root**, not `qr-order-frontend/`) is the product spec derived
+from DESIGN.md. It defines the screen map, routes, per-screen information hierarchy, the
+component inventory, and the interaction state machines.
+
+Use it for:
+
+* which screens exist and how they connect
+* what ranks as primary on a screen
+* component states that Figma does not draw (loading, empty, error, offline, images-off)
+* price formatting and cross-cutting rules
+
+**Priority.** Figma outranks UX-STRUCTURE.md for anything the frame actually draws — layout,
+spacing, typography, which elements are present. UX-STRUCTURE.md governs everything the frame
+does *not* draw, especially non-default states.
+
+Where the two genuinely conflict on drawn output, follow Figma and record the difference in
+the PR document rather than silently picking one.
+
+### 4. Existing Code
 
 Existing reusable components and tokens should be reused whenever appropriate.
 
@@ -73,12 +132,14 @@ Do not create duplicate components simply because a Figma node has a different n
 
 Before implementing a screen:
 
-1. Inspect the selected Figma frame through Figma MCP.
+1. Inspect the target Figma frame through Figma MCP, and confirm the frame name matches
+   the screen requested.
 2. Read relevant existing source files.
-3. Check DESIGN.md.
-4. Identify reusable components.
+3. Check DESIGN.md and the screen's section in UX-STRUCTURE.md §3.
+4. Identify reusable components already in `src/components/`.
 5. Identify new components that genuinely need to be created.
-6. Briefly determine the implementation structure before editing files.
+6. Check `src/styles/tokens.css` for tokens that already cover the frame's values.
+7. Briefly determine the implementation structure before editing files.
 
 Do not start implementation based only on the frame name.
 
@@ -88,30 +149,38 @@ Do not start implementation based only on the frame name.
 
 Prefer reusable, product-level components over page-specific duplication.
 
-Examples include:
-
-* `MenuItem`
-* `CategoryTab`
-* `QuantitySelector`
-* `OptionSelector`
-* `BottomOrderBar`
-* `Button`
-* `Price`
-* common headers
-
 Keep page components focused on composition and page-level state.
 
-Suggested structure:
+**Already built — reuse these, do not recreate them:**
+
+| Component | File | Notes |
+|---|---|---|
+| `Button` | `src/components/Button.tsx` | Full TDS size ladder, `fill`/`weak`, `loading`, `block` |
+| `Badge` | `src/components/Badge.tsx` | Descriptive only, never interactive |
+| `AppBar` | `src/components/AppBar.tsx` | Title + cart chip, sticky |
+| `CategoryTabs` | `src/components/CategoryTabs.tsx` | `role="tablist"`, keyboard navigable |
+| `MenuItem` | `src/components/MenuItem.tsx` | Default + sold-out |
+| `BottomOrderBar` | `src/components/BottomOrderBar.tsx` | Sticky, disabled when empty |
+
+Still to build (see `UX-STRUCTURE.md` §4.2): `QuantitySelector`, `OptionSelector`,
+`CartLine`, `TableChip`, `PriceBreakdown`, `StatusTracker`, `Sheet`, `Toast`, `Dialog`,
+`EmptyState`, `Skeleton`, `InlineAlert`, `TextField`.
+
+Current structure:
 
 ```text
 src/
-├── components/
-├── pages/
-├── styles/
-├── hooks/
-├── types/
-└── utils/
+├── assets/       # exported Figma assets
+├── components/   # reusable components (Component.tsx + Component.css)
+├── data/         # mock content for the UI phase
+├── pages/        # one file per screen
+├── styles/       # tokens.css
+├── types/        # shared domain types
+└── utils/        # formatting helpers
 ```
+
+Add `src/hooks/` when a hook is actually shared. `src/data/` holds mock content only and
+goes away once the API lands.
 
 Do not over-engineer abstractions for components used only once.
 
@@ -119,39 +188,48 @@ Do not over-engineer abstractions for components used only once.
 
 ## 3. Design Tokens
 
-Repeated design values should be represented as reusable tokens whenever reasonable.
+Tokens live in **`src/styles/tokens.css`**, imported once from `src/index.css`. They mirror
+the Figma variables published on the `ui-ux` file — keep the names aligned with Figma so a
+`get_variable_defs` response maps straight onto CSS.
 
-Prefer CSS custom properties for:
+Established groups:
 
-* colors
-* spacing
-* radius
-* typography
-* shadows
-* layout constants
-
-Example:
-
-```css
-:root {
-  --color-text-primary: ...;
-  --color-text-secondary: ...;
-  --space-2: ...;
-  --radius-md: ...;
-}
+```text
+--color-bg-*      canvas, surface, weak, primary, primary-pressed
+--color-text-*    strong, body, muted, weak, on-primary
+--color-border-*  default
+--radius-*        sm, btn-sm, btn-md, btn-lg, btn-xl
+--space-1..6      4, 6, 8, 16, 24, 32
+--type-*          title-screen, title-section, body-strong, body-default,
+                  label-button-xl, caption-strong, caption-default, micro-badge
+--layout-*        max-width, side-margin, app-bar-height, category-tabs-height,
+                  min-touch-target, safe-area
 ```
 
-Avoid scattering repeated arbitrary values throughout component CSS.
+Typography tokens are `font` shorthand values, used as `font: var(--type-body-strong);`.
 
-However, do not create a token for every unique pixel value.
+Three standing constraints, all from DESIGN.md:
+
+* **No shadow tokens.** Separation is divider, scrim and whitespace only (§6).
+* **No dark mode.** DESIGN.md supplies no dark values and §7 forbids inventing them.
+* **Font substitution.** Toss Product Sans is unlicensed (§3), so the build uses Noto Sans KR
+  loaded in `index.html`. Weight 600 maps to 700 — the family ships no Semi Bold.
+
+Add a new token when a value repeats or is a design decision worth naming. Do not create a
+token for every unique pixel value; verified component geometry that falls outside the scale
+stays literal (for example the XLarge button's `0 20px` padding).
 
 ---
 
 ## 4. Styling
 
-Use plain CSS unless the existing project introduces another styling system.
+Use plain CSS. There is no CSS framework and no CSS-in-JS — do not add one.
+Tailwind in particular must not be installed, even though Figma MCP returns Tailwind markup;
+that output is a reference to translate, never code to paste.
 
-Keep styling colocated or organized consistently with the existing project structure.
+Each component owns a sibling stylesheet imported from the component file
+(`Button.tsx` imports `./Button.css`). Class names are BEM-ish and namespaced by component
+(`.menu-item__price`, `.category-tab--active` style).
 
 Prefer:
 
@@ -188,6 +266,16 @@ Prefer:
 
 Avoid hardcoding the entire screen around a single viewport.
 
+Established layout approach:
+
+* The page column is centred with `--layout-max-width` (480px), so the design does not
+  stretch on tablets.
+* Sticky chrome uses `position: sticky` inside that column rather than `position: fixed`,
+  which keeps it inside the max-width without duplicating the constant.
+* Bottom safe spacing is `--layout-safe-area`, i.e. `max(34px, env(safe-area-inset-bottom))`.
+  `index.html` sets `viewport-fit=cover` so `env()` resolves.
+* Use `100dvh`, not `100vh` — mobile browser chrome makes `vh` wrong.
+
 ---
 
 ## 6. Accessibility
@@ -204,6 +292,17 @@ Requirements include:
 * adequate tap targets
 
 Do not use clickable `div` elements when a semantic interactive element exists.
+
+Decisions already made, keep them consistent:
+
+* Sold-out rows are `disabled` buttons, never removed and never danger red.
+* `--color-text-muted` (#8b95a1) fails 4.5:1 and must never carry price, allergen or
+  availability — including on sold-out rows, where price stays at `--color-text-body`.
+* Category tabs use `role="tablist"` with roving tabindex and arrow/Home/End keys, and are
+  wired to the panel via `aria-controls` / `aria-labelledby`.
+* Minimum touch target 48×48, expanding the hit area around smaller visuals rather than
+  enlarging them.
+* Every transition honours `prefers-reduced-motion`.
 
 ---
 
@@ -227,9 +326,14 @@ Keep component props small and explicit.
 
 For the current UI implementation phase, prefer simple local/mock data unless integration requirements explicitly require otherwise.
 
+Mock content lives in `src/data/`, typed against `src/types/`. Components take domain types as
+props and never import mock data directly — only page components do.
+
 Separate UI representation from future API integration where practical.
 
 Do not introduce a global state library unless the application's actual complexity requires one.
+Cart state is currently page-local; `localStorage` persistence (UX-STRUCTURE §6.2) is still
+outstanding and is the natural point to reconsider.
 
 ---
 
@@ -241,14 +345,23 @@ Map them based on product semantics.
 
 Example:
 
+Established mappings:
+
 ```text
 Figma                     React
-ext/MenuRow          ->   MenuItem
-ext/CategoryTab      ->   CategoryTab
-ext/QuantityStepper  ->   QuantitySelector
-tds/OptionSelector   ->   OptionSelector
+tds/Button           ->   Button
+tds/Badge            ->   Badge
+ext/AppBar           ->   AppBar
+ext/CategoryTabs     ->   CategoryTabs        (strip; the Figma CategoryTab child
+                                               is not a separate exported component)
+ext/MenuItem         ->   MenuItem
 ext/BottomOrderBar   ->   BottomOrderBar
+ext/QtyStepper       ->   QuantitySelector     (not built yet)
+tds/OptionGroup      ->   OptionSelector       (not built yet)
 ```
+
+Figma components carry usage documentation in their description field, and it encodes real
+design decisions. `get_design_context` returns it — read it and follow it.
 
 Reuse an existing React component if it already represents the same concept.
 
@@ -276,6 +389,13 @@ After implementation:
 4. Verify the implemented screen renders.
 5. Compare the result against the selected Figma frame.
 6. Fix obvious spacing, hierarchy, typography, and layout mismatches.
+
+Comparing against Figma means actually rendering the screen and measuring it, not reading the
+code back. Check at 390px and at least one narrower width (320px), and confirm there is no
+horizontal overflow at either.
+
+`npm run dev` uses port 5173 and falls back to the next free port when it is taken — read the
+port from the dev server output rather than assuming.
 
 Useful commands:
 
@@ -319,6 +439,9 @@ For implementation tasks, follow this workflow unless explicitly told otherwise.
 2. Never discard or overwrite unrelated uncommitted user changes.
 3. Create a dedicated feature branch before implementation.
 
+**Base branch is `main`.** There is no `dev` branch on `origin`. If a task names a base that
+does not exist, say so and branch from `origin/main` rather than creating it silently.
+
 Branch naming:
 
 feat/<short-feature-name>
@@ -330,43 +453,34 @@ feat/menu-detail-page
 feat/cart-page
 
 4. Implement only the requested scope.
-5. Run verification before committing:
+5. Run verification before committing (from `qr-order-frontend/`):
     - npm run lint
     - npm run build
 
 6. Write a PR document under:
 
-docs/pr/<branch-name-with-slashes-replaced-by-hyphens>.md
+qr-order-frontend/docs/pr/<branch-name-with-slashes-replaced-by-hyphens>.md
 
 Example:
 
-docs/pr/feat-menu-page.md
+qr-order-frontend/docs/pr/feat-menu-page.md
 
-The PR document should contain:
+PR documents are written in **Korean**, following `docs/pr/feat-menu-page.md`.
+Section headings in that document are the template:
 
-# Summary
+```text
+# 개요            — concise description of the implementation
+## 변경 사항       — UI changes, components added/modified, design tokens added/modified
+## Figma          — which frame (name AND node id) was the source of truth
+## 검증            — lint / build / Figma comparison results
+## 참고 사항       — intentional differences from Figma, limitations, follow-up work
+```
 
-A concise description of the implementation.
+Keep file paths, component names, Figma node ids, CSS token names and shell commands in
+English inside the Korean prose — they are identifiers that must stay greppable.
 
-## Changes
-
-- Main UI changes
-- Components added or modified
-- Design tokens added or modified
-
-## Figma
-
-Describe which Figma screen or component was used as the source of truth.
-
-## Verification
-
-- [ ] npm run lint
-- [ ] npm run build
-- [ ] Compared against Figma
-
-## Notes
-
-Document intentional differences from Figma, limitations, or follow-up work.
+Record every intentional deviation from Figma or UX-STRUCTURE.md under 참고 사항, with the
+reason. That section is the audit trail for design decisions.
 
 7. Review `git diff` before committing.
 
