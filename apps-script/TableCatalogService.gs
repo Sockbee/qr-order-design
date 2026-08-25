@@ -111,3 +111,116 @@ function resolveTable(payload) {
     statusPollSeconds: statusPollSeconds,
   };
 }
+
+function getMenu(payload) {
+  const spreadsheet = getConfiguredSpreadsheet_();
+  validateTable_(payload.tableId, payload.tableToken, true, spreadsheet);
+  assertEventOpen_(settingsMap_(spreadsheet));
+
+  const categories = readSheetTable_(spreadsheet, 'Categories').rows
+    .filter(row => row.active === true);
+  const activeCategoryIds = new Set(categories.map(row => String(row.category_id)));
+  const menu = readSheetTable_(spreadsheet, 'Menu').rows
+    .filter(row => activeCategoryIds.has(String(row.category_id)));
+  const groups = readSheetTable_(spreadsheet, 'MenuOptionGroups').rows
+    .filter(row => row.active === true);
+  const options = readSheetTable_(spreadsheet, 'MenuOptions').rows;
+
+  return {
+    categories: sortCatalogRows_(categories, 'category_id').map(categoryResponse_),
+    items: sortCatalogRows_(menu, 'menu_id').map(item => {
+      return catalogItemResponse_(item, groups, options);
+    }),
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+function categoryResponse_(row) {
+  return {
+    categoryId: String(row.category_id),
+    label: String(row.label),
+    heading: String(row.heading),
+  };
+}
+
+function catalogItemResponse_(item, groups, options) {
+  const menuId = String(item.menu_id);
+  const itemGroups = groups.filter(group => String(group.menu_id) === menuId)
+    .slice()
+    .sort((left, right) => {
+      return Number(right.required) - Number(left.required) ||
+        Number(left.sort_order) - Number(right.sort_order) ||
+        String(left.option_group_id).localeCompare(String(right.option_group_id));
+    });
+
+  return {
+    menuId: menuId,
+    categoryId: String(item.category_id),
+    name: String(item.name),
+    description: String(item.description),
+    basePrice: catalogInteger_(item.base_price, 'Menu.base_price'),
+    imageUrl: nullableCatalogString_(item.image_url),
+    available: item.available === true,
+    minQuantity: catalogInteger_(item.min_quantity, 'Menu.min_quantity'),
+    maxQuantity: catalogInteger_(item.max_quantity, 'Menu.max_quantity'),
+    allergens: splitCatalogList_(item.allergens),
+    origin: nullableCatalogString_(item.origin),
+    badgeTags: splitCatalogList_(item.badge_tags),
+    optionGroups: itemGroups.map(group => catalogGroupResponse_(group, options, menuId)),
+  };
+}
+
+function catalogGroupResponse_(group, options, menuId) {
+  const groupId = String(group.option_group_id);
+  const groupOptions = sortCatalogRows_(options.filter(option => {
+    return String(option.option_group_id) === groupId && String(option.menu_id) === menuId;
+  }), 'option_id');
+
+  return {
+    optionGroupId: groupId,
+    label: String(group.label),
+    required: group.required === true,
+    selectionType: catalogSelectionType_(group.selection_type),
+    minSelections: catalogInteger_(group.min_select, 'MenuOptionGroups.min_select'),
+    maxSelections: catalogInteger_(group.max_select, 'MenuOptionGroups.max_select'),
+    defaultSelectedOptionIds: groupOptions
+      .filter(option => option.default_selected === true)
+      .map(option => String(option.option_id)),
+    options: groupOptions.map(option => ({
+      optionId: String(option.option_id),
+      name: String(option.name),
+      priceDelta: catalogInteger_(option.price_delta, 'MenuOptions.price_delta'),
+      available: option.available === true,
+    })),
+  };
+}
+
+function sortCatalogRows_(rows, idField) {
+  return rows.slice().sort((left, right) => {
+    return catalogInteger_(left.sort_order, idField + '.sort_order') -
+        catalogInteger_(right.sort_order, idField + '.sort_order') ||
+      String(left[idField]).localeCompare(String(right[idField]));
+  });
+}
+
+function catalogSelectionType_(value) {
+  if (value === 'SINGLE') return 'single';
+  if (value === 'MULTIPLE') return 'multiple';
+  throw new Error('MenuOptionGroups.selection_type is invalid.');
+}
+
+function catalogInteger_(value, fieldName) {
+  const number = Number(value);
+  if (!Number.isInteger(number)) throw new Error(fieldName + ' must be an integer.');
+  return number;
+}
+
+function nullableCatalogString_(value) {
+  const text = String(value || '').trim();
+  return text || null;
+}
+
+function splitCatalogList_(value) {
+  if (isBlankValue_(value)) return [];
+  return String(value).split('|').map(item => item.trim()).filter(Boolean);
+}
