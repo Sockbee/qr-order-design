@@ -3,16 +3,21 @@ import { AppBar } from '../components/AppBar'
 import { BottomOrderBar } from '../components/BottomOrderBar'
 import { CategoryTabs } from '../components/CategoryTabs'
 import { MenuItem } from '../components/MenuItem'
-import { categories, initialCart, menuItems } from '../data/menu'
+import { categories, menuItems } from '../data/menu'
+import type { CartLine, MenuItemSummary } from '../types/menu'
 import './MenuPage.css'
 
 const CONTENT_PANEL_ID = 'menu-category-panel'
 
-export function MenuPage() {
+interface MenuPageProps {
+  cart: CartLine[]
+  onSelectItem: (id: MenuItemSummary['id']) => void
+}
+
+export function MenuPage({ cart, onSelectItem }: MenuPageProps) {
   const [selectedCategoryId, setSelectedCategoryId] = useState(
     categories[0].id,
   )
-  const [cart] = useState(initialCart)
 
   const selectedCategory =
     categories.find((category) => category.id === selectedCategoryId) ??
@@ -51,7 +56,7 @@ export function MenuPage() {
         {visibleItems.length > 0 ? (
           <div className="menu-page__list">
             {visibleItems.map((item) => (
-              <MenuItem key={item.id} item={item} />
+              <MenuItem key={item.id} item={item} onSelect={onSelectItem} />
             ))}
           </div>
         ) : (

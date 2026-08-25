@@ -1,0 +1,96 @@
+/* S04 — Menu Detail */
+.menu-detail {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--color-bg-canvas);
+}
+
+/* Placeholder is bg/surface: images-off is a designed state, not a fallback
+   (UX-STRUCTURE §5.6). */
+.menu-detail__hero {
+  flex: 0 0 auto;
+  height: var(--layout-hero-height);
+  background: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.menu-detail__hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-detail__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--layout-side-margin) 0;
+}
+
+.menu-detail__head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.menu-detail__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+.menu-detail__name {
+  flex: 1 1 0;
+  min-width: 0;
+  font: inherit;
+}
+
+.menu-detail__price {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Allergen and origin sit at text/body, never text/muted — muted fails 4.5:1
+   and must not carry allergen information. */
+.menu-detail__description,
+.menu-detail__origin {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.menu-detail__quantity-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.menu-detail__quantity-label {
+  flex: 1 1 0;
+  min-width: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+
+/* Footer and safe-area reserve share one sticky container so they cannot
+   overlap, matching the BottomOrderBar structure used on S02. */
+.menu-detail__footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: var(--color-bg-canvas);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.menu-detail__footer-row {
+  display: flex;
+  padding: var(--space-4);
+}
+
+.menu-detail__safe-area {
+  height: var(--layout-safe-area);
+  background: var(--color-bg-canvas);
+}

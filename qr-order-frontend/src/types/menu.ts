@@ -16,9 +16,38 @@ export interface MenuItemSummary {
   imageUrl?: string
 }
 
+export interface MenuOption {
+  id: string
+  label: string
+  /** Signed delta against the item's base price. Always rendered, even at 0. */
+  priceDelta: number
+  soldOut?: boolean
+}
+
+export interface MenuOptionGroup {
+  id: string
+  label: string
+  /** Required groups must have a selection before the item can be added. */
+  required: boolean
+  /** Radio and check differ only by control glyph (UX-STRUCTURE §4.3). */
+  type: 'radio' | 'check'
+  options: MenuOption[]
+  /** Pre-selected option ids when the detail screen opens. */
+  defaultOptionIds?: string[]
+  /** Cap on simultaneous selections for a `check` group. */
+  maxSelections?: number
+}
+
+export interface MenuItemDetail extends MenuItemSummary {
+  allergens?: string[]
+  origin?: string
+  optionGroups: MenuOptionGroup[]
+}
+
 export interface CartLine {
   itemId: MenuItemSummary['id']
   quantity: number
-  /** Unit price at the time the line was added, options included. */
+  /** Unit price at the time the line was added, selected options included. */
   unitPrice: number
+  selectedOptionIds?: MenuOption['id'][]
 }

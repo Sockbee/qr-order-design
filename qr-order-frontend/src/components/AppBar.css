@@ -1,4 +1,4 @@
-/* ext/AppBar — 56h, title + cart chip, sticky at the top of the screen. */
+/* ext/AppBar — 56h, optional back action, title, optional cart chip. Sticky. */
 .app-bar {
   position: sticky;
   top: 0;
@@ -9,6 +9,32 @@
   height: var(--layout-app-bar-height);
   padding: 0 var(--layout-side-margin);
   background: var(--color-bg-canvas);
+}
+
+.app-bar__back {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 33px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+  cursor: pointer;
+}
+
+/* Expanded hit area — the visual glyph stays at its Figma size. */
+.app-bar__back::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--layout-min-touch-target);
+  height: var(--layout-min-touch-target);
+  transform: translate(-50%, -50%);
 }
 
 .app-bar__title {
