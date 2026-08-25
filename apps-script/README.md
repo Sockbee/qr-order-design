@@ -2,7 +2,7 @@
 
 Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, validation,
 보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 고객용
-`resolve-table`, `menu` API를 포함하는 Apps Script V8 프로젝트다.
+`resolve-table`, `menu`, `orders/create` API를 포함하는 Apps Script V8 프로젝트다.
 
 ## 포함 파일
 
@@ -13,6 +13,8 @@ Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, va
 - `Diagnostics.gs`: `runDiagnostics()`와 FK/금액/snapshot 무결성 검사
 - `TableProvisioning.gs`: 테이블 생성, token 회전, 일회성 QR CSV export
 - `TableCatalogService.gs`: SHA-256 token 검증, Settings parse, `resolveTable()`, `getMenu()`
+- `OrderValidation.gs`: 주문 payload, 메뉴/옵션/수량/가격 검증과 fingerprint 생성
+- `OrderService.gs`: idempotent 주문 생성, snapshot 저장, 부분 write 복구
 - `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
 - `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
@@ -54,7 +56,8 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 - `GET {WEB_APP_URL}/exec/health`
 - `POST {WEB_APP_URL}/exec/resolve-table`
 - `POST {WEB_APP_URL}/exec/menu`
-- path routing이 제한된 환경에서는 `?action=resolve-table`, `?action=menu`도 지원
+- `POST {WEB_APP_URL}/exec/orders/create`
+- path routing이 제한된 환경에서는 각 endpoint를 `?action=...` 형식으로도 지원
 
 POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
 
@@ -69,6 +72,34 @@ Spreadsheet ID, 원본 token, token hash가 포함되지 않는다.
 `menu` 요청 body는 `resolve-table`과 동일하다. 활성 카테고리와 그 카테고리에 속한
 메뉴를 sort order 순으로 반환하며, `available=false`인 메뉴와 옵션도 품절 UI 표시를
 위해 응답에 포함한다. 비활성 category와 option group은 제외한다.
+
+## 주문 생성 API
+
+`orders/create`는 클라이언트가 보낸 가격과 이름을 받지 않는다. `menuId`, 수량,
+선택 option ID만 받아 Script Lock 안에서 현재 Sheet의 판매 상태와 가격을 다시 검증한
+뒤 Orders, OrderItems, OrderItemOptions에 주문 시점 snapshot을 저장한다.
+
+```json
+{
+  "apiVersion": "v1",
+  "tableId": "T01",
+  "tableToken": "<64자리 원본 token>",
+  "clientRequestId": "8eaf87de-7f16-43cb-a7ee-dba5054567cc",
+  "note": "",
+  "items": [
+    { "menuId": "soju", "quantity": 2, "selectedOptionIds": [] }
+  ]
+}
+```
+
+동일한 `tableId + clientRequestId`와 동일 payload가 재전송되면 새 주문이나 주문번호를
+만들지 않고 기존 결과에 `idempotentReplay=true`를 표시한다. 같은 ID를 다른 장바구니에
+재사용하면 `DUPLICATE_REQUEST`다. 중간 write가 실패한 주문은 deterministic child ID와
+서버 snapshot을 사용해 다음 동일 요청에서 누락된 행만 복구한다.
+
+원본 table token은 주문 Sheet, snapshot, AuditLogs에 저장하지 않는다. 신규 주문만
+현재 table active, `EVENT_OPEN`, 메뉴/옵션 판매 상태를 확인하며, 이미 성공한 주문의
+재전송은 그 사이 행사가 닫혀도 기존 결과를 반환한다.
 
 진단 결과는 오류와 경고를 각각 최대 100개까지 로그에 포함하고, 전체 개수와 생략된
 개수는 `summary`, `truncated`에 별도로 기록한다. 대량 오류가 있어도 실행 로그 전체가
