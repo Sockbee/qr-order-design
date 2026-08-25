@@ -612,9 +612,38 @@ function checkOrderIntegrity_(tables, report) {
         'Orders', order.__rowNumber, 'public_status');
     }
 
+    if (String(order.note || '').length > QR_ORDER_LIMITS.MAX_NOTE_LENGTH) {
+      addDiagnostic_(report, 'ERROR', 'ORDER_NOTE_TOO_LONG',
+        '주문 메모는 ' + QR_ORDER_LIMITS.MAX_NOTE_LENGTH + '자 이하여야 합니다.',
+        'Orders', order.__rowNumber, 'note');
+    }
+    if (!/^[0-9a-f]{64}$/i.test(String(order.request_fingerprint))) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_REQUEST_FINGERPRINT',
+        'request_fingerprint는 SHA-256 64자리 hex여야 합니다.',
+        'Orders', order.__rowNumber, 'request_fingerprint');
+    }
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+      .test(String(order.client_request_id))) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_CLIENT_REQUEST_ID',
+        'client_request_id는 소문자 UUID 형식이어야 합니다.',
+        'Orders', order.__rowNumber, 'client_request_id');
+    }
+    const expectedIdempotencyKey = String(order.table_id) + ':' +
+      String(order.client_request_id).toLowerCase();
+    if (String(order.idempotency_key) !== expectedIdempotencyKey) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_IDEMPOTENCY_KEY',
+        'idempotency_key는 table_id:client_request_id 형식이어야 합니다.',
+        'Orders', order.__rowNumber, 'idempotency_key');
+    }
+
     try {
       const payload = JSON.parse(String(order.write_payload_json));
       if (!Array.isArray(payload)) throw new Error('not an array');
+      if (containsSensitiveOrderPayloadField_(payload)) {
+        addDiagnostic_(report, 'ERROR', 'SENSITIVE_WRITE_PAYLOAD_FIELD',
+          'write_payload_json에 token 또는 인증 필드를 저장하면 안 됩니다.',
+          'Orders', order.__rowNumber, 'write_payload_json');
+      }
     } catch (error) {
       addDiagnostic_(report, 'ERROR', 'INVALID_WRITE_PAYLOAD_JSON',
         'write_payload_json은 배열 JSON이어야 합니다.',
@@ -664,6 +693,16 @@ function checkOrderIntegrity_(tables, report) {
           'Orders', order.__rowNumber, 'write_state');
       }
     }
+  });
+}
+
+function containsSensitiveOrderPayloadField_(value) {
+  if (Array.isArray(value)) return value.some(containsSensitiveOrderPayloadField_);
+  if (!value || typeof value !== 'object') return false;
+  return Object.keys(value).some(key => {
+    const normalized = String(key).replace(/[^a-z]/gi, '').toLowerCase();
+    if (['token', 'tabletoken', 'tokenhash', 'tokenpepper'].includes(normalized)) return true;
+    return containsSensitiveOrderPayloadField_(value[key]);
   });
 }
 
