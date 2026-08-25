@@ -1,20 +1,24 @@
 import './AppBar.css'
 
+export interface AppBarAction {
+  label: string
+  onClick: () => void
+}
+
 interface AppBarProps {
   title: string
   /** Renders the back action when provided. */
   onBack?: () => void
-  /** Renders the cart chip when provided. */
-  cartCount?: number
-  onCartClick?: () => void
+  /**
+   * Trailing actions, rendered as bordered buttons.
+   *
+   * These are controls, not status — DESIGN.md §7 reserves badge styling for
+   * descriptive labels that are never tappable.
+   */
+  actions?: AppBarAction[]
 }
 
-export function AppBar({
-  title,
-  onBack,
-  cartCount,
-  onCartClick,
-}: AppBarProps) {
+export function AppBar({ title, onBack, actions }: AppBarProps) {
   return (
     <header className="app-bar">
       {onBack && (
@@ -30,15 +34,19 @@ export function AppBar({
 
       <h1 className="app-bar__title">{title}</h1>
 
-      {cartCount !== undefined && (
-        <button
-          type="button"
-          className="app-bar__cart"
-          onClick={onCartClick}
-          aria-label={`장바구니, ${cartCount}개 담김`}
-        >
-          <span className="app-bar__cart-chip">장바구니 {cartCount}</span>
-        </button>
+      {actions && actions.length > 0 && (
+        <div className="app-bar__actions">
+          {actions.map((action) => (
+            <button
+              key={action.label}
+              type="button"
+              className="app-bar__action"
+              onClick={action.onClick}
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
       )}
     </header>
   )

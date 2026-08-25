@@ -25,6 +25,8 @@ interface MenuPageProps {
   onRetry?: () => void
   onSelectItem: (id: MenuItemSummary['id']) => void
   onOpenCart: () => void
+  onViewOrders: () => void
+  onCallStaff: () => void
 }
 
 export function MenuPage({
@@ -37,6 +39,8 @@ export function MenuPage({
   onRetry,
   onSelectItem,
   onOpenCart,
+  onViewOrders,
+  onCallStaff,
 }: MenuPageProps) {
   const [requestedCategoryId, setRequestedCategoryId] = useState<string | null>(null)
 
@@ -57,7 +61,18 @@ export function MenuPage({
 
   return (
     <div className="menu-page">
-      <AppBar title="메뉴" cartCount={cartCount} onCartClick={onOpenCart} />
+      {/*
+        * The cart chip used to live here and duplicated the sticky bar's count
+        * and total. That slot now carries the two actions that had no entry
+        * point at all; the cart stays in BottomOrderBar.
+        */}
+      <AppBar
+        title="메뉴"
+        actions={[
+          { label: '주문 내역', onClick: onViewOrders },
+          { label: '직원 호출', onClick: onCallStaff },
+        ]}
+      />
 
       {categories.length > 0 && (
         <CategoryTabs

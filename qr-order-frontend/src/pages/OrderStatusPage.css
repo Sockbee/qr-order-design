@@ -50,3 +50,25 @@
   height: var(--layout-safe-area);
   background: var(--color-bg-canvas);
 }
+
+/* S08b — empty order history, reached before the first order. */
+.order-status__empty {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0 var(--layout-side-margin);
+  text-align: center;
+}
+
+.order-status__empty-title {
+  font: var(--type-body-strong);
+  color: var(--color-text-body);
+}
+
+.order-status__empty-body {
+  font: var(--type-caption-default);
+  color: var(--color-text-muted);
+}

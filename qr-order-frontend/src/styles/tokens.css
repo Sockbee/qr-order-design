@@ -25,6 +25,24 @@
   --color-text-weak: #1b64da;
   --color-text-on-primary: #ffffff;
 
+  /*
+   * Color — order status. Weak tints only; #e42939 stays reserved for real
+   * failure (DESIGN.md §7). The label carries the state, colour only
+   * reinforces it, so these never have to be distinguishable alone.
+   */
+  --color-status-accepted-bg: #e8f3ff;
+  --color-status-accepted-fg: #1b64da;
+  --color-status-preparing-bg: #fff4e6;
+  --color-status-preparing-fg: #a35b00;
+  --color-status-served-bg: #e6f7ee;
+  --color-status-served-fg: #0f7a43;
+  --color-status-closed-bg: #f2f4f6;
+  --color-status-closed-fg: #4e5968;
+  --color-status-cancelled-bg: #f2f4f6;
+  --color-status-cancelled-fg: #8b95a1;
+  --color-status-attention-bg: #ffecee;
+  --color-status-attention-fg: #e42939;
+
   /* Color — line */
   --color-border-default: #e5e8eb;
   --color-border-selected: #3182f6;
