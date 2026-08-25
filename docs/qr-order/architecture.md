@@ -34,7 +34,7 @@ Figma MCP로 `4:11`을 조회해 다음 실제 프레임을 확인했다.
 
 고객 플로우는 S09b까지 존재한다. S00, S02b, T1, D1-D3, B2, E1-E5의 실제 프레임은 아직 없으므로 이들을 Figma 요구사항으로 간주하지 않는다(B1 직원 호출은 S09/S09b로 구현되었다). 다만 `UX-STRUCTURE.md`에 정의된 오류와 복구 상태는 API 오류 계약에 반영한다.
 
-운영진용 iPad POS는 별도 페이지 `Staff POS — iPad`에 A00~A08, B01~B03으로 존재한다. 이 문서의 범위는 고객 API이며, 운영 API는 호출 수신(§4의 `listCalls`/`acknowledgeCall`)만 확정되어 있다. 할인·테이블 이동·합석·분리는 Figma에 화면이 있으나 아직 스키마에 반영되지 않았다.
+운영진용 iPad POS는 별도 페이지 `Staff POS — iPad`에 A00~A08, B01~B03으로 존재한다. 이 문서의 범위는 고객 API이며, 운영 API는 호출 수신(§4의 `listCalls`/`acknowledgeCall`)만 확정되어 있다. 할인·테이블 이동·합석·분리는 Decision A7의 TableSessions로 스키마에 반영되었다. 운영 API 인증 방식은 미정이다(Open Questions 4).
 
 ## 2. 주요 결정
 
@@ -113,6 +113,30 @@ Figma와 현재 프론트 타입이 `A-1042`를 사용하므로 이를 기본값
 
 핵심은 **파생 카운터를 두지 않는다**는 것이다. "몇 회 호출"은 `(table_id, status='PENDING')` 그룹의 행 수이고, 확인이 그 그룹을 비우므로 다음 호출은 자연히 1회부터 다시 센다. 리셋을 위한 별도 컬럼도, 리셋 로직도, 값이 어긋날 여지도 없다.
 
+### Decision A7 — 테이블 방문을 세션으로 모델링한다
+
+Figma 운영 화면의 할인(A07), 테이블 이동(A04), 합석(A05), 분리(A06)는 모두 "이 팀이 이 테이블에서 먹은 것 전체"를 대상으로 한다. Orders를 `table_id`에만 매달면 넷 다 표현할 수 없다.
+
+| 기능 | 세션 없이 하면 | 무엇이 깨지나 |
+|---|---|---|
+| 할인 | 주문마다 할인율 복사 | 할인 이후 추가 주문의 처리가 모호해진다 |
+| 이동 | `Orders.table_id` 덮어쓰기 | Decision A4의 snapshot 불변성이 깨진다 |
+| 합석 | 주문의 `table_id`를 한쪽으로 통일 | 어느 주문이 어느 테이블 것이었는지 사라져 분리가 불가능해진다 |
+| 결제 | 주문별 결제 | 운영 화면은 테이블 단위로 결제하는데 단위가 어긋난다 |
+
+TableSessions가 Tables와 Orders 사이에 들어가 이를 흡수한다.
+
+- **이동**은 `session.table_id`만 바꾼다. 주문은 접수된 테이블을 그대로 기억한다.
+- **합석**은 종속 세션이 대표 세션을 가리키게 한다. 주문은 각자 자리에 남고 청구만 합쳐지므로 분리가 단순한 역연산이 된다.
+- **할인**은 세션의 `discount_rate`이고 금액은 조회 시점에 계산한다. 따라서 할인 후 추가 주문도 자동으로 대상이 된다.
+- **결제**는 청구 그룹 단위로 확정하고 금액을 snapshot한다.
+
+`Orders.payment_status`는 삭제하지 않고 세션 값의 denormalized mirror로 유지한다. 이미 배포된 조회 코드와 `View_Payment`를 깨지 않기 위해서다. 권위 있는 값은 세션 쪽이며, 무결성 검사가 둘의 일치를 강제한다.
+
+`Orders.session_id`는 열 **U에 추가**한다. 중간 삽입은 A:T 열 문자에 의존하는 기존 View 수식을 전부 깨뜨린다.
+
+이 결정은 기존 행에 대한 backfill을 요구한다. 행사 전 setup에서 각 `table_id`마다 세션 1개를 만들고 기존 Orders를 연결한다. 행사 중에는 적용하지 않는다.
+
 ## 3. 요청 흐름
 
 ### 3.1 QR 진입과 메뉴
@@ -187,6 +211,13 @@ sequenceDiagram
 | A01 호출 스트립 | 미확인 호출 병합 그룹 | `listCalls` | Calls | `PENDING`을 `table_id`로 group |
 | A01/A02 TableCard `Call` | 그 테이블의 `PENDING` 존재 여부 | `listCalls` | Calls | boolean. 카드 상태와 독립적으로 겹쳐짐 |
 | A01 호출 `확인` | 그룹 전체 확인 | `acknowledgeCall` | Calls | `table_id` 단위 1회 동작 |
+| A02 상세 금액 | subtotal/할인/결제금액 | `getTableBill` | TableSessions, Orders | 조회 시점 계산. Sheet에 저장하지 않음 |
+| A04 테이블 이동 | 출발/목적 테이블, 점유 여부 | `moveTable` | TableSessions | `session.table_id`만 변경 |
+| A05 합석 | 대상 세션 2개, 합산 총액 | `mergeTables` | TableSessions | 종속 세션이 대표를 가리킴 |
+| A06 분리 | 그룹 구성, 세션별 금액 | `splitTables` | TableSessions | `merged_into_session_id` 해제. PAID면 거절 |
+| A07 할인 | 할인율, 금액 분해 | `setDiscount` | TableSessions | 세션 `discount_rate`. 이후 주문도 대상 |
+| B03 결제 카드 | 원금액/할인/결제금액 | `getTableBill` | TableSessions, Orders | 대표 세션 단위 |
+| B03 `입금 확인` | 청구 그룹 확정 | `confirmPayment` | TableSessions, Orders | 금액 snapshot + Orders mirror |
 
 Figma의 S05에는 테이블 번호가 실제로 그려져 있지 않지만 `UX-STRUCTURE.md` §6.1은 S05에도 표시하도록 요구한다. 프론트엔드가 Figma를 우선하는 현재 규칙에 따라 백엔드는 추가 필드를 만들지 않고 이미 해석한 테이블 정보를 유지한다.
 
@@ -321,6 +352,9 @@ Apps Script의 quota와 제한은 계정 유형에 따라 달라지고 예고 �
 1. **Netlify와 CORS**: 프론트 호스팅은 Netlify로 확정했다. Apps Script 배포 URL을 대상으로 실제 브라우저 `fetch` GET/POST/redirect 테스트를 먼저 통과해야 한다. 실패하면 Netlify Function proxy 또는 HTMLService + 라우터 변경 중 하나를 선택한다.
 2. **직원 호출**: 확정되어 구현 대상이다. 고객 S09/S09b, 운영 A01 호출 스트립·TableCard `Call`·상세 패널 배너가 모두 정의되었고, Calls Sheet와 병합/리셋 규칙은 schema §14, API는 `apps-script-api-design.md` §4.7~4.9에 있다. 남은 것은 운영 화면 polling 주기 하나다 — 주문 상태는 15초지만 호출은 더 짧아야 하는지 현장에서 정해야 한다.
 3. **주방 요청 메모**: `UX-STRUCTURE.md`는 S05 note를 정의하지만 현재 Figma S05에는 보이지 않는다. API/Orders에는 optional `note`를 예약하되 프론트가 보내기 전까지 사용하지 않는다.
+
+4. **운영 API 인증**: `listCalls`/`acknowledgeCall`과 A04~A07 세션 API는 고객 토큰으로 접근하면 안 된다. 운영 인증 방식(별도 배포 URL, 운영 전용 키, Google 계정 검증 중 택1)이 아직 정해지지 않았다. 이것이 정해지기 전까지 운영 API는 구현하지 않는다.
+5. **세션 종료 기준**: 결제 확정이 세션을 `CLOSED`로 만든다. 결제 없이 자리를 뜬 테이블을 운영진이 수동 종료하는 UI는 Figma에 없다.
 
 확정된 QR 형식은 `https://{netlify-domain}/t/{tableId}?token={random-token}`이다. `COMPLETED`는 결제와 무관하게 서빙까지 끝난 주문의 최종 완료를 뜻한다.
 

@@ -24,6 +24,7 @@
 | Menu | 메뉴 기본 정보와 판매 가능 상태 | 운영진 |
 | MenuOptionGroups | 메뉴 옵션 선택 규칙 | 개발자/운영진 |
 | MenuOptions | 옵션명, 가격 증감, 품절 | 운영진 |
+| TableSessions | 테이블 방문 단위. 할인·이동·합석·분리·결제의 기준 | Apps Script; 할인/결제만 운영진 |
 | Orders | 주문 header, 상태, 결제, idempotency | Apps Script; 상태/결제만 운영진 |
 | OrderItems | 주문 당시 메뉴 snapshot | Apps Script 전용 |
 | OrderItemOptions | 주문 당시 선택 옵션 snapshot | Apps Script 전용 |
@@ -37,6 +38,9 @@ Figma S04의 필수/복수 옵션 및 옵션별 품절을 표현하려면 MenuOp
 
 ```mermaid
 erDiagram
+    TABLES ||--o{ TABLE_SESSIONS : hosts
+    TABLE_SESSIONS ||--o{ ORDERS : groups
+    TABLE_SESSIONS ||--o| TABLE_SESSIONS : merged_into
     TABLES ||--o{ ORDERS : receives
     CATEGORIES ||--o{ MENU : groups
     MENU ||--o{ MENU_OPTION_GROUPS : has
@@ -66,8 +70,18 @@ erDiagram
       integer base_price
       boolean available
     }
+    TABLE_SESSIONS {
+      uuid session_id PK
+      string table_id FK
+      string origin_table_id FK
+      enum status
+      integer discount_rate
+      uuid merged_into_session_id FK
+      enum payment_status
+    }
     ORDERS {
       uuid order_id PK
+      uuid session_id FK
       integer display_number UK
       string idempotency_key UK
       string table_id FK
@@ -196,7 +210,9 @@ Sample:
 
 ## 9. Orders
 
-고정 열 순서는 운영 View 수식의 기준이 된다.
+고정 열 순서는 운영 View 수식의 기준이 된다. 열은 항상 **끝에만 추가**한다. 중간 삽입은 기존 View 수식의 열 문자를 전부 깨뜨린다. `session_id`가 U에 붙은 이유가 이것이다.
+
+`table_id`(G)는 **주문이 접수된 테이블**이며 테이블 이동 후에도 바뀌지 않는다. 현재 위치는 `session_id`를 통해 TableSessions에서 읽는다. G를 덮어쓰면 Decision A4의 snapshot 원칙이 깨진다.
 
 | col | column | type | 필수 | 예시 | unique | index | 변경 주체 | 설명 |
 |---:|---|---|---:|---|---:|---:|---|---|
@@ -220,6 +236,7 @@ Sample:
 | R | `paid_at` | datetime | N | `2026-08-25 21:10:00` | N | N | 운영진/trigger | 결제 완료 시각 |
 | S | `cancelled_at` | datetime | N |  | N | N | trigger | 취소 시각 |
 | T | `cancel_reason` | string | N | `재료 소진` | N | N | 운영진 | CANCELLED이면 권장 필수 |
+| U | `session_id` | UUID string FK | Y | `9b71...` | N | Y | Apps Script | TableSessions 참조. 주문 접수 시점의 OPEN 세션 |
 
 enum:
 
@@ -303,6 +320,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `TIME_ZONE` | `Asia/Seoul` | STRING | 개발자 | 표시 시각 |
 | `STATUS_POLL_SECONDS` | `15` | INTEGER | 개발자 | 프론트 기본 polling 주기 |
 | `CALL_MIN_INTERVAL_SECONDS` | `60` | INTEGER | 운영진 | 같은 테이블의 연속 직원 호출 최소 간격 |
+| `TABLE_DISCOUNT_RATE` | `20` | INTEGER | 운영진 | 지정 테이블 할인율(%). 할인 적용 시 세션에 복사된다 |
 
 `TOKEN_PEPPER`, Spreadsheet ID처럼 비공개/배포 설정인 값은 Settings가 아니라 Script Properties에 저장한다.
 
@@ -322,7 +340,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `request_id` | string | N | `8eaf...` | N | Y | Apps Script | clientRequestId/추적 ID |
 | `detail_json` | string JSON | N | `{"reason":"..."}` | N | N | Apps Script | 민감 토큰/stack trace는 저장 금지 |
 
-권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`.
+권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`, `SESSION_OPENED`, `SESSION_CLOSED`, `TABLE_MOVED`, `TABLES_MERGED`, `TABLES_SPLIT`, `DISCOUNT_APPLIED`, `DISCOUNT_CLEARED`, `SESSION_PAYMENT_CONFIRMED`.
 
 호출 확인은 여러 행을 한 번에 바꾸므로 `CALL_ACKNOWLEDGED`는 그룹 단위로 1건만 기록하고, `entity_type=TABLE`, `entity_id=table_id`, `detail_json`에 `{"callIds":[...],"count":2}`를 담는다. 행마다 로그를 남기면 병합의 의미가 사라진다.
 
@@ -386,7 +404,95 @@ Sample:
 
 위 예시에서 19:28 확인 시점의 표시는 `T12 · 2회 · 19:20 첫 호출`이었고, 19:41 재호출은 리셋되어 `T12 · 1회 · 19:41 호출`로 표시된다.
 
-## 15. repository 인덱스와 조회 규칙
+## 15. TableSessions
+
+한 팀이 한 테이블에 앉아 있는 동안의 단위다. 할인·테이블 이동·합석·분리·결제가 모두 이 단위에서 일어난다.
+
+Orders를 `table_id`에만 매달면 이 넷 중 어느 것도 표현할 수 없다. 할인은 주문 하나가 아니라 그 테이블 전체 계산에 붙고, 이동은 `Orders.table_id`를 덮어써야 하며(Decision A4 위반), 합석은 두 테이블을 하나로 청구해야 한다. 세션이 그 사이에 들어가 이를 모두 흡수한다.
+
+| column | type | 필수 | 예시 | unique | index | 변경 주체 | 설명 |
+|---|---|---:|---|---:|---:|---|---|
+| `session_id` | UUID | Y | `9b71...` | Y | Y | Apps Script | PK |
+| `table_id` | string FK | Y | `T08` | N | Y | Apps Script | **현재** 테이블. 이동 시 이 값만 바뀐다 |
+| `origin_table_id` | string FK | Y | `T03` | N | Y | Apps Script | 최초 착석 테이블. 이동해도 불변. 고객 QR 복구용 |
+| `status` | enum | Y | `OPEN` | N | Y | Apps Script/운영진 | `OPEN`, `CLOSED` |
+| `discount_rate` | integer 0-100 | Y | `20` | N | N | 운영진 | 할인율(%). 기본 `0` |
+| `merged_into_session_id` | UUID FK | N | `4c02...` | N | Y | 운영진 | 합석 시 대표 세션. 대표 자신은 비어 있음 |
+| `payment_status` | enum | Y | `UNPAID` | N | Y | 운영진 | `UNPAID`, `PAID`, `WAIVED` |
+| `subtotal_amount` | integer >= 0 | N | `50000` | N | N | Apps Script | 결제 확정 시 snapshot |
+| `discount_amount` | integer >= 0 | N | `10000` | N | N | Apps Script | 결제 확정 시 snapshot |
+| `final_amount` | integer >= 0 | N | `40000` | N | N | Apps Script | 결제 확정 시 snapshot |
+| `opened_at` | datetime | Y | `2026-08-25 19:02:00` | N | Y | Apps Script | 세션 시작 |
+| `closed_at` | datetime | N | `2026-08-25 21:15:00` | N | N | Apps Script | 세션 종료 |
+| `paid_at` | datetime | N | `2026-08-25 21:12:00` | N | N | 운영진 | 입금 확인 시각 |
+| `updated_at` | datetime | Y | `2026-08-25 21:12:00` | N | N | Apps Script | 마지막 변경 |
+
+인덱스 map: `bySessionId`, `byTableId`(status=`OPEN`만), `byMergedInto`.
+
+세션은 `resolveTable`에서 해당 `table_id`의 `OPEN` 세션이 없을 때 생성한다. 주문 생성 시 그 세션 id를 `Orders.session_id`에 기록한다.
+
+### 청구 그룹
+
+`merged_into_session_id`가 비어 있는 세션이 **대표**다. 청구 그룹 = 대표 + 대표를 가리키는 세션들.
+
+- 합석은 **1단계만** 허용한다. 대표가 다시 다른 세션을 가리킬 수 없다. 체인을 허용하면 총액 계산이 재귀가 되고 분리 시 어디로 돌아갈지 모호해진다. 무결성 검사로 강제한다.
+- 금액과 할인율은 항상 **대표 세션**의 것을 쓴다.
+
+### 금액 계산
+
+```text
+subtotal        = 청구 그룹의 모든 세션에 속한 Orders 중
+                  write_state = COMMITTED 이고 status != CANCELLED 인 total_amount 합
+discount_rate   = 대표 세션의 discount_rate
+discount_amount = floor(subtotal * discount_rate / 100)
+final_amount    = subtotal - discount_amount
+```
+
+- 원 단위 정수이며 버림(floor)이다. 반올림하면 표시 금액과 입금액이 1원 어긋날 수 있다.
+- 이 계산은 **조회 시점마다 다시 한다.** 결제 확정 전까지 Sheet에 저장하지 않는다.
+
+### 할인
+
+- `discount_rate`는 세션에 있고 금액은 계산 시점에 산출하므로, **할인 적용 이후 추가된 주문도 자동으로 할인 대상이다.** 이것이 "할인 후 추가 주문은 어떻게 되는가"에 대한 확정 답이다.
+- 할인 해제는 `discount_rate = 0`이다. 행을 지우지 않는다.
+- 결제 확정 후에는 할인율을 바꿔도 `final_amount` snapshot이 바뀌지 않는다. 정정이 필요하면 `payment_status`를 되돌리고 다시 확정한다.
+
+### 테이블 이동
+
+`session.table_id`만 바꾼다. `Orders.table_id`와 `session.origin_table_id`는 건드리지 않는다.
+
+- 주문이 접수된 테이블은 사실이며 사후에 바뀌지 않는다(Decision A4).
+- 운영 화면의 테이블 번호는 `session.table_id`로 표시한다.
+- 고객 조회는 `table_id` 일치 `OPEN` 세션을 먼저 찾고, 없으면 `origin_table_id` 일치 `OPEN` 세션을 찾아 이동 안내와 함께 반환한다. 옮긴 팀이 옛 QR로 들어와도 주문 내역을 잃지 않는다.
+- 원 테이블에 새 팀이 앉으면 그 테이블의 `OPEN` 세션이 새로 생기므로 첫 번째 조건이 먼저 잡힌다. 충돌하지 않는다.
+- 목적지에 `OPEN` 세션이 있으면 이동이 아니라 합석이다. 이동 API는 이를 거절한다.
+
+### 합석과 분리
+
+- 합석: 종속 세션의 `merged_into_session_id`에 대표 `session_id`를 기록한다. 주문은 각자의 세션에 그대로 남고 **청구만 합쳐진다.**
+- 분리: `merged_into_session_id`를 비운다. 각 세션이 다시 자기 그룹의 대표가 되고, 자기 주문과 금액을 그대로 가져간다.
+- 이미 `PAID`인 그룹은 분리할 수 없다. 정산이 끝난 금액을 사후에 쪼개면 어느 쪽이 얼마를 냈는지 복원할 수 없다.
+- 1인별 분할 계산은 하지 않는다. 이는 운영상의 테이블 분리이지 bill splitting이 아니다.
+
+### 결제
+
+계좌이체 확인만 기록한다. 앱은 결제를 처리하지 않는다.
+
+- 대표 세션에 `subtotal_amount`, `discount_amount`, `final_amount`를 snapshot하고 `payment_status=PAID`, `paid_at`을 기록한다.
+- 그룹의 종속 세션도 같은 `payment_status`와 `paid_at`을 갖는다.
+- 그룹에 속한 모든 `Orders.payment_status`도 함께 `PAID`로 갱신한다. 이는 **denormalized mirror**이며 권위 있는 값은 세션 쪽이다. 기존 `View_Payment`와 이미 배포된 조회 코드를 깨지 않기 위해 유지한다.
+- 결제 확정 시 그룹의 모든 세션을 `CLOSED`로 바꾸고 `closed_at`을 기록한다.
+
+Sample — T03이 T08로 이동한 뒤 T04와 합석하고 20% 할인으로 결제한 경우:
+
+| session_id | table_id | origin_table_id | status | discount_rate | merged_into_session_id | payment_status | subtotal_amount | discount_amount | final_amount | opened_at | paid_at |
+|---|---|---|---|---:|---|---|---:|---:|---:|---|---|
+| 9b71… | T08 | T03 | CLOSED | 20 |  | PAID | 145000 | 29000 | 116000 | 2026-08-25 19:02:00 | 2026-08-25 21:12:00 |
+| 4c02… | T04 | T04 | CLOSED | 0 | 9b71… | PAID |  |  |  | 2026-08-25 19:20:00 | 2026-08-25 21:12:00 |
+
+종속 세션의 금액 열은 비어 있다. 청구는 대표 세션 한 곳에만 기록한다.
+
+## 16. repository 인덱스와 조회 규칙
 
 Google Sheets에는 index가 없다. 한 API 실행에서 필요한 범위를 한 번씩 `getValues()`로 읽고 JavaScript Map을 만든다.
 
@@ -402,49 +508,60 @@ Google Sheets에는 index가 없다. 한 API 실행에서 필요한 범위를 �
 | 주문 항목 | OrderItems `order_id` |
 | 선택 옵션 | OrderItemOptions `order_item_id` |
 | 미확인 호출 병합 | Calls `status='PENDING'`을 `table_id`로 group, 그룹별 `MIN(created_at)` 오름차순 |
+| 현재 세션 | TableSessions `status='OPEN'`을 `table_id`로 map; 이동 복구용으로 `origin_table_id` map도 함께 |
+| 청구 그룹 | TableSessions `merged_into_session_id`로 group; 비어 있는 세션이 대표 |
+| 세션 주문 | Orders `session_id` |
 
 Orders가 수천 행을 넘기 시작하면 당일 Sheet만 활성 데이터로 두고 과거 행사는 별도 파일로 archive한다. 행마다 `getRange().getValue()`를 반복하지 않는다.
 
-## 16. 운영 View와 통계
+## 17. 운영 View와 통계
 
-View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:T를 기준으로 한다.
+View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:U를 기준으로 한다. 열 문자(H, J, N, P …)는 `session_id`를 끝에 추가한 뒤에도 그대로다.
 
 ### 상태별 View
 
 `View_AllOrders!A1`
 
 ```gs
-=QUERY(Orders!A:T,"select * where N = 'COMMITTED' order by P desc",1)
+=QUERY(Orders!A:U,"select * where N = 'COMMITTED' order by P desc",1)
 ```
 
 `View_Kitchen!A1`
 
 ```gs
-=QUERY(Orders!A:T,"select * where N = 'COMMITTED' and (H = 'CONFIRMED' or H = 'PREPARING') order by P asc",1)
+=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and (H = 'CONFIRMED' or H = 'PREPARING') order by P asc",1)
 ```
 
 `View_Serving!A1`
 
 ```gs
-=QUERY(Orders!A:T,"select * where N = 'COMMITTED' and H = 'SERVING' order by O asc",1)
+=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and H = 'SERVING' order by O asc",1)
 ```
 
 `View_Payment!A1`
 
 ```gs
-=QUERY(Orders!A:T,"select * where N = 'COMMITTED' and J = 'UNPAID' and H <> 'CANCELLED' order by G asc, P asc",1)
+=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and J = 'UNPAID' and H <> 'CANCELLED' order by G asc, P asc",1)
 ```
 
 `View_Completed!A1`
 
 ```gs
-=QUERY(Orders!A:T,"select * where N = 'COMMITTED' and H = 'COMPLETED' order by Q desc",1)
+=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and H = 'COMPLETED' order by Q desc",1)
 ```
+
+`View_TableBills!A1` — TableSessions 열 순서 A:N 기준
+
+```gs
+=QUERY(TableSessions!A:N,"select B, E, G, J, M where D = 'OPEN' and F is null order by K asc",1)
+```
+
+대표 세션만 나열한다(`F is null`). 총액은 주문이 바뀔 때마다 달라지므로 Sheet 수식으로 집계하지 않고 결제 화면이 계산한다. 이 View는 어느 테이블이 미결제인지 훑는 용도다.
 
 `View_WriteFailures!A1`
 
 ```gs
-=QUERY(Orders!A:T,"select * where N <> 'COMMITTED' order by P asc",1)
+=QUERY(Orders!A:U,"select * where N <> 'COMMITTED' order by P asc",1)
 ```
 
 `View_Calls!A1` — Calls 열 순서 A:J 기준
@@ -474,12 +591,12 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 테이블별 주문 금액:
 
 ```gs
-=QUERY(Orders!A:T,"select G, sum(K) where N = 'COMMITTED' and H <> 'CANCELLED' group by G label sum(K) '주문금액'",1)
+=QUERY(Orders!A:U,"select G, sum(K) where N = 'COMMITTED' and H <> 'CANCELLED' group by G label sum(K) '주문금액'",1)
 ```
 
 시간대별 주문량은 helper View에서 `=HOUR(Orders!P2)`를 만든 뒤 QUERY로 집계하거나 Pivot Table을 권장한다. 취소 주문은 `status=CANCELLED`, `write_state=COMMITTED` Filter View로 확인한다.
 
-## 17. 무결성 체크리스트
+## 18. 무결성 체크리스트
 
 setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가 있으면 주문 오픈을 막는다.
 
@@ -499,3 +616,13 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - Calls의 `status=CANCELLED`인 행에 `cancelled_at`이 모두 있는가
 - Calls의 `status=PENDING`인 행에 `acknowledged_at`/`cancelled_at`이 비어 있는가
 - 같은 `table_id`의 `ACKNOWLEDGED` 그룹이 동일한 `acknowledged_at`을 공유하는가 (확인은 그룹 단위 1회 동작이다)
+- 모든 Orders 행에 유효한 `session_id`가 있는가
+- `table_id`별 `OPEN` 세션이 최대 1개인가
+- `merged_into_session_id`가 가리키는 세션이 존재하고, 그 세션 자신은 `merged_into_session_id`가 비어 있는가 (합석 체인 금지)
+- 세션이 자기 자신을 가리키지 않는가
+- `discount_rate`가 0 이상 100 이하 정수인가
+- `payment_status=PAID`인 대표 세션에 `subtotal_amount`/`discount_amount`/`final_amount`/`paid_at`이 모두 있는가
+- `final_amount = subtotal_amount - discount_amount`인가
+- `discount_amount = floor(subtotal_amount * discount_rate / 100)`인가
+- 청구 그룹의 종속 세션이 대표와 동일한 `payment_status`를 갖는가
+- 세션이 `PAID`인 그룹의 모든 Orders `payment_status`가 `PAID`로 mirror되어 있는가
