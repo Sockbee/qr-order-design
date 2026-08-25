@@ -450,6 +450,83 @@ Response `data`:
 - 확인할 `PENDING`이 없으면 `acknowledgedCount: 0`으로 정상 응답한다. 두 명이 동시에 눌러도 오류가 아니다.
 - AuditLog는 그룹당 1건(`CALL_ACKNOWLEDGED`)만 남긴다.
 
+### 4.11 `POST /tables/bill` — 청구 조회 (운영 A02/B03)
+
+Request: `{ "apiVersion": "v1", "tableId": "T08" }`
+
+Response `data`:
+
+```json
+{
+  "sessionId": "9b71...",
+  "tableId": "T08",
+  "originTableId": "T03",
+  "mergedTableIds": ["T04"],
+  "discountRate": 20,
+  "subtotalAmount": 145000,
+  "discountAmount": 29000,
+  "finalAmount": 116000,
+  "paymentStatus": "UNPAID",
+  "orderCount": 5
+}
+```
+
+- 금액은 **조회 시점에 계산한다.** 결제 확정 전까지 Sheet에 저장하지 않으므로 주문이 추가/취소되면 즉시 반영된다.
+- 합석된 테이블을 조회하면 대표 세션의 청구를 반환하고 `mergedTableIds`로 관계를 알린다.
+- `discountAmount = floor(subtotalAmount * discountRate / 100)`. 버림이다.
+
+### 4.12 `POST /tables/discount` — 할인 적용/해제 (운영 A07)
+
+Request: `{ "apiVersion": "v1", "tableId": "T08", "discountRate": 20 }`
+
+- `discountRate`는 `0` 또는 `TABLE_DISCOUNT_RATE` 값만 허용한다. 임의 비율은 `INVALID_DISCOUNT_RATE`로 거절한다. 쿠폰 엔진이 아니다.
+- 대표 세션에만 적용된다. 종속 세션에 걸면 대표로 리다이렉트하지 않고 `SESSION_NOT_PRIMARY`로 거절한다 — 어느 쪽에 걸었는지 운영진이 알아야 한다.
+- **할인 적용 이후 추가되는 주문도 할인 대상이다.** 금액이 조회 시점 계산이기 때문이다.
+- `PAID` 세션은 `SESSION_ALREADY_PAID`로 거절한다.
+
+### 4.13 `POST /tables/move` — 테이블 이동 (운영 A04)
+
+Request: `{ "apiVersion": "v1", "fromTableId": "T03", "toTableId": "T08" }`
+
+- `session.table_id`만 바꾼다. `Orders.table_id`와 `origin_table_id`는 그대로 둔다.
+- 목적지에 `OPEN` 세션이 있으면 `DESTINATION_OCCUPIED`로 거절한다. 이동이 아니라 합석이므로 운영진이 의도를 다시 골라야 한다.
+- 이동 후 고객이 옛 QR(T03)로 들어오면 `origin_table_id` 조회로 세션을 찾아 이동 안내와 함께 주문 내역을 반환한다.
+
+### 4.14 `POST /tables/merge` — 합석 (운영 A05)
+
+Request: `{ "apiVersion": "v1", "primaryTableId": "T03", "secondaryTableId": "T04" }`
+
+- 종속 세션의 `merged_into_session_id`에 대표 `session_id`를 기록한다. 주문은 각자 세션에 그대로 남는다.
+- 대표가 이미 종속이면 `MERGE_CHAIN_NOT_ALLOWED`로 거절한다. 합석은 1단계만 허용한다.
+- 어느 한쪽이라도 `PAID`면 `SESSION_ALREADY_PAID`로 거절한다.
+- 할인율은 대표 세션의 것이 그룹 전체에 적용된다. 종속 세션의 `discount_rate`는 무시되며 분리 시 되살아난다.
+
+### 4.15 `POST /tables/split` — 분리 (운영 A06)
+
+Request: `{ "apiVersion": "v1", "tableId": "T04" }`
+
+- 해당 세션의 `merged_into_session_id`를 비운다. 자기 주문과 금액을 그대로 가져간다.
+- `PAID` 그룹은 `SESSION_ALREADY_PAID`로 거절한다. 정산이 끝난 금액을 사후에 쪼개면 누가 얼마를 냈는지 복원할 수 없다.
+- 1인별 분할 계산은 지원하지 않는다.
+
+### 4.16 `POST /tables/confirm-payment` — 입금 확인 (운영 B03)
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "tableId": "T08",
+  "expectedFinalAmount": 116000
+}
+```
+
+- `expectedFinalAmount`는 **필수**다. 서버가 재계산한 값과 다르면 `BILL_AMOUNT_CHANGED`로 거절한다. 운영진이 확인 다이얼로그를 읽는 사이에 주문이 추가되면 화면 금액과 실제 청구가 어긋나므로, 본 적 없는 금액을 확정하는 일을 막는다.
+- 대표 세션에 `subtotal_amount`/`discount_amount`/`final_amount`를 snapshot하고 `payment_status=PAID`, `paid_at`을 기록한다.
+- 그룹의 종속 세션과 모든 Orders의 `payment_status`를 함께 갱신한다(mirror).
+- 그룹의 모든 세션을 `CLOSED`로 바꾼다.
+- 앱은 결제를 처리하지 않는다. 계좌 입금 확인 사실만 기록한다.
+
 ## 5. 오류 코드
 
 | code | 고객 메시지 | retryable | UI 공개 | 운영 로그 |
@@ -474,6 +551,13 @@ Response `data`:
 | `CALL_TOO_FREQUENT` | 방금 호출했어요. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `CALL_NOT_FOUND` | 호출 정보를 찾을 수 없습니다. | N | Y | Y |
 | `CALL_ALREADY_RESOLVED` | 이미 직원이 확인한 호출입니다. | N | Y | Y |
+| `SESSION_NOT_FOUND` | 테이블 세션을 찾을 수 없습니다. | N | 운영 화면 | Y |
+| `SESSION_ALREADY_PAID` | 이미 결제 완료된 테이블입니다. | N | 운영 화면 | Y |
+| `SESSION_NOT_PRIMARY` | 합석된 테이블입니다. 대표 테이블에서 진행해 주세요. | N | 운영 화면 | Y |
+| `DESTINATION_OCCUPIED` | 이동할 테이블이 사용 중입니다. | N | 운영 화면 | Y |
+| `MERGE_CHAIN_NOT_ALLOWED` | 이미 합석된 테이블은 다시 합칠 수 없습니다. | N | 운영 화면 | Y |
+| `INVALID_DISCOUNT_RATE` | 허용되지 않은 할인율입니다. | N | 운영 화면 | Y |
+| `BILL_AMOUNT_CHANGED` | 금액이 변경되었습니다. 다시 확인해 주세요. | Y | 운영 화면 | Y |
 | `INTERNAL_ERROR` | 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `ORDER_WRITE_IN_PROGRESS` | 주문 처리 결과를 확인하고 있습니다. | Y | Y | Y |
 | `LOCK_TIMEOUT` | 주문이 몰리고 있습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
