@@ -335,7 +335,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `log_id` | UUID | Y | `a7bf...` | Y | Y | Apps Script | PK |
 | `occurred_at` | datetime | Y | `2026-08-25 19:30:00` | N | Y | Apps Script | 사건 시각 |
 | `actor_type` | enum | Y | `STAFF` | N | Y | Apps Script | `SYSTEM/STAFF/CLIENT` |
-| `actor_id` | string | N | `주방 iPad` | N | N | trigger | 운영 API는 로그인 시 정한 `deviceLabel`이 들어간다. 공용 기기 환경에서는 개인보다 스테이션이 유용한 감사 단위다. 단순 trigger에서는 비어 있을 수 있음 |
+| `actor_id` | string | N | `주방` | N | N | trigger | 운영 API는 로그인 시 고른 스테이션(`카운터`/`주방`/`서빙`/`결제`)이 들어간다. 공용 기기 환경에서는 개인보다 스테이션이 유용한 감사 단위다. 단순 trigger에서는 비어 있을 수 있음 |
 | `action` | string enum-like | Y | `ORDER_STATUS_CHANGED` | N | Y | Apps Script | 사건 종류 |
 | `entity_type` | string | Y | `ORDER` | N | Y | Apps Script | 대상 종류 |
 | `entity_id` | string | Y | `d08c...` | N | Y | Apps Script | 대상 ID |

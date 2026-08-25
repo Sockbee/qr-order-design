@@ -165,7 +165,7 @@ TableSessions가 Tables와 Orders 사이에 들어가 이를 흡수한다.
 
 1. **별도 배포.** 운영 API는 고객 API와 다른 `/exec`에 배포한다. 고객 앱 번들에 운영 URL이 존재하지 않으므로, 고객 앱을 아무리 뜯어도 운영 엔드포인트를 찾을 수 없다.
 2. **공용 passcode → 서명 토큰.** 운영진이 기기에서 한 번 passcode를 입력하면 서버가 HMAC 서명 토큰을 발급한다. 이후 요청은 body에 토큰을 담아 보낸다. 상태를 Sheet에 쓰지 않는 stateless 검증이라 요청마다 추가 read가 없다.
-3. **기기 라벨.** 로그인 시 `주방 iPad`처럼 기기 이름을 정하고, 이 값이 AuditLogs의 `actor_id`에 들어간다. 공용 기기 환경에서는 "누가"보다 "어느 스테이션이"가 실제로 유용한 감사 정보다.
+3. **스테이션 라벨.** 로그인 시 `카운터`/`주방`/`서빙`/`결제` 중 하나를 고르고, 이 값이 AuditLogs의 `actor_id`에 들어간다. 공용 기기 환경에서는 "누가"보다 "어느 스테이션이"가 실제로 유용한 감사 정보다.
 4. **일괄 무효화.** Settings의 `STAFF_TOKEN_EPOCH`를 올리면 발급된 모든 토큰이 즉시 무효가 된다. passcode가 샜을 때 운영진이 Sheet에서 숫자 하나만 바꿔 대응한다.
 
 `STAFF_PASSCODE_HASH`와 `STAFF_TOKEN_SECRET`은 Sheet가 아니라 Script Properties에 둔다. `STAFF_TOKEN_EPOCH`는 비밀이 아니고 급할 때 빨리 올려야 하므로 Settings에 둔다.
@@ -175,6 +175,8 @@ TableSessions가 Tables와 Orders 사이에 들어가 이를 흡수한다.
 - passcode는 공용이므로 개인 단위 부인방지가 없다. 감사 단위는 기기다.
 - passcode 해시는 SHA-256이며 Apps Script에 bcrypt류가 없다. 해시가 Script Properties 밖으로 나가지 않으므로 오프라인 공격은 이미 스크립트 접근 권한을 전제하지만, 그래도 4자리 숫자가 아니라 **12자 이상 문구**를 쓴다.
 - 결제 확정에 별도 2차 passcode를 두지 않았다. 가장 바쁜 순간에 인증을 한 번 더 넣으면 운영 속도를 해치고, 그 대가로 얻는 것은 이미 물리적으로 통제되는 기기에 대한 방어뿐이다. 대신 `expectedFinalAmount` 확인과 AuditLog가 오조작을 잡는다.
+
+운영 로그인 화면은 Figma `A09 — Staff Login`이며, 인증 실패·시도 제한·인증 중·만료 재로그인 상태를 함께 정의했다. `deviceLabel`을 자유 입력이 아니라 네 개 스테이션 프리셋으로 고정한 이유는 감사 값의 일관성이다. 교대마다 `주방 iPad`와 `주방 아이패드`가 섞이면 AuditLog로 스테이션을 집계할 수 없다.
 
 개인 신원이 반드시 필요해지면 대안은 운영 앱을 Apps Script HTMLService로 서빙하는 것이다. 그러면 `google.script.run`과 `Session.getActiveUser()`가 그대로 동작하고 CORS 문제도 사라진다. 대신 운영 앱의 빌드·배포 경로가 고객 앱과 완전히 달라진다. 이번 행사 범위에서는 채택하지 않는다.
 
@@ -251,6 +253,7 @@ sequenceDiagram
 | S08b 빈 주문 내역 | 빈 `orders` 배열 | `listOrders` | Orders | 주문 전에도 진입 가능하므로 빈 응답이 정상이다 |
 | A01 호출 스트립 | 미확인 호출 병합 그룹 | `listCalls` | Calls | `PENDING`을 `table_id`로 group |
 | A01/A02 TableCard `Call` | 그 테이블의 `PENDING` 존재 여부 | `listCalls` | Calls | boolean. 카드 상태와 독립적으로 겹쳐짐 |
+| A09 운영 로그인 | passcode, 스테이션 | `staffLogin` | - | `deviceLabel`은 자유 입력이 아니라 카운터/주방/서빙/결제 프리셋 |
 | A01 호출 `확인` | 그룹 전체 확인 | `acknowledgeCall` | Calls | `table_id` 단위 1회 동작 |
 | A02 상세 금액 | subtotal/할인/결제금액 | `getTableBill` | TableSessions, Orders | 조회 시점 계산. Sheet에 저장하지 않음 |
 | A04 테이블 이동 | 출발/목적 테이블, 점유 여부 | `moveTable` | TableSessions | `session.table_id`만 변경 |

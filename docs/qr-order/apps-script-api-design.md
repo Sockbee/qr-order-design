@@ -420,16 +420,18 @@ Request:
 {
   "apiVersion": "v1",
   "passcode": "gaeul-pub-2026-counter",
-  "deviceLabel": "주방 iPad"
+  "deviceLabel": "주방"
 }
 ```
+
+`deviceLabel`은 자유 문자열이 아니라 `카운터`, `주방`, `서빙`, `결제` 네 값만 허용한다(Figma A09의 스테이션 프리셋). 다른 값은 `INVALID_DEVICE_LABEL`로 거절한다. 교대마다 표기가 갈리면 AuditLog로 스테이션별 집계를 할 수 없다.
 
 Response `data`:
 
 ```json
 {
   "staffToken": "eyJkIjoi7KO87LCpIGlQYWQiLCJ...Q.9f3ac81b...",
-  "deviceLabel": "주방 iPad",
+  "deviceLabel": "주방",
   "expiresAt": "2026-08-26T06:00:00.000Z"
 }
 ```
@@ -437,7 +439,7 @@ Response `data`:
 토큰 형식은 `base64url(payload) + "." + base64url(HMAC_SHA256(STAFF_TOKEN_SECRET, base64url(payload)))`이며 payload는 다음과 같다.
 
 ```json
-{ "deviceLabel": "주방 iPad", "issuedAt": 1756112400, "expiresAt": 1756155600, "epoch": 3 }
+{ "deviceLabel": "주방", "issuedAt": 1756112400, "expiresAt": 1756155600, "epoch": 3 }
 ```
 
 검증 규칙:
@@ -618,6 +620,7 @@ Request:
 | `STAFF_TOKEN_EXPIRED` | 인증이 만료되었습니다. 다시 로그인해 주세요. | N | 운영 화면 | Y |
 | `STAFF_TOKEN_REVOKED` | 인증이 해제되었습니다. 다시 로그인해 주세요. | N | 운영 화면 | Y |
 | `STAFF_LOGIN_THROTTLED` | 시도가 많습니다. 잠시 후 다시 시도해 주세요. | Y | 운영 화면 | Y |
+| `INVALID_DEVICE_LABEL` | 스테이션을 다시 선택해 주세요. | N | 운영 화면 | Y |
 | `SESSION_NOT_FOUND` | 테이블 세션을 찾을 수 없습니다. | N | 운영 화면 | Y |
 | `SESSION_ALREADY_PAID` | 이미 결제 완료된 테이블입니다. | N | 운영 화면 | Y |
 | `SESSION_NOT_PRIMARY` | 합석된 테이블입니다. 대표 테이블에서 진행해 주세요. | N | 운영 화면 | Y |
