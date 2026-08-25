@@ -39,7 +39,7 @@
   height: var(--layout-min-touch-target);
   padding: 0 var(--space-4);
   border-radius: var(--radius-btn-lg);
-  font: var(--type-body-strong);
+  font: var(--type-label-button-m);
 }
 
 .button--xlarge {

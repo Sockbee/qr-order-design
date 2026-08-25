@@ -184,7 +184,9 @@ Required groups sort above optional groups regardless of authored order.
 | 5 | "메뉴 더 담기" | `tds/Button` large weak |
 | 6 | Request-to-kitchen note | `tds/TextField` box |
 
-Every fee — service charge, VAT, minimum-order shortfall — appears **here**, not on S06.
+**No VAT is charged** (decided 2026-08-25). Menu prices are the final prices, so the
+breakdown collapses to a single 총 결제금액 row. Any fee that is ever introduced —
+service charge, minimum-order shortfall — appears **here**, not on S06.
 DESIGN.md §11 "Value first, cost later": cost becomes fully legible before commitment,
 never after.
 
