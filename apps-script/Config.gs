@@ -3,7 +3,7 @@
  * Keep this file aligned with docs/qr-order/google-sheets-schema.md.
  */
 const QR_ORDER_APP = Object.freeze({
-  BOOTSTRAP_VERSION: '1.1.0',
+  BOOTSTRAP_VERSION: '1.2.0',
   PROTECTION_PREFIX: 'QR Order bootstrap:',
   HEADER_BACKGROUND: '#1b64da',
   HEADER_FOREGROUND: '#ffffff',
@@ -276,6 +276,10 @@ const QR_ORDER_SETTINGS_DEFAULTS = Object.freeze([
   Object.freeze({
     key: 'STORE_NAME', value: '행복식당 본점', type: 'STRING',
     description: 'S01 매장명',
+  }),
+  Object.freeze({
+    key: 'FRONTEND_BASE_URL', value: 'https://caucse.shop', type: 'STRING',
+    description: '테이블 QR URL용 Netlify production origin',
   }),
   Object.freeze({
     key: 'EVENT_OPEN', value: 'TRUE', type: 'BOOLEAN',

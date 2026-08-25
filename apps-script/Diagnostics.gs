@@ -79,6 +79,7 @@ function collectDiagnostics_(spreadsheet) {
   });
 
   checkSettings_(tables, report);
+  checkTableSecurity_(tables, report);
   checkForeignKeys_(tables, report);
   checkCatalogRules_(tables, report);
   checkOrderIntegrity_(tables, report);
@@ -388,6 +389,17 @@ function checkSettings_(tables, report) {
       'EVENT_ID 기본값을 실제 행사 ID로 변경하세요.', 'Settings', eventId.__rowNumber, 'value');
   }
 
+  const frontendBaseUrl = byKey.get('FRONTEND_BASE_URL');
+  if (frontendBaseUrl) {
+    try {
+      normalizeFrontendBaseUrl_(frontendBaseUrl.value);
+    } catch (error) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_FRONTEND_BASE_URL',
+        'FRONTEND_BASE_URL은 path가 없는 HTTPS origin이어야 합니다. 예: https://caucse.shop',
+        'Settings', frontendBaseUrl.__rowNumber, 'value');
+    }
+  }
+
   const nextNumber = byKey.get('NEXT_DISPLAY_NUMBER');
   const orderNumbers = (tables.Orders || []).map(row => Number(row.display_number))
     .filter(Number.isFinite);
@@ -397,6 +409,21 @@ function checkSettings_(tables, report) {
       'NEXT_DISPLAY_NUMBER는 현재 최대 주문번호 ' + currentMax + '보다 커야 합니다.',
       'Settings', nextNumber.__rowNumber, 'value');
   }
+}
+
+function checkTableSecurity_(tables, report) {
+  (tables.Tables || []).forEach(row => {
+    if (!/^T\d{2,}$/.test(String(row.table_id))) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_TABLE_ID_FORMAT',
+        'table_id는 T01 형식이어야 합니다.',
+        'Tables', row.__rowNumber, 'table_id');
+    }
+    if (!/^[0-9a-f]{64}$/i.test(String(row.token_hash))) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_TABLE_TOKEN_HASH',
+        'token_hash는 SHA-256 64자리 hex여야 합니다. 원본 token을 입력하면 안 됩니다.',
+        'Tables', row.__rowNumber, 'token_hash');
+    }
+  });
 }
 
 function checkForeignKeys_(tables, report) {

@@ -284,6 +284,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 |---|---|---|---|---|
 | `EVENT_ID` | `2026-fall-pub` | STRING | 개발자 | 로그/캐시 namespace |
 | `STORE_NAME` | `행복식당 본점` | STRING | 운영진 | S01 표시 |
+| `FRONTEND_BASE_URL` | `https://caucse.shop` | STRING | 개발자 | QR URL을 만드는 Netlify production origin |
 | `EVENT_OPEN` | `TRUE` | BOOLEAN | 운영진 | 전체 신규 접근/주문 on/off |
 | `NOTICE` | `주문은 이 테이블로...` | STRING | 운영진 | S01 안내 |
 | `ORDER_PREFIX` | `A-` | STRING | 운영진 | display code 접두사 |

@@ -1,7 +1,8 @@
 # QR Order Apps Script bootstrap
 
 Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, validation,
-보호 범위와 무결성 진단을 설정하는 Apps Script V8 프로젝트다.
+보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 첫 고객 API인
+`resolve-table`도 포함하는 Apps Script V8 프로젝트다.
 
 ## 포함 파일
 
@@ -10,7 +11,10 @@ Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, va
 - `Setup.gs`: `bootstrapSpreadsheet()`, formatting, validation, protection
 - `CatalogSeed.gs`: 카테고리 4개와 메뉴 19개의 idempotent 초기 데이터
 - `Diagnostics.gs`: `runDiagnostics()`와 FK/금액/snapshot 무결성 검사
-- `appsscript.json`: Asia/Seoul, V8, 향후 anonymous web app 설정
+- `TableProvisioning.gs`: 테이블 생성, token 회전, 일회성 QR CSV export
+- `TableCatalogService.gs`: SHA-256 token 검증, Settings parse, `resolveTable()`
+- `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
+- `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
 ## 최초 실행
 
@@ -22,10 +26,44 @@ Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, va
 4. 함수 목록에서 `bootstrapSpreadsheet`를 선택해 실행하고 권한을 승인한다.
 5. Spreadsheet를 새로고침하면 `QR 주문 관리` 메뉴가 표시된다.
 6. `QR 주문 관리 > 카테고리/메뉴 초기 데이터 추가`를 실행한다.
-7. `QR 주문 관리 > 무결성 진단`을 실행한다.
+7. Settings에서 `FRONTEND_BASE_URL`, `EVENT_OPEN` 등 행사 값을 확인한다.
+8. `QR 주문 관리 > 테이블/QR 초기 발급`을 실행하고 테이블 수를 입력한다.
+9. 표시되는 창에서 CSV를 즉시 다운로드해 안전하게 보관한다.
+10. `QR 주문 관리 > 무결성 진단`을 실행한다.
 
 초기 데이터가 아직 없으면 `NO_TABLES`, `NO_MENU`, `PLACEHOLDER_EVENT_ID` 경고는
 정상이다. 오류가 0개이면 `ok: true`다.
+
+## 테이블 QR과 token
+
+최종 QR URL 형식은 다음과 같다.
+
+```text
+https://caucse.shop/t/T01?token=<64자리 원본 token>
+```
+
+Sheet에는 원본 token 대신 `SHA-256(TOKEN_PEPPER + ':' + token)` hash만 저장한다.
+원본 token URL은 발급/재발급 직후의 modal과 CSV에만 나타나며 실행 로그에는 남기지 않는다.
+CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을 선택한 뒤
+`선택 테이블 token 재발급`을 실행해야 한다. 재발급 즉시 기존 QR은 무효화된다.
+
+초기 발급은 이미 존재하는 `T01`, `T02` 등의 행을 덮어쓰지 않아 반복 실행해도 안전하다.
+
+## Web App 첫 API
+
+- `GET {WEB_APP_URL}/exec/health`
+- `POST {WEB_APP_URL}/exec/resolve-table`
+- path routing이 제한된 환경에서는 `POST {WEB_APP_URL}/exec?action=resolve-table`도 지원
+
+POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
+
+```json
+{"apiVersion":"v1","tableId":"T01","tableToken":"<QR 원본 token>"}
+```
+
+`EVENT_OPEN=FALSE`인 동안 유효한 QR도 `EVENT_CLOSED`를 반환한다. 행사 전 성공 응답을
+시험할 때만 잠시 `TRUE`로 바꾼 뒤 다시 `FALSE`로 돌린다. API 응답에는 stack trace,
+Spreadsheet ID, 원본 token, token hash가 포함되지 않는다.
 
 진단 결과는 오류와 경고를 각각 최대 100개까지 로그에 포함하고, 전체 개수와 생략된
 개수는 `summary`, `truncated`에 별도로 기록한다. 대량 오류가 있어도 실행 로그 전체가
