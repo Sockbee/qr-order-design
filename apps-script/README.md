@@ -25,6 +25,10 @@ Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, va
 초기 데이터가 아직 없으면 `NO_TABLES`, `NO_MENU`, `PLACEHOLDER_EVENT_ID` 경고는
 정상이다. 오류가 0개이면 `ok: true`다.
 
+진단 결과는 오류와 경고를 각각 최대 100개까지 로그에 포함하고, 전체 개수와 생략된
+개수는 `summary`, `truncated`에 별도로 기록한다. 대량 오류가 있어도 실행 로그 전체가
+잘리지 않도록 하기 위한 제한이다.
+
 ## 반복 실행 안전성
 
 - 없는 Sheet와 Settings key만 추가한다.

@@ -281,11 +281,15 @@ function createManagedProtection_(range, label) {
 
 function showBootstrapResult_(result) {
   const diagnostics = result.diagnostics;
+  const errorCount = diagnostics.summary ? diagnostics.summary.errorCount : diagnostics.errors.length;
+  const warningCount = diagnostics.summary
+    ? diagnostics.summary.warningCount
+    : diagnostics.warnings.length;
   const lines = [
     'QR 주문 bootstrap 완료',
     '생성된 Sheet: ' + (result.summary.createdSheets.join(', ') || '없음'),
     '추가된 Settings: ' + (result.summary.insertedSettings.join(', ') || '없음'),
-    '진단: 오류 ' + diagnostics.errors.length + '개 / 경고 ' + diagnostics.warnings.length + '개',
+    '진단: 오류 ' + errorCount + '개 / 경고 ' + warningCount + '개',
   ];
   try {
     SpreadsheetApp.getUi().alert(lines.join('\n'));
