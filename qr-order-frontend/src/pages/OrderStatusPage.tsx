@@ -10,19 +10,29 @@ import './OrderStatusPage.css'
 
 interface OrderStatusPageProps {
   orders: PlacedOrder[]
+  latestPublicStatus?: Exclude<PlacedOrder['status'], 'cancelled'> | null
+  sessionTotalAmount?: number
   onOrderMore: () => void
   onCallStaff: () => void
 }
 
 export function OrderStatusPage({
   orders,
+  latestPublicStatus,
+  sessionTotalAmount,
   onOrderMore,
   onCallStaff,
 }: OrderStatusPageProps) {
   // Newest first, without mutating the session's ordering.
   const rounds = orders.map((order, index) => ({ order, round: index + 1 })).reverse()
-  const currentStatus = orders.at(-1)?.status ?? 'accepted'
-  const sessionTotal = orders.reduce((sum, order) => sum + order.total, 0)
+  const latestActiveOrder = orders.findLast((order) => order.status !== 'cancelled')
+  const fallbackStatus = latestActiveOrder?.status
+  const currentStatus = latestPublicStatus ??
+    (fallbackStatus === 'cancelled' ? 'accepted' : fallbackStatus) ??
+    'accepted'
+  const sessionTotal = sessionTotalAmount ?? orders
+    .filter((order) => order.status !== 'cancelled')
+    .reduce((sum, order) => sum + order.total, 0)
 
   return (
     <div className="order-status">
@@ -38,15 +48,16 @@ export function OrderStatusPage({
             placedAt={order.placedAt}
           >
             {order.lines.map((line, index) => {
-              const item = menuItems.find(
+              const currentMenuItem = menuItems.find(
                 (candidate) => candidate.id === line.itemId,
               )
-              if (!item) return null
+              const name = line.nameSnapshot ?? currentMenuItem?.name
+              if (!name) return null
 
               return (
                 <OrderLine
                   key={`${line.itemId}-${index}`}
-                  name={item.name}
+                  name={name}
                   quantity={line.quantity}
                   amount={line.unitPrice * line.quantity}
                 />

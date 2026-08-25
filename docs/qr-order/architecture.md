@@ -57,7 +57,7 @@ QR URL은 다음 형식을 기준으로 한다.
 https://{frontend-origin}/t/T12?token={128-bit-or-more-random-token}
 ```
 
-현재 프론트엔드의 `/t/:token` 경로와 최종 URL 형식은 API 연동 단계에서 조정이 필요하다. URL에서 `tableId`와 `tableToken`을 분리하면 S01에서 사람이 읽을 수 있는 테이블 번호를 즉시 확인할 수 있고, 서버는 두 값의 조합을 검증할 수 있다.
+프론트엔드는 `/t/:tableId?token=...` 경로에서 `tableId`와 `tableToken`을 분리해 복구한다. S01에서 사람이 읽을 수 있는 테이블 번호를 즉시 확인할 수 있고, 서버는 두 값의 조합을 검증한다.
 
 별도 로그인이나 서버 저장 세션은 만들지 않는다. 원본 토큰은 QR과 사용자 브라우저에만 있고, Sheet에는 `SHA-256(secretPepper + ":" + tableToken)`만 저장한다. `secretPepper`는 Script Properties에 둔다. 이 토큰은 현재 프론트엔드의 `TableSession.token` 및 `localStorage` 스코프 키로 사용한다.
 

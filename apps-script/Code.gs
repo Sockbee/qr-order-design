@@ -18,6 +18,8 @@ function doPost(event) {
     if (route === 'resolve-table') return resolveTable(payload);
     if (route === 'menu') return getMenu(payload);
     if (route === 'orders/create') return createOrder(payload, requestId);
+    if (route === 'orders/get') return getOrder(payload);
+    if (route === 'orders/list') return listOrders(payload);
     throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
   });
 }

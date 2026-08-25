@@ -1,13 +1,18 @@
-# 개요
+# Apps Script 주문 생성·조회 및 상태 polling
+
+## 개요
 
 Google Sheets의 현재 카탈로그를 서버에서 다시 검증하고 주문 snapshot을 안전하게
-저장하는 Apps Script Web App의 `POST /orders/create` API를 구현했습니다.
+저장하는 Apps Script Web App의 `POST /orders/create` API와 인증된 주문 조회 API를
+구현했습니다. Netlify 프론트엔드는 최종 QR URL에서 table 자격증명을 복구하고 주문
+현황을 15초 간격으로 갱신합니다.
 
 클라이언트가 보낸 가격이나 메뉴명은 신뢰하지 않으며, table token 인증부터 메뉴·옵션
 판매 상태, 수량, 필수 선택 규칙, 주문 총액까지 Script Lock 안에서 검증합니다. 동일
 요청의 네트워크 재전송은 idempotency key로 감지해 중복 주문과 주문번호 증가를 막습니다.
 
-프론트엔드 코드는 변경하지 않았습니다.
+주문 조회는 `COMMITTED` snapshot만 사용하므로 현재 메뉴명과 가격이 바뀌어도 과거
+주문 내역은 변하지 않습니다.
 
 ## 변경 사항
 
@@ -125,6 +130,49 @@ order_item_option_id = {orderItemId}-{2-digit option order}
 - `OPTION_NOT_FOUND`, `OPTION_SOLD_OUT`
 - `DUPLICATE_REQUEST`, `ORDER_WRITE_IN_PROGRESS`, `LOCK_TIMEOUT`
 
+### 인증된 주문 조회
+
+다음 endpoint를 추가했습니다. Apps Script path routing이 제한된 환경에서는
+`?action=orders/get`, `?action=orders/list`를 사용합니다.
+
+```text
+POST {WEB_APP_URL}/exec/orders/get
+POST {WEB_APP_URL}/exec/orders/list
+```
+
+`orders/get`은 `orderId` 또는 `displayCode` 중 하나만 받습니다. token이 인증한 table의
+`COMMITTED` 주문만 반환하며 다른 table 주문과 `WRITING`/`FAILED` 주문은
+`ORDER_NOT_FOUND`로 숨깁니다.
+
+`orders/list`는 다음 정보를 반환합니다.
+
+- 최신 주문 우선의 주문 회차와 주문 시점 item/option 이름 snapshot
+- 가장 최근 비취소 주문의 `latestPublicStatus`
+- `COMMITTED`이면서 `CANCELLED`가 아닌 주문의 `sessionTotalAmount`
+
+조회 API는 table이 비활성화되거나 행사가 종료된 뒤에도 이미 접수된 주문을 확인할 수
+있습니다. 원본 token은 응답에 포함하지 않습니다.
+
+### 최종 QR 경로와 15초 polling
+
+프론트 경로를 확정된 QR 형식으로 맞췄습니다.
+
+```text
+https://caucse.shop/t/T01?token=<64자리 원본 token>
+```
+
+유효한 `tableId`와 token은 table session 범위로만 보관하고 Apps Script 주문 목록
+요청에만 사용합니다. `VITE_APPS_SCRIPT_URL`이 설정된 배포에서는 session-level poller
+하나가 `orders/list`를 호출합니다.
+
+- 최초 진입 시 즉시 조회
+- 성공 후 15초 + 0~2초 jitter 뒤 재조회
+- 탭이 hidden이면 timer와 진행 중 요청 중단
+- 다시 visible이 되면 즉시 조회
+- 실패하면 30초, 60초까지 exponential backoff
+- 실패 중에도 마지막 성공 주문과 상태 유지
+- 현재 Menu가 변경돼도 서버가 반환한 주문 snapshot 이름과 합계 표시
+
 ### 민감정보 및 진단
 
 - 원본 table token은 Orders, child snapshot, AuditLogs에 저장하지 않습니다.
@@ -151,8 +199,17 @@ order_item_option_id = {orderItemId}-{2-digit option order}
 - [x] option write 실패 후 `FAILED` 표시와 동일 요청 자동 복구 확인
 - [x] 최근 `WRITING` 주문의 중복 처리 방지 확인
 - [x] 원본 table token 미저장 확인
+- [x] 주문 ID와 display code 단건 조회 확인
+- [x] 다른 table 주문 접근 차단 확인
+- [x] `WRITING`/`FAILED` 주문 조회 제외 확인
+- [x] 주문 목록 최신순과 취소 제외 누적액 확인
+- [x] 현재 메뉴 변경 후에도 주문 snapshot 응답 유지 확인
+- [x] 프론트 TypeScript production build 통과
+- [x] 프론트 ESLint 통과
+- [x] QR 경로 `/t/{tableId}?token=...` 적용
+- [x] 15초 polling, hidden 중단, visible 즉시 조회 구현
+- [x] polling 실패 backoff와 마지막 성공 값 유지 구현
 - [x] `git diff --check` 통과
-- [x] 프론트엔드 변경 없음
 
 로컬 테스트 명령:
 
@@ -160,6 +217,8 @@ order_item_option_id = {orderItemId}-{2-digit option order}
 awk 'FNR==1 { print "" } { print }' apps-script/*.gs | node --check
 node apps-script/tests/table-auth.test.js
 node apps-script/tests/order-create.test.js
+node apps-script/tests/order-query.test.js
+(cd qr-order-frontend && npm run build && npm run lint)
 git diff --check
 ```
 
@@ -176,6 +235,9 @@ git diff --check
 - [x] replay 응답 `idempotentReplay=true` 확인
 - [x] Orders와 OrderItems가 각각 1행만 존재하는지 확인
 - [x] 실제 Spreadsheet `runDiagnostics()` 전체 통과
+- [ ] 배포 후 `orders/get`, `orders/list` 실제 응답 확인
+- [ ] Netlify에서 15초 이내 상태 변경 반영 확인
+- [ ] hidden 탭 중 요청 중단과 복귀 즉시 조회 확인
 - [ ] 테스트 후 `EVENT_OPEN=FALSE` 복구 확인
 
 Apps Script ContentService는 결과를 `script.googleusercontent.com`으로 redirect합니다.
@@ -183,7 +245,8 @@ Postman에서는 자동 redirect를 켜고 302 이후 원본 POST method를 유�
 
 ## 적용 방법
 
-1. Apps Script 프로젝트에 `OrderValidation.gs`, `OrderService.gs`를 추가합니다.
+1. Apps Script 프로젝트에 `OrderValidation.gs`, `OrderService.gs`,
+   `OrderQueryService.gs`를 추가합니다.
 2. 변경된 `Code.gs`, `Config.gs`, `Http.gs`, `TableCatalogService.gs`,
    `Diagnostics.gs`를 반영합니다.
 3. `runDiagnostics()`를 실행합니다.
@@ -191,7 +254,10 @@ Postman에서는 자동 redirect를 켜고 302 이후 원본 POST method를 유�
 5. `EVENT_OPEN=TRUE`인 테스트 시간에 신규 UUID로 주문을 생성합니다.
 6. 동일 body를 재전송해 `idempotentReplay=true`를 확인합니다.
 7. Sheet row와 `NEXT_DISPLAY_NUMBER`가 중복 증가하지 않았는지 확인합니다.
-8. 테스트 후 `EVENT_OPEN=FALSE`로 되돌립니다.
+8. `orders/get`, `orders/list`를 실제 token으로 확인합니다.
+9. Netlify에 `VITE_APPS_SCRIPT_URL={versioned /exec URL}`을 설정해 재배포합니다.
+10. 실제 QR로 접속해 `/orders`의 최초 조회와 상태 변경 반영을 확인합니다.
+11. 테스트 후 `EVENT_OPEN=FALSE`로 되돌립니다.
 
 Sheet schema와 Settings key 변경은 없으므로 `bootstrapSpreadsheet()` 재실행은 필요하지
 않습니다.
@@ -201,5 +267,6 @@ Sheet schema와 Settings key 변경은 없으므로 `bootstrapSpreadsheet()` 재
 - Orders, OrderItems, OrderItemOptions, Settings counter, AuditLogs를 수정합니다.
 - Tables, Categories, Menu, MenuOptionGroups, MenuOptions는 검증 목적으로 읽기만 합니다.
 - Script Lock 범위에서 신규 주문을 직렬화합니다.
-- 주문 조회, 주문 목록, 운영 상태 변경 API는 이번 PR에 포함하지 않습니다.
-- Netlify 프론트엔드 API 연동은 이번 PR 범위에 포함하지 않습니다.
+- Orders, OrderItems, OrderItemOptions는 주문 조회 목적으로 batch read합니다.
+- Netlify 프론트엔드의 QR 진입 경로와 주문 현황 데이터 공급 경로를 변경합니다.
+- 메뉴/장바구니/create 요청의 프론트 API 전환과 운영 상태 변경 API는 포함하지 않습니다.

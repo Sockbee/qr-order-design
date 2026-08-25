@@ -13,3 +13,9 @@ export interface TableSession {
   /** Store notice shown under the table chip. */
   notice: string
 }
+
+/** Raw QR credentials. The token is never logged or sent anywhere but the API. */
+export interface TableCredentials {
+  tableId: string
+  tableToken: string
+}
