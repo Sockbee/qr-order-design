@@ -89,7 +89,9 @@ app bar or in the sticky bottom bar. The 730px worst case is the design target f
 | S05 | Cart | `/cart` | full, scroll |
 | S06 | Order Confirmation | `/cart/confirm` | full |
 | S07 | Order Complete | `/orders/{id}/done` | full |
-| S08 | Order Status | `/orders` | full, live |
+| S08 | Order History / Status | `/orders` | full, live |
+| S08b | Order History — empty | `/orders` | full |
+| S09 | Call Staff | `ext/Sheet` over current screen | overlay |
 
 ### 2.2 Required overlays
 
@@ -99,7 +101,7 @@ app bar or in the sticky bottom bar. The 730px worst case is the design target f
 | D1 | Remove-item confirm | `ext/Dialog` |
 | D2 | Clear-cart confirm | `ext/Dialog` |
 | D3 | Leave-with-items warning | `ext/Dialog` |
-| B1 | Call staff | `ext/Sheet` |
+| B1 | Call staff → built as **S09** | `ext/Sheet` |
 | B2 | Item unavailable (mid-flow) | `ext/Sheet` |
 
 ### 2.3 Required error screens
@@ -156,6 +158,15 @@ the diner must trust the order routes to *their* table. That is the whole job.
 | 4 | Description | 14/400 `#4e5968`, max 2 lines, ellipsis |
 | 5 | Tags (인기 / 신메뉴 / 매움) | `tds/Badge` weak xsmall |
 | — | Cart total | `ext/StickyCartBar`, persistent |
+| — | `주문 내역` · `직원 호출` | app bar, bordered buttons (never Badges) |
+
+The app bar previously carried a `장바구니 N` chip. It was **removed as redundant** — the
+sticky cart bar already shows the same count and total, and that slot is better spent on
+the two actions that had no entry point at all.
+
+**Where `직원 호출` appears:** S02, S04, S08 — the screens where a diner *dwells*.
+It is deliberately absent from S05/S06/S07, which are committed checkout steps where a
+second competing action would invite mis-taps at the money moment.
 
 Price is never demoted to `#8b95a1`. Per the DESIGN.md analysis, muted grey fails 4.5:1
 and must not carry price, allergen, or availability information.
@@ -228,6 +239,12 @@ Auto-advances to S08 after 4s, cancelled by any tap. No confetti, no animation b
 
 Accumulates every round for the session. Reachable by re-scanning the same QR — this is
 the recovery path for a lost tab (DESIGN.md §13, "recovering from an interrupted flow").
+Also reachable any time from the S02 app bar via `주문 내역`, including before the first
+order is placed (**S08b**, empty).
+
+**Each round carries its own status chip.** Once a table has two rounds, one may be 조리 중
+while another is 서빙 완료, and a single top-level tracker cannot describe both. The tracker
+reflects the newest round; the per-round chips carry the truth.
 
 ---
 
