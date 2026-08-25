@@ -1,0 +1,70 @@
+/*
+ * S06 — Order Confirmation.
+ * Deliberately read-only: this is the last irreversible moment, so the screen
+ * states the outcome rather than offering more editing (DESIGN.md §12.5).
+ * Editing goes back to S05 via 수정하기.
+ */
+.order-confirmation {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--color-bg-canvas);
+}
+
+.order-confirmation__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--layout-side-margin) 0;
+}
+
+.order-confirmation__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.order-confirmation__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.order-confirmation__item {
+  flex: 1 1 0;
+  min-width: 0;
+  font: var(--type-body-default);
+  color: var(--color-text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Price stays at text/strong — never demoted to text/muted. */
+.order-confirmation__price {
+  flex: 0 0 auto;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+  white-space: nowrap;
+}
+
+.order-confirmation__payment-note {
+  width: 100%;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.order-confirmation__footer {
+  padding: var(--space-4);
+  background: var(--color-bg-canvas);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.order-confirmation__safe-area {
+  height: var(--layout-safe-area);
+  background: var(--color-bg-canvas);
+}

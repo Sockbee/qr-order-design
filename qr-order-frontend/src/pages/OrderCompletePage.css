@@ -1,0 +1,70 @@
+/*
+ * S07 — Order Complete.
+ * The total is the one Display/Total figure in the product (UX-STRUCTURE §3).
+ * No confetti and no ornament beyond a plain fade — DESIGN.md §6 forbids
+ * invented decoration.
+ */
+.order-complete {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--color-bg-canvas);
+}
+
+.order-complete__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  /* This screen has no app bar; the 120px inset is its own framing. */
+  padding: 120px var(--layout-side-margin) 0;
+}
+
+.order-complete__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+  font: var(--type-title-screen);
+}
+
+.order-complete__headline {
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+  text-align: center;
+}
+
+/* Authored as two lines on the frame, kept as separate blocks so the break
+   survives translation rather than depending on the container width. */
+.order-complete__headline span {
+  display: block;
+}
+
+.order-complete__total {
+  font: var(--type-display-total);
+  color: var(--color-text-strong);
+}
+
+.order-complete__number {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.order-complete__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg-canvas);
+  border-top: 1px solid var(--color-border-default);
+}
+
+.order-complete__safe-area {
+  height: var(--layout-safe-area);
+  background: var(--color-bg-canvas);
+}
