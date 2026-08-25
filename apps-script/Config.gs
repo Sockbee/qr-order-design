@@ -13,6 +13,14 @@ const QR_ORDER_APP = Object.freeze({
   TEXT_FORMAT: '@',
 });
 
+const QR_ORDER_LIMITS = Object.freeze({
+  MAX_NOTE_LENGTH: 200,
+  HARD_MAX_ORDER_LINES: 100,
+  HARD_MAX_OPTIONS_PER_LINE: 50,
+  LOCK_TIMEOUT_MS: 10000,
+  WRITING_STALE_MS: 30000,
+});
+
 const QR_ORDER_ENUMS = Object.freeze({
   SELECTION_TYPE: Object.freeze(['SINGLE', 'MULTIPLE']),
   ORDER_STATUS: Object.freeze([

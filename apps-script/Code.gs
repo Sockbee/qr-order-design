@@ -11,12 +11,13 @@ function doGet(event) {
 }
 
 function doPost(event) {
-  return apiResponse_(() => {
+  return apiResponse_(requestId => {
     const route = apiRoute_(event);
     const payload = parseJsonBody_(event);
 
     if (route === 'resolve-table') return resolveTable(payload);
     if (route === 'menu') return getMenu(payload);
+    if (route === 'orders/create') return createOrder(payload, requestId);
     throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
   });
 }

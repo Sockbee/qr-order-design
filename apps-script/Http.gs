@@ -19,7 +19,7 @@ class ApiError extends Error {
 function apiResponse_(handler) {
   const requestId = Utilities.getUuid();
   try {
-    return jsonOutput_(successEnvelope_(handler(), requestId));
+    return jsonOutput_(successEnvelope_(handler(requestId), requestId));
   } catch (error) {
     const safeError = normalizeApiError_(error);
     console.error(JSON.stringify({

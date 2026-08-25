@@ -117,6 +117,20 @@ function getMenu(payload) {
   validateTable_(payload.tableId, payload.tableToken, true, spreadsheet);
   assertEventOpen_(settingsMap_(spreadsheet));
 
+  const catalog = readCatalogForResponse_(spreadsheet);
+  return {
+    categories: catalog.categories,
+    items: catalog.items,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+function getCatalogForOrder_(spreadsheet) {
+  return readCatalogForResponse_(spreadsheet);
+}
+
+function readCatalogForResponse_(spreadsheet) {
+
   const categories = readSheetTable_(spreadsheet, 'Categories').rows
     .filter(row => row.active === true);
   const activeCategoryIds = new Set(categories.map(row => String(row.category_id)));
@@ -131,7 +145,6 @@ function getMenu(payload) {
     items: sortCatalogRows_(menu, 'menu_id').map(item => {
       return catalogItemResponse_(item, groups, options);
     }),
-    generatedAt: new Date().toISOString(),
   };
 }
 
