@@ -3,12 +3,12 @@ import { Button } from '../components/Button'
 import { OrderLine } from '../components/OrderLine'
 import { PriceBreakdown } from '../components/PriceBreakdown'
 import { TableChip } from '../components/TableChip'
-import { menuItems } from '../data/menu'
 import { calculateCartTotal } from '../utils/cart'
-import type { CartLine } from '../types/menu'
+import type { CartLine, MenuItemDetail } from '../types/menu'
 import './OrderConfirmationPage.css'
 
 interface OrderConfirmationPageProps {
+  menuItems: MenuItemDetail[]
   cart: CartLine[]
   tableNumber: number
   onBack: () => void
@@ -17,6 +17,7 @@ interface OrderConfirmationPageProps {
 }
 
 export function OrderConfirmationPage({
+  menuItems,
   cart,
   tableNumber,
   onBack,
@@ -37,12 +38,13 @@ export function OrderConfirmationPage({
             const item = menuItems.find(
               (candidate) => candidate.id === line.itemId,
             )
-            if (!item) return null
+            const name = line.nameSnapshot ?? item?.name
+            if (!name) return null
 
             return (
               <OrderLine
                 key={`${line.itemId}-${index}`}
-                name={item.name}
+                name={name}
                 quantity={line.quantity}
                 amount={line.unitPrice * line.quantity}
               />

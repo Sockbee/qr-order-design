@@ -20,7 +20,10 @@ import { useOrderPolling } from './hooks/useOrderPolling'
 import { useStorefront } from './hooks/useStorefront'
 import type { OrderSession } from './hooks/useOrderSession'
 import { mapRemoteOrders } from './api/orders'
-import { menuItems } from './data/menu'
+import {
+  categories as mockCategories,
+  menuItems as mockMenuItems,
+} from './data/menu'
 import { tableSession } from './data/session'
 import {
   LAST_TABLE_ID_KEY,
@@ -43,6 +46,12 @@ import type { TableCredentials } from './types/session'
 
 interface RouteProps {
   session: OrderSession
+}
+
+interface CatalogRouteProps {
+  categories: typeof mockCategories
+  menuItems: typeof mockMenuItems
+  storefront: ReturnType<typeof useStorefront>
 }
 
 function parseCredentials(
@@ -102,21 +111,53 @@ function TableConfirmationRoute({
   )
 }
 
-function MenuRoute({ session }: RouteProps) {
+function MenuRoute({
+  session,
+  categories,
+  menuItems,
+  storefront,
+}: RouteProps & CatalogRouteProps) {
   const navigate = useNavigate()
 
   return (
     <MenuPage
+      categories={categories}
+      menuItems={menuItems}
       cart={session.cart}
+      loading={storefront.loading}
+      errorMessage={storefront.error?.message}
+      retryable={storefront.retryable}
+      onRetry={storefront.retry}
       onSelectItem={(id) => navigate(`/menu/${id}`)}
       onOpenCart={() => navigate('/cart')}
     />
   )
 }
 
-function MenuDetailRoute({ session }: RouteProps) {
+function MenuDetailRoute({
+  session,
+  categories,
+  menuItems,
+  storefront,
+}: RouteProps & CatalogRouteProps) {
   const { itemId } = useParams()
   const navigate = useNavigate()
+
+  if (storefront.loading || storefront.error) {
+    return (
+      <MenuPage
+        categories={categories}
+        menuItems={menuItems}
+        cart={session.cart}
+        loading={storefront.loading}
+        errorMessage={storefront.error?.message}
+        retryable={storefront.retryable}
+        onRetry={storefront.retry}
+        onSelectItem={(id) => navigate(`/menu/${id}`)}
+        onOpenCart={() => navigate('/cart')}
+      />
+    )
+  }
 
   const item = menuItems.find((candidate) => candidate.id === itemId)
   if (!item) return <Navigate to="/menu" replace />
@@ -133,11 +174,15 @@ function MenuDetailRoute({ session }: RouteProps) {
   )
 }
 
-function CartRoute({ session }: RouteProps) {
+function CartRoute({
+  session,
+  menuItems,
+}: RouteProps & Pick<CatalogRouteProps, 'menuItems'>) {
   const navigate = useNavigate()
 
   return (
     <CartPage
+      menuItems={menuItems}
       cart={session.cart}
       onBack={() => navigate('/menu')}
       onAddMore={() => navigate('/menu')}
@@ -147,7 +192,11 @@ function CartRoute({ session }: RouteProps) {
   )
 }
 
-function OrderConfirmationRoute({ session }: RouteProps) {
+function OrderConfirmationRoute({
+  session,
+  menuItems,
+  tableNumber,
+}: RouteProps & Pick<CatalogRouteProps, 'menuItems'> & { tableNumber: number }) {
   const navigate = useNavigate()
   /*
    * Placing an order empties the cart, and react-router runs navigation in a
@@ -162,8 +211,9 @@ function OrderConfirmationRoute({ session }: RouteProps) {
 
   return (
     <OrderConfirmationPage
+      menuItems={menuItems}
       cart={session.cart}
-      tableNumber={tableSession.tableNumber}
+      tableNumber={tableNumber}
       onBack={() => navigate('/cart')}
       onEdit={() => navigate('/cart')}
       onConfirm={() => {
@@ -235,12 +285,19 @@ function App() {
     return parseCredentials(initialTableMatch?.[1], initialToken) ??
       parseCredentials(storedTableId, storedToken)
   })
+  const storefront = useStorefront(credentials)
   const session = useOrderSession(
     credentials?.tableToken ?? tableSession.token,
     Number(credentials?.tableId.slice(1)) || tableSession.tableNumber,
+    storefront.configured,
   )
   const remote = useOrderPolling(credentials)
-  const storefront = useStorefront(credentials)
+  const categories = storefront.data?.categories ??
+    (storefront.configured ? [] : mockCategories)
+  const menuItems = storefront.data?.menuItems ??
+    (storefront.configured ? [] : mockMenuItems)
+  const tableNumber = storefront.data?.session.tableNumber ??
+    (Number(credentials?.tableId.slice(1)) || tableSession.tableNumber)
 
   return (
     <BrowserRouter>
@@ -255,15 +312,41 @@ function App() {
             />
           )}
         />
-        <Route path="/menu" element={<MenuRoute session={session} />} />
+        <Route
+          path="/menu"
+          element={(
+            <MenuRoute
+              session={session}
+              categories={categories}
+              menuItems={menuItems}
+              storefront={storefront}
+            />
+          )}
+        />
         <Route
           path="/menu/:itemId"
-          element={<MenuDetailRoute session={session} />}
+          element={(
+            <MenuDetailRoute
+              session={session}
+              categories={categories}
+              menuItems={menuItems}
+              storefront={storefront}
+            />
+          )}
         />
-        <Route path="/cart" element={<CartRoute session={session} />} />
+        <Route
+          path="/cart"
+          element={<CartRoute session={session} menuItems={menuItems} />}
+        />
         <Route
           path="/cart/confirm"
-          element={<OrderConfirmationRoute session={session} />}
+          element={(
+            <OrderConfirmationRoute
+              session={session}
+              menuItems={menuItems}
+              tableNumber={tableNumber}
+            />
+          )}
         />
         <Route
           path="/orders"
