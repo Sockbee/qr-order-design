@@ -13,6 +13,7 @@ interface MenuDetailPageProps {
   item: MenuItemDetail
   onBack: () => void
   onAddToCart: (line: CartLine) => void
+  onCallStaff: () => void
 }
 
 /** Required groups sort above optional ones regardless of authored order. */
@@ -40,6 +41,7 @@ export function MenuDetailPage({
   item,
   onBack,
   onAddToCart,
+  onCallStaff,
 }: MenuDetailPageProps) {
   const groups = useMemo(
     () => sortGroups(item.optionGroups),
@@ -107,7 +109,11 @@ export function MenuDetailPage({
 
   return (
     <div className="menu-detail">
-      <AppBar title={item.name} onBack={onBack} />
+      <AppBar
+        title={item.name}
+        onBack={onBack}
+        actions={[{ label: '직원 호출', onClick: onCallStaff }]}
+      />
 
       <div className="menu-detail__hero">
         {item.imageUrl && <img src={item.imageUrl} alt="" />}

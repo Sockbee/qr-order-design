@@ -16,3 +16,14 @@
   font: var(--type-caption-strong);
   color: var(--color-text-body);
 }
+
+.order-round__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.order-round__head .order-round__label {
+  flex: 1 1 0;
+  min-width: 0;
+}

@@ -15,7 +15,9 @@ import { OrderCompletePage } from './pages/OrderCompletePage'
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage'
 import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
+import { CallStaffSheet } from './components/CallStaffSheet'
 import { useOrderSession } from './hooks/useOrderSession'
+import { useStaffCall } from './hooks/useStaffCall'
 import { useOrderPolling } from './hooks/useOrderPolling'
 import { useStorefront } from './hooks/useStorefront'
 import type { OrderSession } from './hooks/useOrderSession'
@@ -116,7 +118,8 @@ function MenuRoute({
   categories,
   menuItems,
   storefront,
-}: RouteProps & CatalogRouteProps) {
+  onCallStaff,
+}: RouteProps & CatalogRouteProps & { onCallStaff: () => void }) {
   const navigate = useNavigate()
 
   return (
@@ -130,6 +133,8 @@ function MenuRoute({
       onRetry={storefront.retry}
       onSelectItem={(id) => navigate(`/menu/${id}`)}
       onOpenCart={() => navigate('/cart')}
+      onViewOrders={() => navigate('/orders')}
+      onCallStaff={onCallStaff}
     />
   )
 }
@@ -139,7 +144,8 @@ function MenuDetailRoute({
   categories,
   menuItems,
   storefront,
-}: RouteProps & CatalogRouteProps) {
+  onCallStaff,
+}: RouteProps & CatalogRouteProps & { onCallStaff: () => void }) {
   const { itemId } = useParams()
   const navigate = useNavigate()
 
@@ -155,6 +161,8 @@ function MenuDetailRoute({
         onRetry={storefront.retry}
         onSelectItem={(id) => navigate(`/menu/${id}`)}
         onOpenCart={() => navigate('/cart')}
+        onViewOrders={() => navigate('/orders')}
+        onCallStaff={onCallStaff}
       />
     )
   }
@@ -170,6 +178,7 @@ function MenuDetailRoute({
         session.addToCart(line)
         navigate('/menu')
       }}
+      onCallStaff={onCallStaff}
     />
   )
 }
@@ -248,8 +257,10 @@ function OrderCompleteRoute({ session }: RouteProps) {
 function OrderStatusRoute({
   session,
   remote,
+  onCallStaff,
 }: RouteProps & {
   remote: ReturnType<typeof useOrderPolling>
+  onCallStaff: () => void
 }) {
   const navigate = useNavigate()
   const tableNumber = Number(remote.data?.table.tableId.slice(1)) ||
@@ -260,17 +271,18 @@ function OrderStatusRoute({
     : null
   const orders = remoteOrders ?? session.orders
 
-  if (!remote.enabled && orders.length === 0) return <Navigate to="/menu" replace />
-
+  /*
+   * No redirect when empty any more: 주문 내역 is reachable from the menu app
+   * bar before anything is ordered, so OrderStatusPage renders S08b instead.
+   */
   return (
     <OrderStatusPage
       orders={orders}
       latestPublicStatus={remote.data?.latestPublicStatus}
       sessionTotalAmount={remote.data?.sessionTotalAmount}
+      onBack={() => navigate('/menu')}
       onOrderMore={() => navigate('/menu')}
-      onCallStaff={() => {
-        // B1 직원 호출 sheet is not built yet.
-      }}
+      onCallStaff={onCallStaff}
     />
   )
 }
@@ -292,6 +304,13 @@ function App() {
     storefront.configured,
   )
   const remote = useOrderPolling(credentials)
+  /*
+   * 직원 호출 lives above the router so the "직원을 불렀어요" state survives
+   * navigation between the menu, an item and the order history — the same
+   * reason the cart does.
+   */
+  const staffCall = useStaffCall(credentials)
+  const [callSheetOpen, setCallSheetOpen] = useState(false)
   const categories = storefront.data?.categories ??
     (storefront.configured ? [] : mockCategories)
   const menuItems = storefront.data?.menuItems ??
@@ -320,6 +339,7 @@ function App() {
               categories={categories}
               menuItems={menuItems}
               storefront={storefront}
+              onCallStaff={() => setCallSheetOpen(true)}
             />
           )}
         />
@@ -331,6 +351,7 @@ function App() {
               categories={categories}
               menuItems={menuItems}
               storefront={storefront}
+              onCallStaff={() => setCallSheetOpen(true)}
             />
           )}
         />
@@ -350,7 +371,13 @@ function App() {
         />
         <Route
           path="/orders"
-          element={<OrderStatusRoute session={session} remote={remote} />}
+          element={(
+            <OrderStatusRoute
+              session={session}
+              remote={remote}
+              onCallStaff={() => setCallSheetOpen(true)}
+            />
+          )}
         />
         <Route
           path="/orders/:orderNumber/done"
@@ -358,6 +385,21 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {callSheetOpen && (
+        <CallStaffSheet
+          tableNumber={tableNumber}
+          phase={staffCall.phase}
+          activeCall={staffCall.activeCall}
+          error={staffCall.error}
+          onCall={staffCall.call}
+          onCancelCall={staffCall.cancel}
+          onClose={() => {
+            setCallSheetOpen(false)
+            staffCall.clearError()
+          }}
+        />
+      )}
     </BrowserRouter>
   )
 }

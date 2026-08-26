@@ -1,0 +1,186 @@
+/*
+ * ext/Sheet — S09 직원 호출 / S09b 호출 완료.
+ * Separation is scrim + radius only; DESIGN.md §6 promotes no shadow token.
+ */
+.call-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.call-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: #000c1e;
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.call-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: var(--layout-max-width);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--layout-side-margin)
+    calc(var(--space-4) + var(--layout-safe-area));
+  border-radius: var(--radius-btn-xl) var(--radius-btn-xl) 0 0;
+  background: var(--color-bg-canvas);
+  animation: call-sheet-rise 160ms ease-out;
+}
+
+.call-sheet__panel:focus {
+  outline: none;
+}
+
+@keyframes call-sheet-rise {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-sheet__panel {
+    animation: none;
+  }
+}
+
+/* S09b confirmation mark — 56px, centred with the rest of the called view. */
+.call-sheet__mark {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+  font: var(--type-title-section);
+}
+
+.call-sheet__title {
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+.call-sheet__body {
+  margin: calc(var(--space-4) * -1 + var(--space-2)) 0 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.call-sheet__elapsed {
+  align-self: center;
+  margin: 0;
+  padding: var(--space-2) 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-surface);
+  font: var(--type-micro-badge);
+  color: var(--color-text-body);
+}
+
+/* The called view centres its block; the form view stays left-aligned. */
+.call-sheet__mark ~ .call-sheet__title,
+.call-sheet__mark ~ .call-sheet__body {
+  text-align: center;
+  align-self: center;
+}
+
+.call-sheet__reasons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+/* One selection pattern: radio and checkbox differ only by glyph, never by
+   container (UX-STRUCTURE §4.3). */
+.call-sheet__reason {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-row);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-strong);
+  font: var(--type-body-default);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms ease-out, border-color 160ms ease-out;
+}
+
+.call-sheet__reason--selected {
+  border: 2px solid var(--color-border-selected);
+  padding: 0 11px;
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
+
+.call-sheet__reason:active {
+  background: var(--color-bg-surface);
+}
+
+.call-sheet__check {
+  flex: 0 0 auto;
+  position: relative;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-canvas);
+}
+
+.call-sheet__reason--selected .call-sheet__check {
+  border-color: var(--color-bg-primary);
+  background: var(--color-bg-primary);
+}
+
+.call-sheet__reason--selected .call-sheet__check::after {
+  content: '✓';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-on-primary);
+  font: var(--type-micro-badge);
+}
+
+.call-sheet__reason-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.call-sheet__error {
+  margin: 0;
+  padding: var(--space-3) 12px;
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-status-attention-bg);
+  color: var(--color-status-attention-fg);
+  font: var(--type-caption-strong);
+}
+
+/* Throttling is not a failure — the diner already succeeded once. */
+.call-sheet__error--calm {
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .call-sheet__reason {
+    transition: none;
+  }
+}
