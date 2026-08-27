@@ -142,3 +142,31 @@ export interface StaffTableDetail {
   /** Set when this table is part of a merge. */
   mergeLabel: string | null
 }
+
+/** One card in the kitchen or serving queue (staff/KitchenOrderCard, 88:68). */
+export interface StaffStationOrder {
+  orderId: string
+  tableId: string
+  status: StaffOrderStatus
+  elapsedMinutes: number
+  items: Array<{ name: string; quantity: number }>
+  /** The memo addressed to this station, if any. */
+  note: string | null
+}
+
+/** One card in the payment queue (staff/PaymentOrderCard). */
+export interface StaffPaymentOrder {
+  tableId: string
+  bill: StaffBill
+  /** "서빙 완료 후 12분" — how long the table has been waiting to settle. */
+  minutesSinceServed: number | null
+  confirming: boolean
+}
+
+/** The rail badges, so every staff screen shows the same four numbers. */
+export interface StaffStationCounts {
+  tables: number
+  kitchen: number
+  serving: number
+  payment: number
+}

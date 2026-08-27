@@ -87,10 +87,14 @@ export function StaffTableHomePage({
             count: data ? attentionCount : null,
             attention: true,
           },
-          /* B01–B03 are not implemented in this branch. */
-          { label: '주방', to: null, count: null },
-          { label: '서빙', to: null, count: null },
-          { label: '결제', to: null, count: null },
+          /*
+           * Counts stay null here: they come from `orders/queue`, and A01
+           * polling that too would double the request rate on the screen
+           * that is open longest.
+           */
+          { label: '주방', to: '/staff/kitchen', count: null },
+          { label: '서빙', to: '/staff/serving', count: null },
+          { label: '결제', to: '/staff/payment', count: null },
         ]}
       />
 
