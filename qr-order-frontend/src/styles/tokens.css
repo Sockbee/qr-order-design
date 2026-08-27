@@ -141,4 +141,7 @@
   --layout-staff-card-height: 190px;
   /* 56, not the customer app's 48 — operated standing, at arm's length. */
   --layout-staff-control-height: 56px;
+
+  /* Card and sheet corner used by the A09 login card (113:1796). */
+  --radius-sheet: 16px;
 }
