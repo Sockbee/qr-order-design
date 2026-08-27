@@ -1,0 +1,84 @@
+/* staff/StaffOrderItem (87:68). */
+.order-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border-default);
+  list-style: none;
+}
+
+.order-item__line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.order-item__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.order-item__name {
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.order-item__option {
+  font: var(--type-caption-default);
+  color: var(--color-text-muted);
+}
+
+.order-item__qty {
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-body);
+}
+
+.order-item__amount {
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+/*
+ * Cancelled: the whole line goes muted and the name is struck through. It is
+ * never removed from the list.
+ */
+.order-item--cancelled .order-item__name,
+.order-item--cancelled .order-item__qty,
+.order-item--cancelled .order-item__amount {
+  color: var(--color-text-muted);
+}
+
+.order-item--cancelled .order-item__name,
+.order-item--cancelled .order-item__amount {
+  text-decoration: line-through;
+}
+
+.order-item__cancel-chip {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+  font: var(--type-micro-badge);
+}
+
+.order-item__note {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-staff-status-cooking-bg);
+  color: var(--color-staff-status-cooking-fg);
+  font: var(--type-micro-badge);
+}

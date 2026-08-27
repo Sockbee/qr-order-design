@@ -1,0 +1,217 @@
+/* staff/OrderStatusDropdown (83:47). */
+.status-dropdown {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+}
+
+.status-dropdown__control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--layout-staff-control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  cursor: pointer;
+}
+
+.status-dropdown--open .status-dropdown__control {
+  border-color: var(--color-border-selected);
+}
+
+.status-dropdown--updating .status-dropdown__control {
+  background: var(--color-bg-surface);
+  cursor: default;
+}
+
+.status-dropdown--success .status-dropdown__control {
+  background: var(--color-staff-status-ready-bg);
+}
+
+.status-dropdown--disabled .status-dropdown__control {
+  background: var(--color-bg-surface);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.status-dropdown__label {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-strong);
+  text-align: left;
+}
+
+.status-dropdown__dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-dropdown__caret,
+.status-dropdown__check {
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+}
+
+.status-dropdown--success .status-dropdown__control,
+.status-dropdown--success .status-dropdown__check {
+  color: var(--color-staff-status-ready-fg);
+}
+
+.status-dropdown--updating .status-dropdown__control {
+  color: var(--color-text-body);
+}
+
+.status-dropdown--disabled .status-dropdown__control {
+  color: var(--color-text-muted);
+}
+
+.status-dropdown__spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: status-dropdown-spin 0.7s linear infinite;
+}
+
+@keyframes status-dropdown-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-dropdown__spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+/*
+ * 8px below the control, so a tap meant for the control does not land on the
+ * first row. Separated by border + radius, never a shadow.
+ */
+.status-dropdown__options {
+  position: absolute;
+  top: calc(var(--layout-staff-control-height) + var(--space-3));
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  list-style: none;
+}
+
+.status-dropdown__option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--layout-staff-control-height);
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-text-strong);
+  cursor: pointer;
+}
+
+.status-dropdown__option:hover {
+  background: var(--color-bg-surface);
+}
+
+/* The selected row carries its own status tint, as drawn. */
+.status-dropdown__option--new,
+.status-dropdown__control--new {
+  color: var(--color-staff-status-new-fg);
+}
+
+.status-dropdown__option--new.status-dropdown__option--selected {
+  background: var(--color-staff-status-new-bg);
+}
+
+.status-dropdown__option--cooking,
+.status-dropdown__control--cooking {
+  color: var(--color-staff-status-cooking-fg);
+}
+
+.status-dropdown__option--cooking.status-dropdown__option--selected {
+  background: var(--color-staff-status-cooking-bg);
+}
+
+.status-dropdown__option--ready,
+.status-dropdown__control--ready {
+  color: var(--color-staff-status-ready-fg);
+}
+
+.status-dropdown__option--ready.status-dropdown__option--selected {
+  background: var(--color-staff-status-ready-bg);
+}
+
+.status-dropdown__option--served,
+.status-dropdown__control--served {
+  color: var(--color-staff-status-served-fg);
+}
+
+.status-dropdown__option--served.status-dropdown__option--selected {
+  background: var(--color-staff-status-served-bg);
+}
+
+.status-dropdown__option--unpaid,
+.status-dropdown__control--unpaid {
+  color: var(--color-staff-status-unpaid-fg);
+}
+
+.status-dropdown__option--unpaid.status-dropdown__option--selected {
+  background: var(--color-staff-status-unpaid-bg);
+}
+
+.status-dropdown__option--paid,
+.status-dropdown__control--paid {
+  color: var(--color-staff-status-paid-fg);
+}
+
+.status-dropdown__option--paid.status-dropdown__option--selected {
+  background: var(--color-staff-status-paid-bg);
+}
+
+/*
+ * An unselected option keeps dark label text but still shows its status
+ * colour on the dot, so the ladder is readable before anything is chosen.
+ */
+.status-dropdown__dot--new {
+  background: var(--color-staff-status-new-fg);
+}
+
+.status-dropdown__dot--cooking {
+  background: var(--color-staff-status-cooking-fg);
+}
+
+.status-dropdown__dot--ready {
+  background: var(--color-staff-status-ready-fg);
+}
+
+.status-dropdown__dot--served {
+  background: var(--color-staff-status-served-fg);
+}
+
+.status-dropdown__dot--unpaid {
+  background: var(--color-staff-status-unpaid-fg);
+}
+
+.status-dropdown__dot--paid {
+  background: var(--color-staff-status-paid-fg);
+}
