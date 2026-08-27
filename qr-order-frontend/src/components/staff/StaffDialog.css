@@ -1,0 +1,135 @@
+/* A04–A07 dialog shell. */
+.staff-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  /* Scrim, not shadow — DESIGN.md §6. */
+  background: rgb(0 0 0 / 40%);
+}
+
+.staff-dialog__card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  width: 100%;
+  max-height: 100%;
+  padding: var(--layout-staff-gutter);
+  border-radius: var(--radius-sheet);
+  background: var(--color-bg-canvas);
+  overflow-y: auto;
+}
+
+.staff-dialog__card--wide {
+  max-width: 680px;
+}
+
+.staff-dialog__card--narrow {
+  max-width: 480px;
+}
+
+.staff-dialog__body {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.staff-dialog__card:focus {
+  outline: none;
+}
+
+.staff-dialog__title {
+  margin: 0;
+  font: var(--type-title-screen);
+  color: var(--color-text-strong);
+}
+
+/*
+ * Pinned to the bottom of the card: on a 768px-tall iPad the taller dialogs
+ * scroll, and 취소/확인 must never be the part that scrolls out of reach.
+ */
+.staff-dialog__actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  padding-top: var(--space-3);
+  margin-top: auto;
+  background: var(--color-bg-canvas);
+}
+
+.staff-dialog__actions .op-button {
+  flex: 1;
+  min-width: 0;
+}
+
+.staff-dialog__impact {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 14px var(--space-4);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-staff-status-new-bg);
+  color: var(--color-staff-status-new-fg);
+}
+
+.staff-dialog__impact-title {
+  margin: 0;
+  font: var(--type-caption-strong);
+}
+
+.staff-dialog__impact-body {
+  margin: 0;
+  font: var(--type-caption-default);
+}
+
+.staff-dialog__summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 14px var(--space-4);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-surface);
+}
+
+.staff-dialog__summary-label {
+  margin: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-muted);
+}
+
+.staff-dialog__summary-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.staff-dialog__summary-table {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text-strong);
+}
+
+.staff-dialog__summary-table--lg {
+  font: var(--type-staff-table-no);
+}
+
+.staff-dialog__summary-table--md {
+  font: var(--type-title-section);
+}
+
+.staff-dialog__summary-meta {
+  margin: 0;
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-body);
+}
