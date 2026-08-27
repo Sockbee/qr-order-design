@@ -1,0 +1,65 @@
+/* staff/StaffNavigation (84:90). */
+.staff-nav {
+  display: flex;
+  flex-direction: column;
+  width: var(--layout-staff-rail-width);
+  flex-shrink: 0;
+  padding: var(--space-4) var(--space-3);
+  border-right: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+}
+
+.staff-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.staff-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 72px;
+  padding: 10px var(--space-2);
+  border-radius: var(--radius-btn-md);
+  color: var(--color-text-body);
+  text-decoration: none;
+}
+
+.staff-nav__item--active {
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
+
+.staff-nav__label {
+  font: var(--type-caption-strong);
+  color: inherit;
+}
+
+.staff-nav__count {
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+  font: var(--type-micro-badge);
+}
+
+/*
+ * The 테이블 badge counts tables that *need attention* — calls plus delays —
+ * not simply how many tables are active.
+ */
+.staff-nav__count--attention {
+  background: var(--color-status-attention-bg);
+  color: var(--color-status-attention-fg);
+}
+
+/* B01–B03 are not built yet — the rail shows them without linking anywhere. */
+.staff-nav__item--pending {
+  color: var(--color-text-muted);
+  cursor: default;
+}

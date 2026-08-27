@@ -1,0 +1,47 @@
+.table-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 10px;
+  border-radius: var(--radius-md);
+  font: var(--type-caption-strong);
+  white-space: nowrap;
+}
+
+.table-status-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.table-status-badge--new {
+  background: var(--color-staff-status-new-bg);
+  color: var(--color-staff-status-new-fg);
+}
+
+.table-status-badge--cooking {
+  background: var(--color-staff-status-cooking-bg);
+  color: var(--color-staff-status-cooking-fg);
+}
+
+.table-status-badge--ready {
+  background: var(--color-staff-status-ready-bg);
+  color: var(--color-staff-status-ready-fg);
+}
+
+.table-status-badge--served {
+  background: var(--color-staff-status-served-bg);
+  color: var(--color-staff-status-served-fg);
+}
+
+.table-status-badge--unpaid {
+  background: var(--color-staff-status-unpaid-bg);
+  color: var(--color-staff-status-unpaid-fg);
+}
+
+.table-status-badge--paid {
+  background: var(--color-staff-status-paid-bg);
+  color: var(--color-staff-status-paid-fg);
+}

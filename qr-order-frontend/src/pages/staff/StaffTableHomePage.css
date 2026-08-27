@@ -1,0 +1,100 @@
+/*
+ * A01 — Table Home (90:2), 1194×834. The rail is fixed at 88 and the main
+ * column takes the rest, so the layout holds on a narrower iPad (1024×768)
+ * without a second breakpoint: the grid simply wraps to fewer columns.
+ */
+.staff-home {
+  display: flex;
+  align-items: stretch;
+  min-height: 100dvh;
+  background: var(--color-bg-surface);
+}
+
+.staff-home__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.staff-home__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--layout-staff-header-height);
+  flex-shrink: 0;
+  padding: 0 var(--layout-staff-gutter);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+}
+
+.staff-home__title {
+  margin: 0;
+  margin-right: auto;
+  font: var(--type-title-screen);
+  color: var(--color-text-strong);
+}
+
+.staff-home__summary {
+  margin: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+  white-space: nowrap;
+}
+
+.staff-home__clock {
+  margin: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.staff-home__alert {
+  padding: var(--space-4) var(--layout-staff-gutter) 0;
+}
+
+.staff-home__calls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-4) var(--layout-staff-gutter) var(--space-1);
+}
+
+.staff-home__calls-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.staff-home__calls-title {
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+/* Tables that called, not calls raised. */
+.staff-home__calls-count {
+  padding: 2px var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-status-attention-bg);
+  color: var(--color-status-attention-fg);
+  font: var(--type-caption-strong);
+}
+
+.staff-home__call-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.staff-home__grid {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--space-4);
+  padding: var(--layout-staff-gutter);
+}

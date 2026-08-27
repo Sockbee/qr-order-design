@@ -1,0 +1,93 @@
+/* staff/CallRow (106:124). */
+.call-row {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-btn-md);
+  list-style: none;
+}
+
+.call-row--new {
+  background: var(--color-status-attention-bg);
+  border-color: var(--color-status-attention-fg);
+}
+
+.call-row--acknowledged {
+  background: var(--color-bg-surface);
+  border-color: var(--color-border-default);
+}
+
+.call-row__table {
+  flex-shrink: 0;
+  font: var(--type-staff-metric);
+  color: var(--color-text-strong);
+}
+
+.call-row--acknowledged .call-row__table {
+  color: var(--color-text-body);
+}
+
+.call-row__repeat {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-status-attention-fg);
+  color: var(--color-text-on-primary);
+  font: var(--type-micro-badge);
+}
+
+.call-row--acknowledged .call-row__repeat {
+  background: var(--color-bg-canvas);
+  color: var(--color-text-body);
+}
+
+.call-row__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.call-row__reason {
+  overflow: hidden;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.call-row__elapsed {
+  overflow: hidden;
+  font: var(--type-caption-default);
+  color: var(--color-status-attention-fg);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.call-row--acknowledged .call-row__reason,
+.call-row--acknowledged .call-row__elapsed {
+  color: var(--color-text-body);
+}
+
+.call-row__done {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  padding: var(--space-2) 10px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-body);
+  font: var(--type-micro-badge);
+}
+
+.call-row .op-button {
+  flex-shrink: 0;
+  min-width: 96px;
+}

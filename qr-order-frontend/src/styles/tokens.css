@@ -94,3 +94,51 @@
   --layout-min-touch-target: 48px;
   --layout-safe-area: max(34px, env(safe-area-inset-bottom, 0px));
 }
+
+/*
+ * Staff POS (운영 iPad) — Figma page "Staff POS — iPad" (81:132), frame
+ * A00 — Staff Foundations (98:1403).
+ *
+ * A00 states the rule explicitly: the staff app reuses the customer ramp and
+ * only picks smaller steps from the same scale, so density goes up without a
+ * second design language. Only what A00 marks 신규 is added here.
+ */
+:root {
+  /* Typography — the two A00 additions. Everything else is reused above. */
+  --type-staff-table-no: 700 32px / 40px var(--font-sans);
+  --type-staff-metric: 700 20px / 28px var(--font-sans);
+
+  /*
+   * Order status, 6 steps (A00 "Status semantics"). Namespaced `staff-` on
+   * purpose: Figma calls the grey terminal step `served`, but the customer
+   * app already owns `--color-status-served-*` as green. Same word, different
+   * step — merging them would silently repaint S08.
+   *
+   * Backend mapping: 주문 접수/조리 중/서빙 대기/서빙 완료 are Orders.status,
+   * 결제 대기/결제 완료 are payment_status.
+   */
+  --color-staff-status-new-bg: #e8f3ff;
+  --color-staff-status-new-fg: #1b64da;
+  --color-staff-status-cooking-bg: #fff4e6;
+  --color-staff-status-cooking-fg: #a35b00;
+  --color-staff-status-ready-bg: #e6f7ee;
+  --color-staff-status-ready-fg: #0f7a43;
+  --color-staff-status-served-bg: #f2f4f6;
+  --color-staff-status-served-fg: #4e5968;
+  --color-staff-status-unpaid-bg: #f0edff;
+  --color-staff-status-unpaid-fg: #5b3fd6;
+  --color-staff-status-paid-bg: #f2f4f6;
+  --color-staff-status-paid-fg: #8b95a1;
+
+  /* #e42939 stays reserved for real failure and delay (DESIGN.md §7). */
+  --color-text-danger: #e42939;
+
+  /* Layout — verified geometry from A01 (90:2), 1194×834. */
+  --layout-staff-rail-width: 88px;
+  --layout-staff-header-height: 72px;
+  --layout-staff-gutter: 24px;
+  --layout-staff-card-width: 198px;
+  --layout-staff-card-height: 190px;
+  /* 56, not the customer app's 48 — operated standing, at arm's length. */
+  --layout-staff-control-height: 56px;
+}

@@ -1,0 +1,141 @@
+/*
+ * staff/TableCard (87:45). 198×190 fixed — the grid must not break, because
+ * scanning it is the whole point of the screen.
+ */
+.table-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: var(--layout-staff-card-width);
+  height: var(--layout-staff-card-height);
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+}
+
+.table-card--empty {
+  background: var(--color-bg-surface);
+}
+
+.table-card--merged {
+  border-color: var(--color-border-selected);
+}
+
+.table-card__accent {
+  height: 3px;
+  flex-shrink: 0;
+}
+
+.table-card--attention .table-card__accent {
+  background: var(--color-text-danger);
+}
+
+.table-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-height: 0;
+  padding: 13px 14px;
+  overflow: hidden;
+}
+
+.table-card__table-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.table-card__number {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-staff-table-no);
+  color: var(--color-text-strong);
+}
+
+.table-card--empty .table-card__number {
+  color: var(--color-text-muted);
+}
+
+.table-card__attention-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-text-danger);
+}
+
+.table-card__call-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-status-attention-bg);
+  color: var(--color-status-attention-fg);
+  font: var(--type-micro-badge);
+}
+
+.table-card__call-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/*
+ * Empty is a normal operating state, not a failure — muted is correct here
+ * and carries no price or availability (CLAUDE.md §6).
+ */
+.table-card__empty {
+  font: var(--type-caption-strong);
+  color: var(--color-text-muted);
+}
+
+.table-card__merge-chip {
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+  font: var(--type-micro-badge);
+}
+
+.table-card__amount-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.table-card__amount {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-staff-metric);
+  color: var(--color-text-strong);
+}
+
+.table-card__discount {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+  font: var(--type-micro-badge);
+}
+
+.table-card__meta {
+  width: 100%;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.table-card--attention .table-card__meta {
+  color: var(--color-text-danger);
+}
