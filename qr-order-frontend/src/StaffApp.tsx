@@ -15,6 +15,11 @@ import {
   StaffTableOperationRoute,
 } from './pages/staff/StaffOperationRoutes'
 import type { StaffOperation } from './pages/staff/StaffOperationRoutes'
+import {
+  StaffKitchenRoute,
+  StaffPaymentRoute,
+  StaffServingRoute,
+} from './pages/staff/StaffStationRoutes'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { useStaffAuth } from './hooks/useStaffAuth'
 import { useStaffTableDetail } from './hooks/useStaffTableDetail'
@@ -158,6 +163,30 @@ function StaffApp() {
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffTableOperationRoute operation="edit" />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/kitchen"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffKitchenRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/serving"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffServingRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/payment"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffPaymentRoute />
             </RequireStaffAuth>
           )}
         />

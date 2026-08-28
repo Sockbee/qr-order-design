@@ -147,4 +147,7 @@
 
   /* A02's right-hand inspector (89:8). */
   --layout-staff-panel-width: 420px;
+
+  /* B01–B03 queue cards (88:68) — three across the 1106px main column. */
+  --layout-staff-station-card-width: 342px;
 }

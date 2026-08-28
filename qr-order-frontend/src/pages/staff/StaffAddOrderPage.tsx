@@ -94,9 +94,9 @@ export function StaffAddOrderPage({
       <StaffNavigation
         items={[
           { label: '테이블', to: '/staff/tables', count: null },
-          { label: '주방', to: null, count: null },
-          { label: '서빙', to: null, count: null },
-          { label: '결제', to: null, count: null },
+          { label: '주방', to: '/staff/kitchen', count: null },
+          { label: '서빙', to: '/staff/serving', count: null },
+          { label: '결제', to: '/staff/payment', count: null },
         ]}
       />
 
