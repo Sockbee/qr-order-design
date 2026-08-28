@@ -11,6 +11,8 @@ interface TableCardProps {
    * renders as plain content rather than a control that does nothing.
    */
   onSelect?: (tableId: string) => void
+  /** True while this table's detail panel is open. */
+  selected?: boolean
 }
 
 /**
@@ -25,7 +27,11 @@ interface TableCardProps {
  * `hasCall` is a boolean layered on top of any state, not a fifth state — a
  * call can arrive while cooking or while merged.
  */
-export function TableCard({ table, onSelect }: TableCardProps) {
+export function TableCard({
+  table,
+  onSelect,
+  selected = false,
+}: TableCardProps) {
   const delayed =
     table.occupied &&
     !table.paid &&
@@ -102,9 +108,12 @@ export function TableCard({ table, onSelect }: TableCardProps) {
   return (
     <button
       type="button"
-      className={`table-card table-card--${state}`}
+      className={`table-card table-card--${state}${
+        selected ? ' table-card--selected' : ''
+      }`}
       onClick={() => onSelect(table.tableId)}
       aria-label={label}
+      aria-pressed={selected}
     >
       {content}
     </button>

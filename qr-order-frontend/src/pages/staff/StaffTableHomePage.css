@@ -6,8 +6,22 @@
 .staff-home {
   display: flex;
   align-items: stretch;
-  min-height: 100dvh;
+  /*
+   * The POS fills the screen and does not scroll as a page: the rail, header
+   * and call strip stay put while only the grid moves. `dvh`, not `vh` —
+   * browser chrome makes `vh` wrong on a tablet.
+   */
+  height: 100dvh;
+  overflow: hidden;
   background: var(--color-bg-surface);
+}
+
+/*
+ * A02 is A01 with the inspector docked on the right; the grid keeps the same
+ * tile size and simply wraps to fewer columns.
+ */
+.staff-home--with-panel .staff-home__main {
+  min-width: 0;
 }
 
 .staff-home__main {
@@ -15,6 +29,7 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
 }
 
 .staff-home__header {
@@ -96,5 +111,7 @@
   flex-wrap: wrap;
   align-content: flex-start;
   gap: var(--space-4);
+  min-height: 0;
   padding: var(--layout-staff-gutter);
+  overflow-y: auto;
 }

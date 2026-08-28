@@ -86,3 +86,59 @@ export interface StaffTableHomeData {
   pendingItemCount: number
   delayedTableCount: number
 }
+
+/** One line of the A02 order list (staff/StaffOrderItem, 87:68). */
+export interface StaffOrderItem {
+  itemId: string
+  name: string
+  /** Joined option summary, or `—` when there is none. */
+  optionSummary: string
+  quantity: number
+  amount: number
+  /** Cancelled lines stay in the list, struck through — see the component. */
+  cancelled: boolean
+  /** Item-level memo, shown directly under the line. */
+  note: string | null
+}
+
+/**
+ * staff/OrderNote (87:81). A memo is an operational instruction, so the tag
+ * says which team it is addressed to without relying on colour.
+ */
+export type StaffNoteAudience = 'general' | 'kitchen' | 'serving'
+
+export interface StaffNote {
+  noteId: string
+  audience: StaffNoteAudience
+  text: string
+}
+
+export const STAFF_NOTE_LABELS: Record<StaffNoteAudience, string> = {
+  general: '메모',
+  kitchen: '주방',
+  serving: '서빙',
+}
+
+/** Money as A02 breaks it down (§4.12 `tables/bill`). */
+export interface StaffBill {
+  subtotalAmount: number
+  discountRate: number
+  discountAmount: number
+  finalAmount: number
+  paid: boolean
+}
+
+/** Everything the 420px inspector panel renders for one table. */
+export interface StaffTableDetail {
+  tableId: string
+  displayName: string
+  status: StaffOrderStatus | null
+  elapsedMinutes: number | null
+  bill: StaffBill
+  items: StaffOrderItem[]
+  notes: StaffNote[]
+  /** Present while the table has unacknowledged calls. */
+  call: StaffCallGroup | null
+  /** Set when this table is part of a merge. */
+  mergeLabel: string | null
+}

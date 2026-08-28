@@ -6,10 +6,13 @@ import {
   Route,
   Routes,
   useNavigate,
+  useParams,
 } from 'react-router-dom'
+import { TableDetailPanel } from './components/staff/TableDetailPanel'
 import { StaffLoginPage } from './pages/staff/StaffLoginPage'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { useStaffAuth } from './hooks/useStaffAuth'
+import { useStaffTableDetail } from './hooks/useStaffTableDetail'
 import { useStaffTableHome } from './hooks/useStaffTableHome'
 
 type StaffAuth = ReturnType<typeof useStaffAuth>
@@ -46,6 +49,8 @@ function StaffLoginRoute({ auth }: { auth: StaffAuth }) {
 function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
   const staff = useStaffTableHome()
   const navigate = useNavigate()
+  const { tableId } = useParams()
+  const detail = useStaffTableDetail(tableId ?? null)
 
   useEffect(() => {
     if (!staff.unauthorized) return
@@ -63,6 +68,37 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
       acknowledgingTableId={staff.acknowledgingTableId}
       onRetry={staff.retry}
       onAcknowledge={staff.acknowledge}
+      selectedTableId={tableId ?? null}
+      onSelectTable={(next) => navigate(`/staff/tables/${next}`)}
+      renderPanel={
+        tableId
+          ? (now) => (
+              <TableDetailPanel
+                detail={detail.detail}
+                now={now}
+                loading={detail.loading}
+                statusPhase={detail.statusPhase}
+                statusError={detail.statusError}
+                onDismissStatusError={detail.dismissStatusError}
+                acknowledging={staff.acknowledgingTableId === tableId}
+                onClose={() => navigate('/staff/tables')}
+                onAcknowledgeCall={staff.acknowledge}
+                onStatusChange={detail.changeStatus}
+                onAddOrder={() => navigate(`/staff/tables/${tableId}/order`)}
+                onConfirmPayment={() =>
+                  navigate(`/staff/tables/${tableId}/payment`)
+                }
+                onMove={() => navigate(`/staff/tables/${tableId}/move`)}
+                onMerge={() => navigate(`/staff/tables/${tableId}/merge`)}
+                onSplit={() => navigate(`/staff/tables/${tableId}/split`)}
+                onDiscount={() => navigate(`/staff/tables/${tableId}/discount`)}
+                onNote={() => navigate(`/staff/tables/${tableId}/note`)}
+                onEditOrder={() => navigate(`/staff/tables/${tableId}/edit`)}
+                onCancelOrder={() => navigate(`/staff/tables/${tableId}/cancel`)}
+              />
+            )
+          : undefined
+      }
     />
   )
 }
@@ -77,6 +113,14 @@ function StaffApp() {
         <Route path="/staff/login" element={<StaffLoginRoute auth={auth} />} />
         <Route
           path="/staff/tables"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffTableHomeRoute auth={auth} />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/tables/:tableId"
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffTableHomeRoute auth={auth} />

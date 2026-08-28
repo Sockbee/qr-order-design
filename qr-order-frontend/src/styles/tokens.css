@@ -144,4 +144,7 @@
 
   /* Card and sheet corner used by the A09 login card (113:1796). */
   --radius-sheet: 16px;
+
+  /* A02's right-hand inspector (89:8). */
+  --layout-staff-panel-width: 420px;
 }
