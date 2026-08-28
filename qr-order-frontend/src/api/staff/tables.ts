@@ -1,6 +1,8 @@
 import { callStaffApi } from './client'
+import { TABLE_ELAPSED } from '../../utils/elapsed'
 import type {
   StaffOrderStatus,
+  StaffStationCounts,
   StaffTableHomeData,
   StaffTableSummary,
 } from '../../types/staff'
@@ -29,6 +31,7 @@ export interface StaffTableListItem {
 
 export interface StaffTableListResponse {
   tables: StaffTableListItem[]
+  stationCounts: StaffStationCounts
   serverTime: string
 }
 
@@ -87,9 +90,9 @@ export function mapStaffTables(
   })
 }
 
-/** Warning amber at 24분, delayed red at 35분 — see the PR document. */
-export const ELAPSED_WARNING_MINUTES = 24
-export const ELAPSED_DELAYED_MINUTES = 35
+/** The table ladder. Kitchen and serving use their own — see utils/elapsed. */
+export const ELAPSED_WARNING_MINUTES = TABLE_ELAPSED.warning
+export const ELAPSED_DELAYED_MINUTES = TABLE_ELAPSED.delayed
 
 export function isDelayed(table: StaffTableSummary): boolean {
   return (
@@ -106,8 +109,10 @@ export function isDelayed(table: StaffTableSummary): boolean {
 export function buildTableHomeData(
   tables: StaffTableSummary[],
   callGroups: StaffCallGroup[],
+  stationCounts?: StaffStationCounts,
 ): StaffTableHomeData {
   const pending = callGroups.filter((group) => !group.acknowledged)
+  const delayedTableCount = tables.filter(isDelayed).length
   return {
     tables,
     callGroups,
@@ -117,7 +122,13 @@ export function buildTableHomeData(
       (total, table) => total + table.pendingItemCount,
       0,
     ),
-    delayedTableCount: tables.filter(isDelayed).length,
+    delayedTableCount,
+    stationCounts: {
+      tables: pending.length + delayedTableCount,
+      kitchen: stationCounts?.kitchen ?? 0,
+      serving: stationCounts?.serving ?? 0,
+      payment: stationCounts?.payment ?? 0,
+    },
   }
 }
 

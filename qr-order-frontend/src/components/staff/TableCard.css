@@ -25,6 +25,11 @@
   border-color: var(--color-border-selected);
 }
 
+/* Open in the inspector — a 2px edge, not a new fill. */
+.table-card--selected {
+  border: 2px solid var(--color-border-selected);
+}
+
 .table-card__accent {
   height: 3px;
   flex-shrink: 0;

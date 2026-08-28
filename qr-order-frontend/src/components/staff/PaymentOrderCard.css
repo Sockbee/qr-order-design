@@ -1,0 +1,77 @@
+.payment-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  width: var(--layout-staff-station-card-width);
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+}
+
+.payment-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.payment-card__table {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: var(--type-staff-table-no);
+  color: var(--color-text-strong);
+}
+
+.payment-card__money {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.payment-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.payment-card__row span,
+.payment-card__final span {
+  flex: 1;
+  min-width: 0;
+}
+
+.payment-card__row strong {
+  font: var(--type-caption-strong);
+}
+
+.payment-card__row--discount {
+  color: var(--color-text-weak);
+}
+
+.payment-card__final {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--color-text-strong);
+}
+
+.payment-card__final span {
+  font: var(--type-body-strong);
+}
+
+/* The figure the operator checks against the bank app. */
+.payment-card__final strong {
+  font: var(--type-staff-metric);
+}
+
+.payment-card__waited {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-muted);
+}

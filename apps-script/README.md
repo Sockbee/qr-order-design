@@ -23,6 +23,7 @@ Apps Script V8 프로젝트다.
 - `StaffAuthService.gs`: 운영 로그인, HMAC token, throttle, 운영 action dispatch
 - `StaffCallService.gs`: 미확인 호출 그룹 조회와 테이블 단위 일괄 확인
 - `StaffTableService.gs`: 청구, 할인, 이동, 합석, 분리, 결제 확정
+- `StaffDashboardService.gs`: 테이블 현황·상세, 스테이션 queue, 상태, 메뉴, 운영 주문
 - `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
 - `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
@@ -80,6 +81,13 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 - `POST {STAFF_WEB_APP_URL}/exec/staff/tables/merge`
 - `POST {STAFF_WEB_APP_URL}/exec/staff/tables/split`
 - `POST {STAFF_WEB_APP_URL}/exec/staff/tables/confirm-payment`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/list`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/detail`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/orders/status`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/orders/queue`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/menu/list`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/menu/availability`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/orders/create`
 - 모든 운영 action은 `staff/` prefix를 사용하며 body에 `staffToken`을 포함
 - path routing이 제한된 환경에서는 각 endpoint를 `?action=...` 형식으로도 지원
 

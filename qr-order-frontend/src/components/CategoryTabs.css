@@ -59,3 +59,42 @@
 .category-tab:focus-visible {
   outline-offset: -2px;
 }
+
+/*
+ * Pill variant — the staff A03 filter (92:840). Not sticky and not
+ * underlined: it sits inside a scrolling panel, so it scrolls with it.
+ */
+.category-tabs--pill {
+  position: static;
+  gap: var(--space-3);
+  padding: 0;
+  border-bottom: none;
+  background: none;
+}
+
+.category-tabs--pill .category-tab {
+  height: auto;
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+}
+
+.category-tabs--pill .category-tab[aria-selected='true'] {
+  border-color: var(--color-border-selected);
+  background: var(--color-bg-weak);
+}
+
+.category-tabs--pill .category-tab__label {
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+}
+
+.category-tabs--pill .category-tab[aria-selected='true'] .category-tab__label {
+  color: var(--color-text-weak);
+}
+
+/* The pill carries selection itself; the underline bar has no job here. */
+.category-tabs--pill .category-tab__indicator {
+  display: none;
+}

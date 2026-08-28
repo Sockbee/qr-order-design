@@ -1,0 +1,134 @@
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-card:hover:not(:disabled) {
+  border-color: var(--color-border-selected);
+}
+
+.menu-card--sold-out {
+  background: var(--color-bg-surface);
+  cursor: default;
+}
+
+.menu-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.menu-card__name {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.menu-card--sold-out .menu-card__name {
+  color: var(--color-text-muted);
+}
+
+.menu-card__badge {
+  flex-shrink: 0;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-body);
+  font: var(--type-micro-badge);
+}
+
+/*
+ * Price stays at body strength even when sold out — muted fails 4.5:1 and
+ * must never carry a price (CLAUDE.md §6).
+ */
+.menu-card__price {
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+}
+
+.availability-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+}
+
+.availability-card--sold-out {
+  background: var(--color-bg-surface);
+}
+
+.availability-card__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.availability-card__name {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.availability-card--sold-out .availability-card__name {
+  color: var(--color-text-muted);
+}
+
+.availability-card__price {
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+}
+
+.availability-card__switch {
+  display: flex;
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-surface);
+  overflow: hidden;
+}
+
+.availability-card__option {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-btn-md);
+  background: none;
+  color: var(--color-text-body);
+  font: var(--type-caption-strong);
+  cursor: pointer;
+}
+
+.availability-card__option--on {
+  border-color: var(--color-border-selected);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-weak);
+}
+
+/*
+ * Sold out is the one place a red outline is right: it is the state that
+ * stops orders, and DESIGN.md §7 reserves red for exactly that kind of stop.
+ * It stays an outline, never a filled red.
+ */
+.availability-card__option--off {
+  border-color: var(--color-text-danger);
+  background: var(--color-status-attention-bg);
+  color: var(--color-text-danger);
+}
+
+.availability-card__option:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

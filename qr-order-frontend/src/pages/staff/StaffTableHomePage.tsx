@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import './StaffTableHomePage.css'
 import { CallRow } from '../../components/staff/CallRow'
 import { StaffEmptyState } from '../../components/staff/StaffEmptyState'
@@ -17,8 +18,14 @@ interface StaffTableHomePageProps {
   acknowledgingTableId: string | null
   onRetry: () => void
   onAcknowledge: (tableId: string) => void
-  /** Absent until A02 — Table Detail is built. */
   onSelectTable?: (tableId: string) => void
+  /**
+   * The A02 inspector. Absent on A01, which is the same screen without it.
+   * Takes the page clock so the panel's elapsed labels tick with the header's.
+   */
+  renderPanel?: (now: number) => ReactNode
+  /** Highlighted while its detail is open. */
+  selectedTableId?: string | null
 }
 
 const SKELETON_COUNT = 15
@@ -58,14 +65,18 @@ export function StaffTableHomePage({
   onRetry,
   onAcknowledge,
   onSelectTable,
+  renderPanel,
+  selectedTableId = null,
 }: StaffTableHomePageProps) {
   const { label: clock, now } = useClock()
   const pendingCalls = data?.callGroups ?? []
-  const attentionCount =
-    (data?.callingTableCount ?? 0) + (data?.delayedTableCount ?? 0)
+  const attentionCount = data?.stationCounts.tables ?? 0
 
   return (
-    <div className="staff-home" data-staff-app>
+    <div
+      className={`staff-home${renderPanel ? ' staff-home--with-panel' : ''}`}
+      data-staff-app
+    >
       <StaffNavigation
         items={[
           {
@@ -75,10 +86,9 @@ export function StaffTableHomePage({
             count: data ? attentionCount : null,
             attention: true,
           },
-          /* B01–B03 are not implemented in this branch. */
-          { label: '주방', to: null, count: null },
-          { label: '서빙', to: null, count: null },
-          { label: '결제', to: null, count: null },
+          { label: '주방', to: '/staff/kitchen', count: data?.stationCounts.kitchen ?? null },
+          { label: '서빙', to: '/staff/serving', count: data?.stationCounts.serving ?? null },
+          { label: '결제', to: '/staff/payment', count: data?.stationCounts.payment ?? null },
         ]}
       />
 
@@ -149,6 +159,7 @@ export function StaffTableHomePage({
               <TableCard
                 key={table.tableId}
                 table={table}
+                selected={table.tableId === selectedTableId}
                 onSelect={onSelectTable}
               />
             ))}
@@ -178,6 +189,8 @@ export function StaffTableHomePage({
           )}
         </section>
       </main>
+
+      {renderPanel?.(now)}
     </div>
   )
 }

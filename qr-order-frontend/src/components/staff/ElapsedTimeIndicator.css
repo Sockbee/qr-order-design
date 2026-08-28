@@ -1,0 +1,22 @@
+.elapsed {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  font: var(--type-caption-strong);
+  white-space: nowrap;
+}
+
+.elapsed--normal {
+  color: var(--color-text-muted);
+}
+
+.elapsed--warning {
+  color: var(--color-staff-status-cooking-fg);
+}
+
+/* Only the delayed level becomes a chip — it is the one that must be seen. */
+.elapsed--delayed {
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-status-attention-bg);
+  color: var(--color-status-attention-fg);
+}

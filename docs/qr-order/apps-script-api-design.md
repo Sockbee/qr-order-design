@@ -42,6 +42,13 @@ POST {STAFF_WEB_APP_URL}/exec/staff/tables/move
 POST {STAFF_WEB_APP_URL}/exec/staff/tables/merge
 POST {STAFF_WEB_APP_URL}/exec/staff/tables/split
 POST {STAFF_WEB_APP_URL}/exec/staff/tables/confirm-payment
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/list
+POST {STAFF_WEB_APP_URL}/exec/staff/tables/detail
+POST {STAFF_WEB_APP_URL}/exec/staff/orders/status
+POST {STAFF_WEB_APP_URL}/exec/staff/orders/queue
+POST {STAFF_WEB_APP_URL}/exec/staff/menu/list
+POST {STAFF_WEB_APP_URL}/exec/staff/menu/availability
+POST {STAFF_WEB_APP_URL}/exec/staff/orders/create
 ```
 
 `staffToken`은 **request body**에 담는다. `Authorization` header를 쓰지 않는 이유는 위와 같다 — Apps Script event object가 임의 request header를 다루지 못하고, custom header는 CORS preflight를 유발한다.
@@ -71,6 +78,7 @@ AdminTriggers.gs     # onOpen, 설치형 edit trigger, 운영진 상태 변경 g
 Setup.gs             # Sheet/header/validation/bootstrap/diagnostics
 CatalogSeed.gs       # 초기 Categories/Menu idempotent seed
 Diagnostics.gs       # runDiagnostics, FK/금액/snapshot 무결성 검사
+StaffDashboardService.gs # 운영 현황·queue·메뉴·상태·주문 생성
 ```
 
 각 파일은 관련 함수 이름에 prefix를 붙이기보다 Apps Script 관례대로 public entry만 명확히 두고 내부 함수에 trailing underscore를 쓴다. 예: `createOrder`는 service entry, `readSheetObjects_`는 내부 helper다. class와 repository instance를 과도하게 만들지 않는다.
@@ -1469,6 +1477,16 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
   과거 결제 금액이 다시 청구되지 않게 한다.
 - `tables/bill`은 결제 전에는 현재 주문으로 재계산하고, 결제 후에는 대표 세션에 확정된
   금액 snapshot을 반환한다. 이후 원본 주문 행이 정정되어도 확정 청구액은 바뀌지 않는다.
+- 운영 화면의 `COOKING`/`READY`/`SERVED`는 프론트 계약 별칭이며 Sheet에는 각각
+  `PREPARING`/`SERVING`/`COMPLETED`로 저장한다. `RECEIVED`는 그대로 저장한다.
+- `orders/status`는 위 네 주문 단계만 바꾼다. `UNPAID`/`PAID`는 주문 상태 dropdown에서
+  제외하며, 결제 확정은 반드시 `tables/confirm-payment`와 `expectedFinalAmount`를 거쳐
+  처리한다.
+- `tables/list.stationCounts`는 테이블 화면의 한 번의 poll로 네 navigation badge를 모두
+  채운다. 별도의 `orders/queue` 중복 poll은 추가하지 않는다.
+- 운영 주문 생성 계약에는 client request ID가 없으므로 서버가 내부 ID를 발급한다.
+  네트워크 결과가 불명확한 요청의 자동 재전송은 하지 않으며, 후속 계약 개정 전까지
+  고객 주문과 같은 client-side idempotent replay는 제공하지 않는다.
 
 ## 10. 구현 시 남은 결정
 
