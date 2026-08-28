@@ -28,6 +28,15 @@ body {
   background: var(--color-bg-canvas);
 }
 
+/*
+ * The 480px column is the customer phone app. The staff POS is a 1194×834
+ * iPad layout riding the same bundle, so it opts out of the column rather
+ * than the column having to know about it.
+ */
+#root:has(> .staff-home) {
+  max-width: none;
+}
+
 h1,
 h2,
 h3,

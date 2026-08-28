@@ -1,0 +1,38 @@
+.table-skeleton {
+  display: flex;
+  flex-direction: column;
+  width: var(--layout-staff-card-width);
+  height: var(--layout-staff-card-height);
+  padding: 16px 14px;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+}
+
+.table-skeleton__bar {
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+}
+
+.table-skeleton__bar--number {
+  width: 80px;
+  height: 32px;
+  margin-bottom: var(--space-3);
+}
+
+.table-skeleton__bar--status {
+  width: 70px;
+  height: 22px;
+  margin-bottom: var(--space-3);
+}
+
+.table-skeleton__bar--amount {
+  width: 110px;
+  height: 26px;
+  margin-bottom: var(--space-3);
+}
+
+.table-skeleton__bar--meta {
+  width: 150px;
+  height: 18px;
+}

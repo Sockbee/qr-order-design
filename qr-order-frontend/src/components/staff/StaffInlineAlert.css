@@ -1,0 +1,28 @@
+.staff-alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px var(--space-4);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-status-attention-bg);
+}
+
+.staff-alert__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--color-status-attention-fg);
+}
+
+.staff-alert__title {
+  margin: 0;
+  font: var(--type-body-strong);
+}
+
+.staff-alert__detail {
+  margin: 0;
+  font: var(--type-caption-default);
+}
