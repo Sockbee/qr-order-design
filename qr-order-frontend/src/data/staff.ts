@@ -5,7 +5,11 @@
  * import it directly.
  */
 
-import type { StaffCallGroup, StaffTableSummary } from '../types/staff'
+import type {
+  StaffCallGroup,
+  StaffTableDetail,
+  StaffTableSummary,
+} from '../types/staff'
 
 interface Seed {
   n: number
@@ -77,3 +81,75 @@ export const staffCallGroups: StaffCallGroup[] = [
     callIds: ['seed-a17f'],
   },
 ]
+
+/** The sample table drawn in the A02 inspector (89:8). */
+export function staffTableDetail(tableId: string): StaffTableDetail {
+  const table = staffTables.find((candidate) => candidate.tableId === tableId)
+  const subtotal = table?.amount ?? 0
+  const discountRate = table?.discountLabel ? 20 : 0
+  const discountAmount = Math.floor((subtotal * discountRate) / 100)
+  const call = staffCallGroups.find(
+    (group) => group.tableId === tableId,
+  )
+
+  return {
+    tableId,
+    displayName: table?.displayName ?? tableId,
+    status: table?.status ?? null,
+    elapsedMinutes: table?.elapsedMinutes ?? null,
+    bill: {
+      subtotalAmount: subtotal,
+      discountRate,
+      discountAmount,
+      finalAmount: subtotal - discountAmount,
+      paid: table?.paid ?? false,
+    },
+    items: [
+      {
+        itemId: `${tableId}-1`,
+        name: '김치전',
+        optionSummary: '바삭하게',
+        quantity: 2,
+        amount: 18_000,
+        cancelled: false,
+        note: '고수 빼주세요',
+      },
+      {
+        itemId: `${tableId}-2`,
+        name: '떡볶이',
+        optionSummary: '기본',
+        quantity: 1,
+        amount: 9_000,
+        cancelled: false,
+        note: null,
+      },
+      {
+        itemId: `${tableId}-3`,
+        name: '소주',
+        optionSummary: '참이슬',
+        quantity: 3,
+        amount: 15_000,
+        cancelled: false,
+        note: null,
+      },
+      {
+        itemId: `${tableId}-4`,
+        name: '해물파전',
+        optionSummary: '—',
+        quantity: 1,
+        amount: 15_000,
+        cancelled: true,
+        note: null,
+      },
+    ],
+    notes: [
+      {
+        noteId: `${tableId}-note-1`,
+        audience: 'general',
+        text: '선배님 테이블 — 접시 여유 있게',
+      },
+    ],
+    call: call ?? null,
+    mergeLabel: table?.mergeLabel ?? null,
+  }
+}
