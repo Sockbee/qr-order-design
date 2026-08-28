@@ -1462,6 +1462,13 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
   entry에서만 참조하며 고객 entry가 내려받는 JavaScript에는 포함하지 않는다.
 - 같은 Apps Script 소스에서 고객/운영의 동명 action을 안전하게 분기하도록 운영
   `?action=` 값은 §1의 transport와 동일하게 항상 `staff/` prefix를 사용한다.
+- 기존 Orders A:T는 열 위치를 보존하고 U에 `session_id`만 추가한다. bootstrap은 A:T가
+  정확히 canonical일 때만 이 suffix migration을 자동 수행하며 다른 header 차이는 중단한다.
+- 기존 주문 backfill은 같은 테이블의 `PAID` 주문과 미결제 주문을 서로 다른 세션으로
+  분리한다. 결제 완료분은 닫힌 이력 세션에 snapshot하고 미결제분만 열린 세션에 두어
+  과거 결제 금액이 다시 청구되지 않게 한다.
+- `tables/bill`은 결제 전에는 현재 주문으로 재계산하고, 결제 후에는 대표 세션에 확정된
+  금액 snapshot을 반환한다. 이후 원본 주문 행이 정정되어도 확정 청구액은 바뀌지 않는다.
 
 ## 10. 구현 시 남은 결정
 

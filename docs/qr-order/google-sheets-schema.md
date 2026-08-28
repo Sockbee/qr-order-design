@@ -435,6 +435,11 @@ Orders를 `table_id`에만 매달면 이 넷 중 어느 것도 표현할 수 없
 
 세션은 `resolveTable`에서 해당 `table_id`의 `OPEN` 세션이 없을 때 생성한다. 주문 생성 시 그 세션 id를 `Orders.session_id`에 기록한다.
 
+기존 Orders A:T를 운영 중인 Spreadsheet는 bootstrap 시 U에 `session_id`를 끝 열로만
+추가한다. backfill할 때 같은 table의 결제 완료 주문은 닫힌 이력 세션으로, 나머지는 열린
+세션으로 분리한다. 방문 경계를 복원할 정보가 없는 과거 데이터의 최소 안전 단위이며,
+결제 완료 주문이 현재 청구에 다시 포함되는 것을 방지한다.
+
 ### 청구 그룹
 
 `merged_into_session_id`가 비어 있는 세션이 **대표**다. 청구 그룹 = 대표 + 대표를 가리키는 세션들.
@@ -453,7 +458,8 @@ final_amount    = subtotal - discount_amount
 ```
 
 - 원 단위 정수이며 버림(floor)이다. 반올림하면 표시 금액과 입금액이 1원 어긋날 수 있다.
-- 이 계산은 **조회 시점마다 다시 한다.** 결제 확정 전까지 Sheet에 저장하지 않는다.
+- 이 계산은 **결제 전 조회 시점마다 다시 한다.** 결제 확정 전까지 Sheet에 저장하지
+  않는다. 결제 후 조회는 대표 세션의 확정 snapshot을 사용한다.
 
 ### 할인
 

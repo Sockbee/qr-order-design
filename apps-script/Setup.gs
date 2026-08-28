@@ -43,6 +43,8 @@ function bootstrapSpreadsheet() {
       summary.configuredSheets.push(sheetName);
     });
 
+    summary.sessionMigration = migrateLegacyOrdersToSessions_(spreadsheet);
+
     summary.insertedSettings = seedSettings_(spreadsheet);
 
     // Settings rows now exist, so width and validation can include the seeded values.
@@ -94,6 +96,14 @@ function ensureCanonicalSheet_(spreadsheet, sheetName) {
   const extraHeader = sheet.getRange(1, 1, 1, extraLastColumn).getDisplayValues()[0]
     .slice(expected.length)
     .filter(value => value !== '');
+
+  const safeOrdersSuffixMigration = sheetName === 'Orders' &&
+    valuesEqual_(actual.slice(0, expected.length - 1), expected.slice(0, expected.length - 1)) &&
+    actual[expected.length - 1] === '' && extraHeader.length === 0;
+  if (safeOrdersSuffixMigration) {
+    sheet.getRange(1, expected.length).setValue(expected[expected.length - 1]);
+    return { sheet: sheet, created: created, repairedHeader: true };
+  }
 
   if (!valuesEqual_(actual, expected) || extraHeader.length > 0) {
     const hasData = sheet.getLastRow() > 1 && sheet.getRange(
