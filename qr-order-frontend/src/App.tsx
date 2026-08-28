@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import type { ReactNode } from 'react'
 import {
   BrowserRouter,
   Navigate,
@@ -16,15 +15,11 @@ import { OrderCompletePage } from './pages/OrderCompletePage'
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage'
 import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
-import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
-import { StaffLoginPage } from './pages/staff/StaffLoginPage'
 import { CallStaffSheet } from './components/CallStaffSheet'
 import { useOrderSession } from './hooks/useOrderSession'
 import { useStaffCall } from './hooks/useStaffCall'
 import { useOrderPolling } from './hooks/useOrderPolling'
 import { useStorefront } from './hooks/useStorefront'
-import { useStaffTableHome } from './hooks/useStaffTableHome'
-import { useStaffAuth } from './hooks/useStaffAuth'
 import type { OrderSession } from './hooks/useOrderSession'
 import { mapRemoteOrders } from './api/orders'
 import {
@@ -292,89 +287,16 @@ function OrderStatusRoute({
   )
 }
 
-type StaffAuth = ReturnType<typeof useStaffAuth>
-
-/**
- * Every staff screen sits behind A09. When the API is not configured the
- * guard stands down, so the seeded UI still runs without a deployment.
- */
-function RequireStaffAuth({
-  auth,
-  children,
-}: {
-  auth: StaffAuth
-  children: ReactNode
-}) {
-  if (auth.configured && !auth.session) {
-    return <Navigate to="/staff/login" replace />
-  }
-  return <>{children}</>
-}
-
-function StaffLoginRoute({ auth }: { auth: StaffAuth }) {
-  if (auth.session) return <Navigate to="/staff/tables" replace />
-
-  return (
-    <StaffLoginPage
-      submitting={auth.submitting}
-      error={auth.error}
-      expired={auth.expired}
-      onSubmit={(station, passcode) => {
-        void auth.login(station, passcode)
-      }}
-      onDismissError={auth.clearError}
-    />
-  )
-}
-
-/**
- * The staff POS is a different app on the same bundle: its own Apps Script
- * deployment, its own token, and no customer session. It is mounted here only
- * so both share one router.
- */
-function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
-  const staff = useStaffTableHome()
-  const navigate = useNavigate()
-
-  /*
-   * A rejected token cannot be recovered from this screen — drop the session
-   * so the guard sends the operator to A09 instead of leaving them on an
-   * alert they cannot act on.
-   */
-  useEffect(() => {
-    if (!staff.unauthorized) return
-    auth.logout()
-    navigate('/staff/login', { replace: true })
-  }, [auth, navigate, staff.unauthorized])
-
-  return (
-    <StaffTableHomePage
-      data={staff.data}
-      loading={staff.loading}
-      errorMessage={staff.error?.message}
-      retryable={staff.retryable}
-      unauthorized={staff.unauthorized}
-      acknowledgingTableId={staff.acknowledgingTableId}
-      onRetry={staff.retry}
-      onAcknowledge={staff.acknowledge}
-    />
-  )
-}
-
 function App() {
   const location = window.location
-  // The staff POS shares the bundle but not the customer session.
-  const isStaffRoute = location.pathname.startsWith('/staff')
   const initialTableMatch = location.pathname.match(/^\/t\/(T\d{2,})\/?$/)
   const initialToken = new URLSearchParams(location.search).get('token')
   const storedTableId = readStoredString(LAST_TABLE_ID_KEY)
   const storedToken = readStoredString(LAST_TOKEN_KEY)
   const [credentials, setCredentials] = useState<TableCredentials | null>(() => {
-    if (isStaffRoute) return null
     return parseCredentials(initialTableMatch?.[1], initialToken) ??
       parseCredentials(storedTableId, storedToken)
   })
-  const staffAuth = useStaffAuth()
   const storefront = useStorefront(credentials)
   const session = useOrderSession(
     credentials?.tableToken ?? tableSession.token,
@@ -460,16 +382,6 @@ function App() {
         <Route
           path="/orders/:orderNumber/done"
           element={<OrderCompleteRoute session={session} />}
-        />
-        <Route path="/staff" element={<Navigate to="/staff/tables" replace />} />
-        <Route path="/staff/login" element={<StaffLoginRoute auth={staffAuth} />} />
-        <Route
-          path="/staff/tables"
-          element={(
-            <RequireStaffAuth auth={staffAuth}>
-              <StaffTableHomeRoute auth={staffAuth} />
-            </RequireStaffAuth>
-          )}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

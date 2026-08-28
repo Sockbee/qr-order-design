@@ -39,13 +39,15 @@ interface StaffAuthState {
 function describe(error: unknown): StaffAuthError {
   const code = error instanceof ApiClientError ? error.code : 'NETWORK_ERROR'
   switch (code) {
-    case 'STAFF_LOGIN_THROTTLED':
+    case 'STAFF_LOGIN_THROTTLED': {
+      const retryAfter = readRetryAfter(error)
       return {
         title: '잠시 후 다시 시도해 주세요',
         detail: `10분 안에 5번 실패했습니다. ${THROTTLE_MINUTES}분 뒤에 다시 인증할 수 있습니다.`,
         tone: 'danger',
-        throttledUntil: Date.now() + THROTTLE_MINUTES * 60_000,
+        throttledUntil: retryAfter ?? Date.now() + THROTTLE_MINUTES * 60_000,
       }
+    }
     case 'INVALID_DEVICE_LABEL':
       return {
         title: '스테이션을 다시 골라 주세요',
@@ -79,6 +81,17 @@ function describe(error: unknown): StaffAuthError {
         throttledUntil: null,
       }
   }
+}
+
+function readRetryAfter(error: unknown): number | null {
+  if (!(error instanceof ApiClientError) || !error.details ||
+      typeof error.details !== 'object') return null
+  const value = 'retryAfter' in error.details
+    ? (error.details as { retryAfter?: unknown }).retryAfter
+    : null
+  if (typeof value !== 'string') return null
+  const timestamp = Date.parse(value)
+  return Number.isFinite(timestamp) && timestamp > Date.now() ? timestamp : null
 }
 
 export function useStaffAuth(): StaffAuthState {

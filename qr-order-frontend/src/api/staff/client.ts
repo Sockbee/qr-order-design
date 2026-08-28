@@ -83,6 +83,7 @@ const AUTH_ERROR_CODES = new Set([
   'STAFF_TOKEN_REVOKED',
   'STAFF_TOKEN_INVALID',
   'STAFF_TOKEN_MISSING',
+  'STAFF_AUTH_REQUIRED',
 ])
 
 export function isStaffAuthError(error: unknown): boolean {
@@ -121,7 +122,8 @@ export async function callStaffApi<T>(
   }
 
   const url = new URL(configuredUrl)
-  url.searchParams.set('action', action)
+  const staffAction = action.startsWith('staff/') ? action : `staff/${action}`
+  url.searchParams.set('action', staffAction)
   const response = await fetch(url, {
     method: 'POST',
     redirect: 'follow',
