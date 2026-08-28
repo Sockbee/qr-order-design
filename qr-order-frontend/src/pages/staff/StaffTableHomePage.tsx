@@ -70,8 +70,7 @@ export function StaffTableHomePage({
 }: StaffTableHomePageProps) {
   const { label: clock, now } = useClock()
   const pendingCalls = data?.callGroups ?? []
-  const attentionCount =
-    (data?.callingTableCount ?? 0) + (data?.delayedTableCount ?? 0)
+  const attentionCount = data?.stationCounts.tables ?? 0
 
   return (
     <div
@@ -87,14 +86,9 @@ export function StaffTableHomePage({
             count: data ? attentionCount : null,
             attention: true,
           },
-          /*
-           * Counts stay null here: they come from `orders/queue`, and A01
-           * polling that too would double the request rate on the screen
-           * that is open longest.
-           */
-          { label: '주방', to: '/staff/kitchen', count: null },
-          { label: '서빙', to: '/staff/serving', count: null },
-          { label: '결제', to: '/staff/payment', count: null },
+          { label: '주방', to: '/staff/kitchen', count: data?.stationCounts.kitchen ?? null },
+          { label: '서빙', to: '/staff/serving', count: data?.stationCounts.serving ?? null },
+          { label: '결제', to: '/staff/payment', count: data?.stationCounts.payment ?? null },
         ]}
       />
 

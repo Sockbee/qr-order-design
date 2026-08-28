@@ -178,7 +178,7 @@ assert.equal(evaluate(
 const missingAuth = apiCall('staff/calls/list', {});
 assert.equal(missingAuth.success, false);
 assert.equal(missingAuth.error.code, 'STAFF_AUTH_REQUIRED');
-const validAuthUnimplementedRoute = apiCall('staff/tables/list', {
+const validAuthUnimplementedRoute = apiCall('staff/orders/update', {
   staffToken: login.data.staffToken,
 });
 assert.equal(validAuthUnimplementedRoute.success, false);

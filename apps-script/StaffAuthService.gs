@@ -44,6 +44,17 @@ function dispatchStaffRoute_(route, payload, requestId, staff) {
   if (route === 'staff/tables/confirm-payment') {
     return confirmStaffTablePayment(payload, requestId, staff);
   }
+  if (route === 'staff/tables/list') return listStaffTables(payload);
+  if (route === 'staff/tables/detail') return getStaffTableDetail(payload);
+  if (route === 'staff/orders/status') {
+    return updateStaffOrderStatus(payload, requestId, staff);
+  }
+  if (route === 'staff/orders/queue') return listStaffOrderQueues(payload);
+  if (route === 'staff/menu/list') return listStaffMenu(payload);
+  if (route === 'staff/menu/availability') {
+    return setStaffMenuAvailability(payload, requestId, staff);
+  }
+  if (route === 'staff/orders/create') return createStaffOrder(payload, requestId, staff);
   throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
 }
 

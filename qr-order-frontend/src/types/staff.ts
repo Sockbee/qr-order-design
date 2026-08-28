@@ -85,6 +85,8 @@ export interface StaffTableHomeData {
   activeTableCount: number
   pendingItemCount: number
   delayedTableCount: number
+  /** All four rail badges returned with the table snapshot. */
+  stationCounts: StaffStationCounts
 }
 
 /** One line of the A02 order list (staff/StaffOrderItem, 87:68). */

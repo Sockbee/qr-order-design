@@ -10,8 +10,6 @@ const STATUSES: StaffOrderStatus[] = [
   'cooking',
   'ready',
   'served',
-  'unpaid',
-  'paid',
 ]
 
 interface OrderStatusDropdownProps {
