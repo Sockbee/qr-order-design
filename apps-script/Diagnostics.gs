@@ -83,6 +83,7 @@ function collectDiagnostics_(spreadsheet) {
   checkForeignKeys_(tables, report);
   checkCatalogRules_(tables, report);
   checkOrderIntegrity_(tables, report);
+  checkCallIntegrity_(tables, report);
   finishDiagnosticsReport_(report);
   return report;
 }
@@ -443,6 +444,7 @@ function checkForeignKeys_(tables, report) {
   checkForeignKeyRows_(tables.MenuOptions, 'menu_id', menuIds,
     'MenuOptions', 'Menu.menu_id', report);
   checkForeignKeyRows_(tables.Orders, 'table_id', tableIds, 'Orders', 'Tables.table_id', report);
+  checkForeignKeyRows_(tables.Calls, 'table_id', tableIds, 'Calls', 'Tables.table_id', report);
   checkForeignKeyRows_(tables.OrderItems, 'order_id', orderIds,
     'OrderItems', 'Orders.order_id', report);
   checkForeignKeyRows_(tables.OrderItems, 'menu_id', menuIds, 'OrderItems', 'Menu.menu_id', report);
@@ -703,6 +705,36 @@ function containsSensitiveOrderPayloadField_(value) {
     const normalized = String(key).replace(/[^a-z]/gi, '').toLowerCase();
     if (['token', 'tabletoken', 'tokenhash', 'tokenpepper'].includes(normalized)) return true;
     return containsSensitiveOrderPayloadField_(value[key]);
+  });
+}
+
+function checkCallIntegrity_(tables, report) {
+  (tables.Calls || []).forEach(call => {
+    if (!isBlankValue_(call.client_request_id) &&
+        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      .test(String(call.client_request_id))) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_CALL_CLIENT_REQUEST_ID',
+        'client_request_id는 UUID 형식이어야 합니다.',
+        'Calls', call.__rowNumber, 'client_request_id');
+    }
+
+    const acknowledged = !isBlankValue_(call.acknowledged_at);
+    const cancelled = !isBlankValue_(call.cancelled_at);
+    if (call.status === 'PENDING' && (acknowledged || cancelled)) {
+      addDiagnostic_(report, 'ERROR', 'PENDING_CALL_HAS_RESOLUTION_TIME',
+        'PENDING 호출에는 확인/취소 시각이 없어야 합니다.',
+        'Calls', call.__rowNumber, 'status');
+    }
+    if (call.status === 'ACKNOWLEDGED' && (!acknowledged || cancelled)) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_ACKNOWLEDGED_CALL_TIMESTAMPS',
+        'ACKNOWLEDGED 호출에는 확인 시각만 필요합니다.',
+        'Calls', call.__rowNumber, 'status');
+    }
+    if (call.status === 'CANCELLED' && (!cancelled || acknowledged)) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_CANCELLED_CALL_TIMESTAMPS',
+        'CANCELLED 호출에는 취소 시각만 필요합니다.',
+        'Calls', call.__rowNumber, 'status');
+    }
   });
 }
 

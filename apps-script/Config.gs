@@ -3,7 +3,7 @@
  * Keep this file aligned with docs/qr-order/google-sheets-schema.md.
  */
 const QR_ORDER_APP = Object.freeze({
-  BOOTSTRAP_VERSION: '1.2.0',
+  BOOTSTRAP_VERSION: '1.3.0',
   PROTECTION_PREFIX: 'QR Order bootstrap:',
   HEADER_BACKGROUND: '#1b64da',
   HEADER_FOREGROUND: '#ffffff',
@@ -36,6 +36,14 @@ const QR_ORDER_ENUMS = Object.freeze({
   WRITE_STATE: Object.freeze(['WRITING', 'COMMITTED', 'FAILED']),
   SETTING_TYPE: Object.freeze(['STRING', 'INTEGER', 'BOOLEAN']),
   ACTOR_TYPE: Object.freeze(['SYSTEM', 'STAFF', 'CLIENT']),
+  CALL_REASON: Object.freeze([
+    'WATER_UTENSIL',
+    'SIDE_PLATE',
+    'ORDER_INQUIRY',
+    'PAYMENT_REQUEST',
+    'OTHER',
+  ]),
+  CALL_STATUS: Object.freeze(['PENDING', 'ACKNOWLEDGED', 'CANCELLED']),
 });
 
 const QR_ORDER_STATUS_TO_PUBLIC = Object.freeze({
@@ -56,6 +64,7 @@ const QR_ORDER_SHEET_ORDER = Object.freeze([
   'Orders',
   'OrderItems',
   'OrderItemOptions',
+  'Calls',
   'Settings',
   'AuditLogs',
 ]);
@@ -240,6 +249,31 @@ const QR_ORDER_SCHEMA = Object.freeze({
     dropdowns: Object.freeze({}),
     minRows: 10000,
   }),
+  Calls: Object.freeze({
+    headers: Object.freeze([
+      'call_id', 'table_id', 'reason', 'status', 'client_request_id', 'created_at',
+      'acknowledged_at', 'acknowledged_by', 'cancelled_at', 'updated_at',
+    ]),
+    required: Object.freeze([
+      'call_id', 'table_id', 'reason', 'status', 'created_at', 'updated_at',
+    ]),
+    unique: Object.freeze(['call_id', 'client_request_id']),
+    text: Object.freeze([
+      'call_id', 'table_id', 'reason', 'status', 'client_request_id', 'acknowledged_by',
+    ]),
+    integers: Object.freeze([]),
+    nonNegative: Object.freeze([]),
+    positive: Object.freeze([]),
+    dates: Object.freeze([
+      'created_at', 'acknowledged_at', 'cancelled_at', 'updated_at',
+    ]),
+    checkboxes: Object.freeze([]),
+    dropdowns: Object.freeze({
+      reason: QR_ORDER_ENUMS.CALL_REASON,
+      status: QR_ORDER_ENUMS.CALL_STATUS,
+    }),
+    minRows: 2000,
+  }),
   Settings: Object.freeze({
     headers: Object.freeze(['key', 'value', 'type', 'description', 'updated_at']),
     required: Object.freeze(['key', 'value', 'type', 'description', 'updated_at']),
@@ -322,6 +356,10 @@ const QR_ORDER_SETTINGS_DEFAULTS = Object.freeze([
     key: 'STATUS_POLL_SECONDS', value: '15', type: 'INTEGER',
     description: '프론트 주문 상태 polling 기본 주기',
   }),
+  Object.freeze({
+    key: 'CALL_MIN_INTERVAL_SECONDS', value: '60', type: 'INTEGER',
+    description: '같은 테이블의 연속 직원 호출 최소 간격',
+  }),
 ]);
 
 const QR_ORDER_PROTECTIONS = Object.freeze({
@@ -356,6 +394,9 @@ const QR_ORDER_PROTECTIONS = Object.freeze({
   ]),
   OrderItemOptions: Object.freeze([
     Object.freeze({ a1: 'A:I', label: 'order option snapshots' }),
+  ]),
+  Calls: Object.freeze([
+    Object.freeze({ a1: 'A:J', label: 'call lifecycle records' }),
   ]),
   Settings: Object.freeze([
     Object.freeze({ a1: 'A:A', label: 'setting key' }),
