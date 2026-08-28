@@ -1,0 +1,95 @@
+/* staff/KitchenOrderCard (88:68). */
+.station-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  width: var(--layout-staff-station-card-width);
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+}
+
+/* Late tickets get an edge, not a fill — no full-screen alarm. */
+.station-card--late {
+  border-color: var(--color-status-attention-fg);
+}
+
+.station-card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.station-card__table {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: var(--type-staff-table-no);
+  color: var(--color-text-strong);
+}
+
+.station-card__items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.station-card__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.station-card__item-name {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+/* Quantity is the number the station acts on, so it is the larger step. */
+.station-card__item-qty {
+  flex-shrink: 0;
+  font: var(--type-staff-metric);
+  color: var(--color-text-strong);
+}
+
+.station-card__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0;
+  min-height: 100px;
+  padding: var(--space-3) 10px;
+  border-radius: var(--radius-md);
+  font: var(--type-caption-strong);
+}
+
+.station-card__note--kitchen {
+  background: var(--color-staff-status-cooking-bg);
+  color: var(--color-staff-status-cooking-fg);
+}
+
+.station-card__note--serving {
+  background: var(--color-staff-status-ready-bg);
+  color: var(--color-staff-status-ready-fg);
+}
+
+.station-card__note--general {
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+}
+
+.station-card__note-tag {
+  flex-shrink: 0;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-canvas);
+  font: var(--type-micro-badge);
+  color: inherit;
+}
