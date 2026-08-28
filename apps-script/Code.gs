@@ -22,6 +22,11 @@ function doPost(event) {
     if (route === 'orders/list') return listOrders(payload);
     if (route === 'calls/create') return createCall(payload, requestId);
     if (route === 'calls/cancel') return cancelCall(payload, requestId);
+    if (route === 'staff/login') return staffLogin(payload, requestId);
+    if (isStaffApiRoute_(route)) {
+      const staff = requireStaffAuth_(payload);
+      return dispatchStaffRoute_(route, payload, requestId, staff);
+    }
     throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
   });
 }

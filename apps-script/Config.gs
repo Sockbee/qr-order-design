@@ -3,7 +3,7 @@
  * Keep this file aligned with docs/qr-order/google-sheets-schema.md.
  */
 const QR_ORDER_APP = Object.freeze({
-  BOOTSTRAP_VERSION: '1.3.0',
+  BOOTSTRAP_VERSION: '1.4.0',
   PROTECTION_PREFIX: 'QR Order bootstrap:',
   HEADER_BACKGROUND: '#1b64da',
   HEADER_FOREGROUND: '#ffffff',
@@ -44,6 +44,7 @@ const QR_ORDER_ENUMS = Object.freeze({
     'OTHER',
   ]),
   CALL_STATUS: Object.freeze(['PENDING', 'ACKNOWLEDGED', 'CANCELLED']),
+  STAFF_DEVICE_LABEL: Object.freeze(['카운터', '주방', '서빙', '결제']),
 });
 
 const QR_ORDER_STATUS_TO_PUBLIC = Object.freeze({
@@ -359,6 +360,14 @@ const QR_ORDER_SETTINGS_DEFAULTS = Object.freeze([
   Object.freeze({
     key: 'CALL_MIN_INTERVAL_SECONDS', value: '60', type: 'INTEGER',
     description: '같은 테이블의 연속 직원 호출 최소 간격',
+  }),
+  Object.freeze({
+    key: 'STAFF_TOKEN_EPOCH', value: '1', type: 'INTEGER',
+    description: '올리면 기존 운영 토큰을 전체 무효화',
+  }),
+  Object.freeze({
+    key: 'STAFF_SESSION_HOURS', value: '14', type: 'INTEGER',
+    description: '운영 토큰 유효 시간',
   }),
 ]);
 

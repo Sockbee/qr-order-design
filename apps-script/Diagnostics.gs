@@ -135,6 +135,8 @@ function checkScriptProperties_(spreadsheet, report) {
   const properties = PropertiesService.getScriptProperties();
   const spreadsheetId = properties.getProperty('SPREADSHEET_ID');
   const pepper = properties.getProperty('TOKEN_PEPPER');
+  const staffPasscodeHash = properties.getProperty('STAFF_PASSCODE_HASH');
+  const staffTokenSecret = properties.getProperty('STAFF_TOKEN_SECRET');
 
   if (!spreadsheetId) {
     addDiagnostic_(report, 'ERROR', 'MISSING_SCRIPT_PROPERTY', 'SPREADSHEET_ID가 없습니다.');
@@ -161,6 +163,15 @@ function checkScriptProperties_(spreadsheet, report) {
       'TOKEN_PEPPER_ENTROPY_UNVERIFIED',
       'TOKEN_PEPPER 길이는 충분하지만 32바이트 이상 난수인지 확인하세요.'
     );
+  }
+
+  if (!/^[0-9a-f]{64}$/i.test(String(staffPasscodeHash || ''))) {
+    addDiagnostic_(report, 'ERROR', 'MISSING_OR_INVALID_STAFF_PASSCODE_HASH',
+      'STAFF_PASSCODE_HASH는 SHA-256 64자리 hex여야 합니다.');
+  }
+  if (!staffTokenSecret || staffTokenSecret.length < 32) {
+    addDiagnostic_(report, 'ERROR', 'WEAK_OR_MISSING_STAFF_TOKEN_SECRET',
+      'STAFF_TOKEN_SECRET는 최소 32자 이상의 비밀 난수여야 합니다.');
   }
 }
 

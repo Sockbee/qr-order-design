@@ -453,6 +453,8 @@ passcode 검증:
 
 - `SHA-256(pepper + ":" + passcode)`를 Script Properties의 `STAFF_PASSCODE_HASH`와 비교한다.
 - 실패 시도는 CacheService에 누적한다. 10분 내 5회 실패하면 그 `deviceLabel`에 대해 10분간 `STAFF_LOGIN_THROTTLED`로 거절한다. Apps Script는 신뢰할 수 있는 client IP를 주지 않으므로 `deviceLabel` 기준으로 제한하고, 전역 실패 카운터도 함께 둔다.
+- passcode 불일치는 `STAFF_PASSCODE_MISMATCH`로 응답한다. throttle 응답은
+  `error.details.retryAfter`에 서버 기준 ISO 8601 재시도 가능 시각을 포함한다.
 - 성공/실패 모두 AuditLog에 남긴다(`STAFF_LOGIN`, `STAFF_LOGIN_FAILED`). `actor_id`는 `deviceLabel`이다.
 - passcode는 응답·로그·`detail_json` 어디에도 남기지 않는다.
 
@@ -620,6 +622,7 @@ Request:
 | `STAFF_TOKEN_EXPIRED` | 인증이 만료되었습니다. 다시 로그인해 주세요. | N | 운영 화면 | Y |
 | `STAFF_TOKEN_REVOKED` | 인증이 해제되었습니다. 다시 로그인해 주세요. | N | 운영 화면 | Y |
 | `STAFF_LOGIN_THROTTLED` | 시도가 많습니다. 잠시 후 다시 시도해 주세요. | Y | 운영 화면 | Y |
+| `STAFF_PASSCODE_MISMATCH` | passcode가 올바르지 않습니다. | N | 운영 화면 | Y |
 | `INVALID_DEVICE_LABEL` | 스테이션을 다시 선택해 주세요. | N | 운영 화면 | Y |
 | `SESSION_NOT_FOUND` | 테이블 세션을 찾을 수 없습니다. | N | 운영 화면 | Y |
 | `SESSION_ALREADY_PAID` | 이미 결제 완료된 테이블입니다. | N | 운영 화면 | Y |
@@ -1444,7 +1447,23 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
 - Apps Script 실행 dashboard에서 duration, failure, 동시 실행을 행사 리허설 동안 확인한다.
 - 공식 quota는 변경될 수 있으므로 행사 직전 [Apps Script quotas](https://developers.google.com/apps-script/guides/services/quotas)를 다시 확인한다.
 
-## 9. 구현 시 남은 결정
+## 9. 구현 결정 기록
+
+2026-08-28 구현 확정:
+
+- passcode 불일치는 `STAFF_PASSCODE_MISMATCH`로 응답한다.
+- `STAFF_LOGIN_THROTTLED`는 `error.details.retryAfter`에 서버 기준 ISO 8601 시각을 포함한다.
+- `orders/status`는 `tableId` 또는 `orderId` 중 정확히 하나를 받는다. 둘 다 있거나 둘 다
+  없으면 `INVALID_REQUEST`다.
+- 경과 시간 지연 임계값은 현재 운영 기준인 테이블 24/35분, 주방 24/30분, 서빙
+  5/12분을 유지한다.
+- `tables/list`는 레일 배지에 필요한 `stationCounts`를 함께 반환한다.
+- 고객 앱과 운영 앱은 별도 Vite entry와 산출물로 분리한다. 운영 Apps Script URL은 운영
+  entry에서만 참조하며 고객 entry가 내려받는 JavaScript에는 포함하지 않는다.
+- 같은 Apps Script 소스에서 고객/운영의 동명 action을 안전하게 분기하도록 운영
+  `?action=` 값은 §1의 transport와 동일하게 항상 `staff/` prefix를 사용한다.
+
+## 10. 구현 시 남은 결정
 
 1. Netlify origin에서 Apps Script ContentService CORS가 목표 모바일 브라우저에서 안정적으로 동작하는가. 실패 시 Netlify Function proxy를 우선 검토한다.
 2. 직원 호출을 Sheet row로 기록할지, 단순 현장 안내 Sheet로 끝낼지.

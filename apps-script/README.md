@@ -29,6 +29,8 @@ Apps Script V8 프로젝트다.
 3. 프로젝트 설정의 Script Properties에 다음을 저장한다.
    - `SPREADSHEET_ID`: 대상 Spreadsheet URL의 `/d/`와 `/edit` 사이 값
    - `TOKEN_PEPPER`: `openssl rand -hex 32` 등으로 만든 32바이트 이상 난수
+   - `STAFF_PASSCODE_HASH`: `SHA-256(TOKEN_PEPPER + ':' + passcode)` 64자리 hex
+   - `STAFF_TOKEN_SECRET`: `openssl rand -hex 32` 등으로 만든 별도 서명 비밀값
 4. 함수 목록에서 `bootstrapSpreadsheet`를 선택해 실행하고 권한을 승인한다.
 5. Spreadsheet를 새로고침하면 `QR 주문 관리` 메뉴가 표시된다.
 6. `QR 주문 관리 > 카테고리/메뉴 초기 데이터 추가`를 실행한다.
@@ -65,6 +67,8 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 - `POST {WEB_APP_URL}/exec/orders/list`
 - `POST {WEB_APP_URL}/exec/calls/create`
 - `POST {WEB_APP_URL}/exec/calls/cancel`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/login`
+- 그 밖의 운영 action도 `staff/` prefix를 사용하며 body에 `staffToken`을 포함
 - path routing이 제한된 환경에서는 각 endpoint를 `?action=...` 형식으로도 지원
 
 POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
