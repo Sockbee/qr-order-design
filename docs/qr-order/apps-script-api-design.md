@@ -49,6 +49,8 @@ POST {STAFF_WEB_APP_URL}/exec/staff/orders/queue
 POST {STAFF_WEB_APP_URL}/exec/staff/menu/list
 POST {STAFF_WEB_APP_URL}/exec/staff/menu/availability
 POST {STAFF_WEB_APP_URL}/exec/staff/orders/create
+POST {STAFF_WEB_APP_URL}/exec/staff/orders/update
+POST {STAFF_WEB_APP_URL}/exec/staff/orders/cancel
 ```
 
 `staffToken`은 **request body**에 담는다. `Authorization` header를 쓰지 않는 이유는 위와 같다 — Apps Script event object가 임의 request header를 다루지 못하고, custom header는 CORS preflight를 유발한다.
@@ -600,6 +602,34 @@ Request:
 - 그룹의 종속 세션과 모든 Orders의 `payment_status`를 함께 갱신한다(mirror).
 - 그룹의 모든 세션을 `CLOSED`로 바꾼다.
 - 앱은 결제를 처리하지 않는다. 계좌 입금 확인 사실만 기록한다.
+
+### 4.18 `POST /orders/update` — 항목·메모 수정 (운영 A08)
+
+동일 endpoint를 `operation` discriminator로 나눈다.
+
+```json
+{ "apiVersion": "v1", "operation": "quantity", "itemId": "d08c...-01", "quantity": 3 }
+{ "apiVersion": "v1", "operation": "cancel-item", "itemId": "d08c...-01" }
+{ "apiVersion": "v1", "operation": "note", "tableId": "T08", "note": "먼저 서빙", "audience": "serving" }
+```
+
+- 수량은 1~99 정수다. 서버가 `line_total`, 활성 항목 기준 `Orders.total_amount`,
+  `write_payload_json`을 같은 Script Lock 안에서 함께 갱신한다.
+- 항목 취소는 행을 삭제하지 않고 `OrderItems.status=CANCELLED`로 보존한다. 마지막 활성
+  항목이 취소되면 부모 주문도 `CANCELLED`가 된다.
+- 메모는 billing group의 가장 최근 `COMMITTED` 비취소 주문에 귀속한다. A08 화면이
+  주문 하나가 아니라 테이블 단위로 열리기 때문에 선택 대상을 결정적으로 만드는 규칙이다.
+- `audience`는 `general/kitchen/serving`이며 Sheet에는 대문자 enum으로 저장한다.
+- 결제 완료 세션은 `SESSION_ALREADY_PAID`로 거절한다.
+
+### 4.19 `POST /orders/cancel` — 테이블 전체 주문 취소 (운영 A08)
+
+Request: `{ "apiVersion": "v1", "tableId": "T08" }`
+
+- 현재 billing group의 미결제 `COMMITTED` 비취소 주문과 모든 항목을 취소한다.
+- 가격·옵션 snapshot 행은 삭제하지 않는다. 활성 합계는 0으로 다시 쓰고 취소 전 금액은
+  audit detail에 남긴다.
+- 결제 완료 세션은 `SESSION_ALREADY_PAID`로 거절한다.
 
 ## 5. 오류 코드
 
@@ -1470,8 +1500,9 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
   entry에서만 참조하며 고객 entry가 내려받는 JavaScript에는 포함하지 않는다.
 - 같은 Apps Script 소스에서 고객/운영의 동명 action을 안전하게 분기하도록 운영
   `?action=` 값은 §1의 transport와 동일하게 항상 `staff/` prefix를 사용한다.
-- 기존 Orders A:T는 열 위치를 보존하고 U에 `session_id`만 추가한다. bootstrap은 A:T가
-  정확히 canonical일 때만 이 suffix migration을 자동 수행하며 다른 header 차이는 중단한다.
+- 기존 Orders A:T/A:U는 열 위치를 보존하고 U:V에 누락된 `session_id`와
+  `note_audience`만 추가한다. bootstrap은 기존 prefix가 정확히 canonical일 때만 이
+  suffix migration을 자동 수행하며 다른 header 차이는 중단한다.
 - 기존 주문 backfill은 같은 테이블의 `PAID` 주문과 미결제 주문을 서로 다른 세션으로
   분리한다. 결제 완료분은 닫힌 이력 세션에 snapshot하고 미결제분만 열린 세션에 두어
   과거 결제 금액이 다시 청구되지 않게 한다.
@@ -1487,6 +1518,13 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
 - 운영 주문 생성 계약에는 client request ID가 없으므로 서버가 내부 ID를 발급한다.
   네트워크 결과가 불명확한 요청의 자동 재전송은 하지 않으며, 후속 계약 개정 전까지
   고객 주문과 같은 client-side idempotent replay는 제공하지 않는다.
+- Orders V에는 메모 노출 대상을, OrderItems K:L에는 항목 상태와 수정 시각을 suffix로
+  추가한다. 기존 열을 이동하지 않으며 bootstrap은 canonical prefix 뒤 빈 열에만 자동
+  migration한다.
+- 항목 취소는 행 삭제가 아니라 `CANCELLED` 상태 변경이다. 주문 총액과 복구 payload는
+  활성 항목만 합산하되 취소 항목의 가격·옵션 snapshot은 감사와 상세 표시를 위해 남긴다.
+- A08 메모는 테이블의 가장 최근 활성 주문에 귀속한다. 별도 TableNotes Sheet를 만들지
+  않아 기존 조회 구조를 유지하고, 노출 대상만 `note_audience`로 구분한다.
 
 ## 10. 구현 시 남은 결정
 

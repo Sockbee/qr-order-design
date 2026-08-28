@@ -3,7 +3,7 @@
  * Keep this file aligned with docs/qr-order/google-sheets-schema.md.
  */
 const QR_ORDER_APP = Object.freeze({
-  BOOTSTRAP_VERSION: '1.5.0',
+  BOOTSTRAP_VERSION: '1.6.0',
   PROTECTION_PREFIX: 'QR Order bootstrap:',
   HEADER_BACKGROUND: '#1b64da',
   HEADER_FOREGROUND: '#ffffff',
@@ -176,6 +176,7 @@ const QR_ORDER_SCHEMA = Object.freeze({
       'public_status', 'payment_status', 'total_amount', 'note',
       'write_payload_json', 'write_state', 'status_updated_at', 'created_at',
       'updated_at', 'paid_at', 'cancelled_at', 'cancel_reason', 'session_id',
+      'note_audience',
     ]),
     required: Object.freeze([
       'order_id', 'display_number', 'display_code', 'client_request_id',
@@ -188,7 +189,7 @@ const QR_ORDER_SCHEMA = Object.freeze({
     text: Object.freeze([
       'order_id', 'display_code', 'client_request_id', 'idempotency_key',
       'request_fingerprint', 'table_id', 'note', 'write_payload_json', 'cancel_reason',
-      'session_id',
+      'session_id', 'note_audience',
     ]),
     integers: Object.freeze(['display_number', 'total_amount']),
     nonNegative: Object.freeze(['total_amount']),
@@ -203,6 +204,7 @@ const QR_ORDER_SCHEMA = Object.freeze({
       public_status: QR_ORDER_ENUMS.PUBLIC_STATUS,
       payment_status: QR_ORDER_ENUMS.PAYMENT_STATUS,
       write_state: QR_ORDER_ENUMS.WRITE_STATE,
+      note_audience: Object.freeze(['GENERAL', 'KITCHEN', 'SERVING']),
     }),
     minRows: 2000,
   }),
@@ -210,24 +212,24 @@ const QR_ORDER_SCHEMA = Object.freeze({
     headers: Object.freeze([
       'order_item_id', 'order_id', 'line_no', 'menu_id', 'menu_name_snapshot',
       'base_price_snapshot', 'unit_price_snapshot', 'quantity', 'line_total',
-      'created_at',
+      'created_at', 'status', 'updated_at',
     ]),
     required: Object.freeze([
       'order_item_id', 'order_id', 'line_no', 'menu_id', 'menu_name_snapshot',
       'base_price_snapshot', 'unit_price_snapshot', 'quantity', 'line_total',
-      'created_at',
+      'created_at', 'status', 'updated_at',
     ]),
     unique: Object.freeze(['order_item_id']),
-    text: Object.freeze(['order_item_id', 'order_id', 'menu_id', 'menu_name_snapshot']),
+    text: Object.freeze(['order_item_id', 'order_id', 'menu_id', 'menu_name_snapshot', 'status']),
     integers: Object.freeze([
       'line_no', 'base_price_snapshot', 'unit_price_snapshot', 'quantity', 'line_total',
     ]),
     nonNegative: Object.freeze(['base_price_snapshot', 'unit_price_snapshot', 'line_total']),
     positive: Object.freeze(['line_no', 'quantity']),
     money: Object.freeze(['base_price_snapshot', 'unit_price_snapshot', 'line_total']),
-    dates: Object.freeze(['created_at']),
+    dates: Object.freeze(['created_at', 'updated_at']),
     checkboxes: Object.freeze([]),
-    dropdowns: Object.freeze({}),
+    dropdowns: Object.freeze({ status: Object.freeze(['ACTIVE', 'CANCELLED']) }),
     minRows: 5000,
   }),
   OrderItemOptions: Object.freeze({
@@ -439,9 +441,11 @@ const QR_ORDER_PROTECTIONS = Object.freeze({
     Object.freeze({ a1: 'I:I', label: 'derived public status' }),
     Object.freeze({ a1: 'K:S', label: 'amount snapshots and managed state' }),
     Object.freeze({ a1: 'U:U', label: 'table session identity' }),
+    Object.freeze({ a1: 'V:V', label: 'note audience' }),
   ]),
   OrderItems: Object.freeze([
     Object.freeze({ a1: 'A:J', label: 'order item snapshots' }),
+    Object.freeze({ a1: 'K:L', label: 'item lifecycle state' }),
   ]),
   OrderItemOptions: Object.freeze([
     Object.freeze({ a1: 'A:I', label: 'order option snapshots' }),

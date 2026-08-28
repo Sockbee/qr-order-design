@@ -10,8 +10,8 @@ import type {
 /**
  * A02 needs one table's bill *and* its order lines, notes and pending call.
  * apps-script-api-design.md has `tables/bill` (§4.12) for the money only, so
- * `tables/detail` is specified here from what the panel draws (89:8) and is
- * still to be implemented server-side. See the PR document.
+ * `tables/detail` is specified here from what the panel draws (89:8); the
+ * server returns that screen-shaped snapshot without exposing Sheet fields.
  */
 export interface StaffTableDetailResponse {
   tableId: string

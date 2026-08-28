@@ -44,6 +44,7 @@ function bootstrapSpreadsheet() {
     });
 
     summary.sessionMigration = migrateLegacyOrdersToSessions_(spreadsheet);
+    summary.orderItemMigration = migrateLegacyOrderItems_(spreadsheet);
 
     summary.insertedSettings = seedSettings_(spreadsheet);
 
@@ -97,11 +98,22 @@ function ensureCanonicalSheet_(spreadsheet, sheetName) {
     .slice(expected.length)
     .filter(value => value !== '');
 
-  const safeOrdersSuffixMigration = sheetName === 'Orders' &&
-    valuesEqual_(actual.slice(0, expected.length - 1), expected.slice(0, expected.length - 1)) &&
-    actual[expected.length - 1] === '' && extraHeader.length === 0;
-  if (safeOrdersSuffixMigration) {
-    sheet.getRange(1, expected.length).setValue(expected[expected.length - 1]);
+  const safeSuffixPrefixLength = sheetName === 'Orders'
+    ? (valuesEqual_(actual.slice(0, 21), expected.slice(0, 21)) ? 21 :
+      (valuesEqual_(actual.slice(0, 20), expected.slice(0, 20)) ? 20 : 0))
+    : (sheetName === 'OrderItems' && valuesEqual_(actual.slice(0, 10), expected.slice(0, 10)) ? 10 : 0);
+  const safeSuffixDataBlank = safeSuffixPrefixLength > 0 &&
+    (sheet.getLastRow() <= 1 || sheet.getRange(
+      2, safeSuffixPrefixLength + 1, sheet.getLastRow() - 1,
+      expected.length - safeSuffixPrefixLength
+    ).getDisplayValues().every(row => row.every(value => value === '')));
+  const safeSuffixMigration = safeSuffixPrefixLength > 0 &&
+    actual.slice(safeSuffixPrefixLength).every(value => value === '') &&
+    safeSuffixDataBlank &&
+    extraHeader.length === 0;
+  if (safeSuffixMigration) {
+    sheet.getRange(1, safeSuffixPrefixLength + 1, 1, expected.length - safeSuffixPrefixLength)
+      .setValues([expected.slice(safeSuffixPrefixLength)]);
     return { sheet: sheet, created: created, repairedHeader: true };
   }
 

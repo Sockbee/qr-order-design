@@ -76,7 +76,8 @@ const state = {
       order_id: 'order-1', display_number: 1, display_code: 'A-1', table_id: 'T01',
       session_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', write_state: 'COMMITTED',
       status: 'RECEIVED', public_status: 'accepted', payment_status: 'UNPAID',
-      total_amount: 10000, note: '김치전 먼저', created_at: new Date(now - 10 * 60_000),
+      total_amount: 10000, note: '김치전 먼저', note_audience: 'KITCHEN',
+      created_at: new Date(now - 10 * 60_000),
       status_updated_at: new Date(now - 10 * 60_000), updated_at: new Date(),
     },
     {
@@ -104,6 +105,11 @@ const state = {
       order_item_id: 'order-2-01', order_id: 'order-2', line_no: 1,
       menu_id: 'soju', menu_name_snapshot: '소주', base_price_snapshot: 5000,
       unit_price_snapshot: 5000, quantity: 1, line_total: 5000,
+    },
+    {
+      order_item_id: 'order-1-02', order_id: 'order-1', line_no: 2,
+      menu_id: 'soju', menu_name_snapshot: '취소 소주', base_price_snapshot: 5000,
+      unit_price_snapshot: 5000, quantity: 4, line_total: 20000, status: 'CANCELLED',
     },
     {
       order_item_id: 'order-3-01', order_id: 'order-3', line_no: 1,
@@ -196,13 +202,19 @@ assert.deepEqual(
 
 const detail = apiCall('staff/tables/detail', { tableId: 'T01' });
 assert.equal(detail.success, true);
-assert.equal(detail.data.items.length, 2);
+assert.equal(detail.data.items.length, 3);
 assert.deepEqual(
   detail.data.items.find(item => item.itemId === 'order-1-01').selectedOptions,
   ['바삭하게'],
 );
 assert.equal(detail.data.notes[0].text, '김치전 먼저');
+assert.equal(detail.data.notes[0].audience, 'kitchen');
+assert.equal(detail.data.items.find(item => item.itemId === 'order-1-02').status, 'CANCELLED');
 assert.equal(detail.data.call.count, 1);
+
+const initialQueues = apiCall('staff/orders/queue');
+assert.equal(initialQueues.data.kitchen[0].kitchenNote, '김치전 먼저');
+assert.equal(initialQueues.data.kitchen[0].items.some(item => item.name === '취소 소주'), false);
 
 const ambiguousStatus = apiCall('staff/orders/status', {
   tableId: 'T01', orderId: 'order-1', status: 'COOKING',
@@ -226,6 +238,7 @@ assert.equal(queues.success, true);
 assert.equal(queues.data.kitchen.length, 0);
 assert.equal(queues.data.serving.length, 2);
 assert.equal(queues.data.payment.length, 1);
+assert.equal(queues.data.serving.find(order => order.orderId === 'order-1').servingNote, null);
 
 const menu = apiCall('staff/menu/list');
 assert.equal(menu.success, true);

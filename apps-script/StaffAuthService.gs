@@ -55,6 +55,8 @@ function dispatchStaffRoute_(route, payload, requestId, staff) {
     return setStaffMenuAvailability(payload, requestId, staff);
   }
   if (route === 'staff/orders/create') return createStaffOrder(payload, requestId, staff);
+  if (route === 'staff/orders/update') return updateStaffOrder(payload, requestId, staff);
+  if (route === 'staff/orders/cancel') return cancelStaffTableOrders(payload, requestId, staff);
   throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
 }
 

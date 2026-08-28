@@ -90,6 +90,7 @@ function createOrder(payload, requestId) {
         cancelled_at: '',
         cancel_reason: '',
         session_id: String(session.session_id),
+        note_audience: 'GENERAL',
       }]);
       createdRowNumber = appendResult.startRow;
 
@@ -164,7 +165,7 @@ function writeOrderChildren_(spreadsheet, orderId, lines, createdAt, onlyMissing
     });
     assertStoredChildrenMatch_(currentItems, desired.items, 'order_item_id', [
       'order_id', 'line_no', 'menu_id', 'menu_name_snapshot', 'base_price_snapshot',
-      'unit_price_snapshot', 'quantity', 'line_total',
+      'unit_price_snapshot', 'quantity', 'line_total', 'status',
     ]);
     assertStoredChildrenMatch_(currentOptions, desired.options, 'order_item_option_id', [
       'order_item_id', 'order_id', 'option_id', 'option_group_name_snapshot',
@@ -196,6 +197,8 @@ function buildOrderChildRows_(orderId, lines, createdAt) {
       quantity: line.quantity,
       line_total: line.lineTotal,
       created_at: createdAt,
+      status: line.cancelled === true ? 'CANCELLED' : 'ACTIVE',
+      updated_at: createdAt,
     });
     line.selectedOptions.forEach((option, optionIndex) => {
       const sortOrder = optionIndex + 1;
@@ -245,7 +248,8 @@ function parseStoredOrderLines_(value) {
         !Number.isSafeInteger(line.unitPrice) || !Number.isSafeInteger(line.quantity) ||
         !Number.isSafeInteger(line.lineTotal) || !Array.isArray(line.selectedOptions) ||
         line.basePrice < 0 || line.unitPrice < 0 || line.quantity < 1 || line.lineTotal < 0 ||
-        line.lineTotal !== line.unitPrice * line.quantity) {
+        line.lineTotal !== line.unitPrice * line.quantity ||
+        (line.cancelled !== undefined && typeof line.cancelled !== 'boolean')) {
       throw new Error('Stored order line snapshot is invalid.');
     }
     let optionDelta = 0;
@@ -301,12 +305,14 @@ function readOrderSnapshotTables_(spreadsheet) {
 function buildOrderResponseFromSnapshot_(order, table, allItems, allOptions) {
   const orderId = String(order.order_id);
   const items = allItems
-    .filter(row => String(row.order_id) === orderId)
+    .filter(row => String(row.order_id) === orderId && orderItemIsActive_(row))
     .sort((left, right) => Number(left.line_no) - Number(right.line_no));
   const options = allOptions.filter(row => String(row.order_id) === orderId);
   const createdAt = new Date(order.created_at);
   if (!Number.isFinite(createdAt.getTime())) throw new Error('Order created_at is invalid.');
-  if (!items.length) throw new Error('Committed order has no item snapshots.');
+  if (!items.length && order.status !== 'CANCELLED') {
+    throw new Error('Committed order has no active item snapshots.');
+  }
 
   return {
     orderId: String(order.order_id),
@@ -340,6 +346,10 @@ function buildOrderResponseFromSnapshot_(order, table, allItems, allOptions) {
         })),
     })),
   };
+}
+
+function orderItemIsActive_(item) {
+  return isBlankValue_(item.status) || String(item.status) === 'ACTIVE';
 }
 
 function orderResponseInteger_(value, fieldName) {

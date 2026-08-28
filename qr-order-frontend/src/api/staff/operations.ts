@@ -1,4 +1,5 @@
 import { callStaffApi } from './client'
+import type { StaffNoteAudience } from '../../types/staff'
 
 /**
  * Table operations. Unlike `tables/list` and `tables/detail`, every action
@@ -77,4 +78,51 @@ export function confirmTablePayment(
     { tableId, expectedFinalAmount },
     signal,
   )
+}
+
+/** §4.18. Item snapshots stay in place; only quantity and lifecycle fields change. */
+export function updateStaffOrderItemQuantity(
+  itemId: string,
+  quantity: number,
+  signal?: AbortSignal,
+): Promise<void> {
+  return callStaffApi<void>(
+    'orders/update',
+    { operation: 'quantity', itemId, quantity },
+    signal,
+  )
+}
+
+/** §4.18. Cancelling a line preserves it as a struck-through audit record. */
+export function cancelStaffOrderItem(
+  itemId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  return callStaffApi<void>(
+    'orders/update',
+    { operation: 'cancel-item', itemId },
+    signal,
+  )
+}
+
+/** §4.18. The table memo is attached to its latest active order. */
+export function saveStaffTableNote(
+  tableId: string,
+  note: string,
+  audience: StaffNoteAudience,
+  signal?: AbortSignal,
+): Promise<void> {
+  return callStaffApi<void>(
+    'orders/update',
+    { operation: 'note', tableId, note, audience },
+    signal,
+  )
+}
+
+/** §4.19. Cancels every unpaid order in the table's current billing group. */
+export function cancelStaffTableOrders(
+  tableId: string,
+  signal?: AbortSignal,
+): Promise<void> {
+  return callStaffApi<void>('orders/cancel', { tableId }, signal)
 }

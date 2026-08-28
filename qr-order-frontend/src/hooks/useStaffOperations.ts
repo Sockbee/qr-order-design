@@ -3,11 +3,16 @@ import { ApiClientError } from '../api/client'
 import { hasStaffApi } from '../api/staff/client'
 import {
   applyTableDiscount,
+  cancelStaffOrderItem,
+  cancelStaffTableOrders,
   confirmTablePayment,
   mergeTables,
   moveTable,
   splitTable,
+  saveStaffTableNote,
+  updateStaffOrderItemQuantity,
 } from '../api/staff/operations'
+import type { StaffNoteAudience } from '../types/staff'
 
 interface StaffOperationsState {
   submitting: boolean
@@ -23,6 +28,15 @@ interface StaffOperationsState {
     expectedFinalAmount: number,
     onDone: () => void,
   ) => void
+  quantity: (itemId: string, quantity: number, onDone: () => void) => void
+  cancelItem: (itemId: string, onDone: () => void) => void
+  saveNote: (
+    tableId: string,
+    note: string,
+    audience: StaffNoteAudience,
+    onDone: () => void,
+  ) => void
+  cancelOrders: (tableId: string, onDone: () => void) => void
 }
 
 /**
@@ -84,6 +98,24 @@ export function useStaffOperations(): StaffOperationsState {
     confirmPayment: useCallback(
       (tableId, expectedFinalAmount, onDone) =>
         run(() => confirmTablePayment(tableId, expectedFinalAmount), onDone),
+      [run],
+    ),
+    quantity: useCallback(
+      (itemId, quantity, onDone) =>
+        run(() => updateStaffOrderItemQuantity(itemId, quantity), onDone),
+      [run],
+    ),
+    cancelItem: useCallback(
+      (itemId, onDone) => run(() => cancelStaffOrderItem(itemId), onDone),
+      [run],
+    ),
+    saveNote: useCallback(
+      (tableId, note, audience, onDone) =>
+        run(() => saveStaffTableNote(tableId, note, audience), onDone),
+      [run],
+    ),
+    cancelOrders: useCallback(
+      (tableId, onDone) => run(() => cancelStaffTableOrders(tableId), onDone),
       [run],
     ),
   }

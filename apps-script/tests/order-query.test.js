@@ -123,6 +123,8 @@ const second = create('22222222-2222-4222-8222-222222222222', 2);
 assert.equal(second.success, true);
 state.Orders[1].status = 'CANCELLED';
 state.Orders[1].public_status = 'cancelled';
+state.Orders[1].total_amount = 0;
+state.OrderItems.find(item => item.order_id === state.Orders[1].order_id).status = 'CANCELLED';
 
 // Reads must use immutable snapshots rather than the current Menu sheet.
 state.Menu[0].name = '변경된 메뉴명';
@@ -148,8 +150,7 @@ const list = apiCall('/orders/list', { tableId: 'T01', tableToken: tokenOne });
 assert.equal(list.success, true);
 assert.deepEqual(list.data.orders.map(order => order.displayCode), ['A-1043', 'A-1042']);
 assert.equal(list.data.orders[0].publicStatus, 'cancelled');
-assert.equal(list.data.orders[0].items[0].name, '원래 메뉴명');
-assert.deepEqual(list.data.orders[0].items[0].selectedOptions, []);
+assert.deepEqual(list.data.orders[0].items, []);
 assert.equal(list.data.latestPublicStatus, 'accepted');
 assert.equal(list.data.sessionTotalAmount, 10000);
 

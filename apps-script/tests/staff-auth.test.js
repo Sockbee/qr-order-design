@@ -7,7 +7,7 @@ const vm = require('node:vm');
 const appsScriptDir = path.resolve(__dirname, '..');
 const source = [
   'Config.gs', 'Http.gs', 'Repositories.gs', 'TableCatalogService.gs',
-  'StaffAuthService.gs', 'Code.gs',
+  'StaffOrderEditService.gs', 'StaffAuthService.gs', 'Code.gs',
 ].map(file => fs.readFileSync(path.join(appsScriptDir, file), 'utf8')).join('\n');
 
 const pepper = 'a'.repeat(64);
@@ -178,11 +178,11 @@ assert.equal(evaluate(
 const missingAuth = apiCall('staff/calls/list', {});
 assert.equal(missingAuth.success, false);
 assert.equal(missingAuth.error.code, 'STAFF_AUTH_REQUIRED');
-const validAuthUnimplementedRoute = apiCall('staff/orders/update', {
+const validAuthInvalidRequest = apiCall('staff/orders/update', {
   staffToken: login.data.staffToken,
 });
-assert.equal(validAuthUnimplementedRoute.success, false);
-assert.equal(validAuthUnimplementedRoute.error.code, 'NOT_FOUND');
+assert.equal(validAuthInvalidRequest.success, false);
+assert.equal(validAuthInvalidRequest.error.code, 'INVALID_REQUEST');
 
 cacheValues.clear();
 for (let attempt = 1; attempt <= 4; attempt += 1) {

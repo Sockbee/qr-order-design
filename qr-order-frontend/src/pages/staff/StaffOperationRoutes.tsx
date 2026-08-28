@@ -46,8 +46,13 @@ export function StaffTableOperationRoute({
   const detail = useStaffTableDetail(tableId)
   const operations = useStaffOperations()
   const [noteAudience, setNoteAudience] =
-    useState<StaffNoteAudience>('general')
-  const [note, setNote] = useState('')
+    useState<StaffNoteAudience | null>(null)
+  const [note, setNote] = useState<string | null>(null)
+  const [cancelItemId, setCancelItemId] = useState<string | null>(null)
+
+  const latestNote = detail.detail?.notes.at(-1)
+  const currentNote = note ?? latestNote?.text ?? ''
+  const currentNoteAudience = noteAudience ?? latestNote?.audience ?? 'general'
 
   const close = () => navigate(`/staff/tables/${tableId}`)
   const table = staff.data?.tables.find(
@@ -77,25 +82,56 @@ export function StaffTableOperationRoute({
   if (!table && staff.data) return <Navigate to="/staff/tables" replace />
 
   if (operation === 'edit') {
-    return home({
-      panel: (
-        <EditOrderPanel
-          tableId={tableId}
-          items={detail.detail?.items ?? []}
-          note={note}
-          noteAudience={noteAudience}
-          savingNote={false}
-          onQuantityChange={() => {
-            /* Wired when orders/items exists — see the PR document. */
-          }}
-          onCancelItem={() => navigate(`/staff/tables/${tableId}/cancel`)}
-          onNoteChange={setNote}
-          onAudienceChange={setNoteAudience}
-          onSaveNote={close}
-          onClose={close}
-        />
-      ),
-    })
+    const cancellingItem = detail.detail?.items.find(
+      (item) => item.itemId === cancelItemId,
+    )
+    return (
+      <>
+        {home({
+          panel: (
+            <EditOrderPanel
+              tableId={tableId}
+              items={detail.detail?.items ?? []}
+              note={currentNote}
+              noteAudience={currentNoteAudience}
+              savingNote={operations.submitting}
+              onQuantityChange={(itemId, quantity) =>
+                operations.quantity(itemId, quantity, detail.reload)
+              }
+              onCancelItem={setCancelItemId}
+              onNoteChange={setNote}
+              onAudienceChange={setNoteAudience}
+              onSaveNote={() =>
+                operations.saveNote(
+                  tableId,
+                  currentNote,
+                  currentNoteAudience,
+                  close,
+                )
+              }
+              onClose={close}
+            />
+          ),
+        })}
+        {cancellingItem && (
+          <ConfirmDialog
+            title={`${cancellingItem.name} 항목을 취소할까요?`}
+            body={`${cancellingItem.quantity}개 ${formatStaffAmount(
+              cancellingItem.amount,
+            )} 항목이 취소 이력으로 남고 결제 금액에서 제외됩니다.`}
+            confirmLabel="항목 취소"
+            submitting={operations.submitting}
+            onConfirm={() =>
+              operations.cancelItem(cancellingItem.itemId, () => {
+                setCancelItemId(null)
+                detail.reload()
+              })
+            }
+            onCancel={() => setCancelItemId(null)}
+          />
+        )}
+      </>
+    )
   }
 
   return (
@@ -172,7 +208,8 @@ export function StaffTableOperationRoute({
             detail.detail?.bill.finalAmount ?? table.amount,
           )}이 취소됩니다. 이미 조리된 항목이 있다면 주방에 먼저 알려주세요.`}
           confirmLabel="전체 취소"
-          onConfirm={close}
+          submitting={operations.submitting}
+          onConfirm={() => operations.cancelOrders(tableId, close)}
           onCancel={close}
         />
       )}

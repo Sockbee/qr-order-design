@@ -163,7 +163,10 @@ Spreadsheet ID, 원본 token, token hash가 포함되지 않는다.
 - 없는 Sheet와 Settings key만 추가한다.
 - header가 정확하면 기존 데이터를 유지한다.
 - 데이터가 있는 Sheet의 header가 schema와 다르면 자동 덮어쓰지 않고 중단한다.
-- 예외적으로 기존 Orders A:T가 정확히 일치하면 끝 열 U에 `session_id`만 추가한다.
+- 예외적으로 기존 Orders A:T/A:U가 정확히 일치하면 끝 열 U:V에 누락된
+  `session_id`/`note_audience`만 추가한다.
+- 기존 OrderItems A:J가 정확히 일치하면 K:L에 `status`/`updated_at`을 추가하고 기존
+  항목을 `ACTIVE`로 backfill한다.
 - `session_id`가 비어 있는 기존 주문은 table별로 backfill한다. 결제 완료 주문은 닫힌
   이력 세션, 미결제 주문은 열린 세션으로 분리해 과거 결제분의 재청구를 막는다.
 - `QR Order bootstrap:` prefix가 붙은 보호 범위만 교체한다.

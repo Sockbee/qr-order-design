@@ -64,7 +64,7 @@ function getStaffTableDetail(payload) {
         selectedOptions: selected.map(option => String(option.option_name_snapshot)),
         quantity: staffSafeInteger_(item.quantity, 'OrderItems.quantity'),
         lineTotal: staffSafeInteger_(item.line_total, 'OrderItems.line_total'),
-        status: String(order.status),
+        status: orderItemIsActive_(item) ? 'ACTIVE' : 'CANCELLED',
         note: Number(item.line_no) === 1 && !isBlankValue_(order.note)
           ? String(order.note)
           : null,
@@ -80,11 +80,14 @@ function getStaffTableDetail(payload) {
     const reason = String(call.reason);
     if (!reasons.includes(reason)) reasons.push(reason);
   });
-  const notes = detailOrders.filter(order => !isBlankValue_(order.note)).map(order => ({
-    noteId: String(order.order_id) + '-note',
-    audience: 'general',
-    text: String(order.note),
-  }));
+  const notes = detailOrders.filter(order => !isBlankValue_(order.note))
+    .sort((left, right) => {
+      return new Date(left.created_at).getTime() - new Date(right.created_at).getTime();
+    }).map(order => ({
+      noteId: String(order.order_id) + '-note',
+      audience: staffRemoteNoteAudience_(order.note_audience),
+      text: String(order.note),
+    }));
   return {
     tableId: tableId,
     displayName: String(table.display_name),
@@ -194,14 +197,14 @@ function listStaffOrderQueues(payload) {
     status: order.status === 'PREPARING' ? 'COOKING' : 'RECEIVED',
     createdAt: staffIsoDate_(order.created_at, 'Orders.created_at'),
     items: staffQueueItems_(itemGroups.get(String(order.order_id)) || []),
-    kitchenNote: isBlankValue_(order.note) ? null : String(order.note),
+    kitchenNote: staffStationNote_(order, 'KITCHEN'),
   }));
   const serving = activeOrders.filter(order => order.status === 'SERVING').map(order => ({
     orderId: String(order.order_id),
     tableId: staffCurrentTableIdForOrder_(snapshot, order),
     readyAt: staffIsoDate_(order.status_updated_at, 'Orders.status_updated_at'),
     items: staffQueueItems_(itemGroups.get(String(order.order_id)) || []),
-    servingNote: isBlankValue_(order.note) ? null : String(order.note),
+    servingNote: staffStationNote_(order, 'SERVING'),
   }));
   const payment = staffPaymentRows_(snapshot);
   return {
@@ -318,6 +321,7 @@ function createStaffOrder(payload, requestId, staff) {
       cancelled_at: '',
       cancel_reason: '',
       session_id: String(session.session_id),
+      note_audience: 'GENERAL',
     }]);
     try {
       writeOrderChildren_(spreadsheet, orderId, lines, now, false);
@@ -406,7 +410,7 @@ function staffTableListItem_(snapshot, table) {
   const pendingOrderIds = new Set(bill.orders.filter(order => order.status !== 'COMPLETED')
     .map(order => String(order.order_id)));
   const pendingItemCount = snapshot.items.filter(item => {
-    return pendingOrderIds.has(String(item.order_id));
+    return pendingOrderIds.has(String(item.order_id)) && orderItemIsActive_(item);
   }).reduce((sum, item) => sum + staffSafeInteger_(item.quantity, 'OrderItems.quantity'), 0);
   const groupTableIds = bill.members.map(member => String(member.table_id)).sort();
   return {
@@ -549,11 +553,25 @@ function staffCurrentTableIdForOrder_(snapshot, order) {
 }
 
 function staffQueueItems_(items) {
-  return items.slice().sort((left, right) => Number(left.line_no) - Number(right.line_no))
+  return items.filter(orderItemIsActive_)
+    .sort((left, right) => Number(left.line_no) - Number(right.line_no))
     .map(item => ({
       name: String(item.menu_name_snapshot),
       quantity: staffSafeInteger_(item.quantity, 'OrderItems.quantity'),
     }));
+}
+
+function staffRemoteNoteAudience_(value) {
+  const audience = String(value || 'GENERAL');
+  if (audience === 'KITCHEN') return 'kitchen';
+  if (audience === 'SERVING') return 'serving';
+  return 'general';
+}
+
+function staffStationNote_(order, station) {
+  if (isBlankValue_(order.note)) return null;
+  const audience = String(order.note_audience || 'GENERAL');
+  return audience === 'GENERAL' || audience === station ? String(order.note) : null;
 }
 
 function staffSafeInteger_(value, fieldName) {

@@ -178,7 +178,9 @@ function validateOrderLine_(input, index, menuById) {
 }
 
 function calculateOrderTotal_(lines) {
-  const total = lines.reduce((sum, line) => sum + line.lineTotal, 0);
+  const total = lines.reduce((sum, line) => {
+    return sum + (line.cancelled === true ? 0 : line.lineTotal);
+  }, 0);
   if (!Number.isSafeInteger(total) || total < 0) throw new Error('Invalid order total.');
   return total;
 }

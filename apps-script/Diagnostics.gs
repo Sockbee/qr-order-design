@@ -591,6 +591,15 @@ function checkOrderIntegrity_(tables, report) {
   );
 
   items.forEach(item => {
+    if (!['ACTIVE', 'CANCELLED'].includes(String(item.status || 'ACTIVE'))) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_ORDER_ITEM_STATUS',
+        'OrderItems.status는 ACTIVE 또는 CANCELLED여야 합니다.',
+        'OrderItems', item.__rowNumber, 'status');
+    }
+    if (isBlankValue_(item.updated_at)) {
+      addDiagnostic_(report, 'ERROR', 'MISSING_ORDER_ITEM_UPDATED_AT',
+        'OrderItems.updated_at이 필요합니다.', 'OrderItems', item.__rowNumber, 'updated_at');
+    }
     if (Number(item.line_total) !== Number(item.unit_price_snapshot) * Number(item.quantity)) {
       addDiagnostic_(report, 'ERROR', 'LINE_TOTAL_MISMATCH',
         'line_total이 unit_price_snapshot * quantity와 다릅니다.',
@@ -674,7 +683,8 @@ function checkOrderIntegrity_(tables, report) {
     }
 
     const orderItems = itemsByOrder.get(String(order.order_id)) || [];
-    const itemTotal = orderItems.reduce((sum, item) => sum + Number(item.line_total), 0);
+    const itemTotal = orderItems.filter(orderItemIsActive_)
+      .reduce((sum, item) => sum + Number(item.line_total), 0);
     if (order.write_state === 'COMMITTED' && orderItems.length === 0) {
       addDiagnostic_(report, 'ERROR', 'COMMITTED_ORDER_WITHOUT_ITEMS',
         'COMMITTED 주문에 OrderItems가 없습니다.', 'Orders', order.__rowNumber);

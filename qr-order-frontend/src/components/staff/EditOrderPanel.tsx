@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import './EditOrderPanel.css'
 import { OperationalButton } from './OperationalButton'
 import { QuantitySelector } from '../QuantitySelector'
@@ -46,8 +45,6 @@ export function EditOrderPanel({
   onSaveNote,
   onClose,
 }: EditOrderPanelProps) {
-  const [draftNote, setDraftNote] = useState(note)
-
   return (
     <aside className="edit-panel" aria-label={`${tableId} 주문 수정`}>
       <header className="edit-panel__head">
@@ -109,11 +106,8 @@ export function EditOrderPanel({
           className="edit-panel__note-input"
           aria-label="주문 메모"
           rows={2}
-          value={draftNote}
-          onChange={(event) => {
-            setDraftNote(event.target.value)
-            onNoteChange(event.target.value)
-          }}
+          value={note}
+          onChange={(event) => onNoteChange(event.target.value)}
         />
         <div
           className="edit-panel__audiences"

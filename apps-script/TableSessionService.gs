@@ -78,6 +78,23 @@ function migrateLegacyOrdersToSessions_(spreadsheet) {
   };
 }
 
+function migrateLegacyOrderItems_(spreadsheet) {
+  const items = readSheetTable_(spreadsheet, 'OrderItems').rows;
+  let migratedOrderItemCount = 0;
+  items.forEach(item => {
+    const changes = {};
+    if (isBlankValue_(item.status)) changes.status = 'ACTIVE';
+    if (isBlankValue_(item.updated_at)) {
+      const createdAt = new Date(item.created_at);
+      changes.updated_at = Number.isFinite(createdAt.getTime()) ? createdAt : new Date();
+    }
+    if (!Object.keys(changes).length) return;
+    updateObjectRowBySchema_(spreadsheet, 'OrderItems', item.__rowNumber, changes);
+    migratedOrderItemCount += 1;
+  });
+  return { migratedOrderItemCount: migratedOrderItemCount };
+}
+
 function createLegacyTableSession_(spreadsheet, tableId, orders, paid) {
   const openedAt = earliestDate_(orders.map(order => order.created_at));
   const paidAt = paid ? latestDate_(orders.map(order => order.paid_at)) : null;
