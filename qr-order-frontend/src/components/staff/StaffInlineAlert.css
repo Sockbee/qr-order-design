@@ -5,7 +5,14 @@
   width: 100%;
   padding: 14px var(--space-4);
   border-radius: var(--radius-btn-md);
+}
+
+.staff-alert--danger {
   background: var(--color-status-attention-bg);
+}
+
+.staff-alert--info {
+  background: var(--color-bg-weak);
 }
 
 .staff-alert__info {
@@ -14,7 +21,14 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+}
+
+.staff-alert--danger .staff-alert__info {
   color: var(--color-status-attention-fg);
+}
+
+.staff-alert--info .staff-alert__info {
+  color: var(--color-text-weak);
 }
 
 .staff-alert__title {
