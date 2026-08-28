@@ -8,6 +8,12 @@ interface CategoryTabsProps {
   onSelect: (id: MenuCategory['id']) => void
   /** id of the panel the tabs control, for `aria-controls`. */
   panelId: string
+  /**
+   * `underline` is the customer strip (S02); `pill` is the staff variant
+   * drawn on A03 (92:840). Same semantics and keyboard model — only the
+   * indicator differs, so this stays one component.
+   */
+  variant?: 'underline' | 'pill'
 }
 
 export function CategoryTabs({
@@ -15,6 +21,7 @@ export function CategoryTabs({
   selectedId,
   onSelect,
   panelId,
+  variant = 'underline',
 }: CategoryTabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
 
@@ -45,7 +52,7 @@ export function CategoryTabs({
 
   return (
     <div
-      className="category-tabs"
+      className={`category-tabs category-tabs--${variant}`}
       role="tablist"
       aria-label="메뉴 카테고리"
       ref={listRef}

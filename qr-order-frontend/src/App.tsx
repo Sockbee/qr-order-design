@@ -19,6 +19,11 @@ import { TableConfirmationPage } from './pages/TableConfirmationPage'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { StaffLoginPage } from './pages/staff/StaffLoginPage'
 import { TableDetailPanel } from './components/staff/TableDetailPanel'
+import {
+  StaffAddOrderRoute,
+  StaffTableOperationRoute,
+} from './pages/staff/StaffOperationRoutes'
+import type { StaffOperation } from './pages/staff/StaffOperationRoutes'
 import { CallStaffSheet } from './components/CallStaffSheet'
 import { useOrderSession } from './hooks/useOrderSession'
 import { useStaffCall } from './hooks/useStaffCall'
@@ -512,6 +517,37 @@ function App() {
           element={(
             <RequireStaffAuth auth={staffAuth}>
               <StaffTableHomeRoute auth={staffAuth} />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/tables/:tableId/order"
+          element={(
+            <RequireStaffAuth auth={staffAuth}>
+              <StaffAddOrderRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        {/* A04–A08 all keep the table grid behind them. */}
+        {(['move', 'merge', 'split', 'discount', 'edit', 'cancel'] as StaffOperation[]).map(
+          (operation) => (
+            <Route
+              key={operation}
+              path={`/staff/tables/:tableId/${operation}`}
+              element={(
+                <RequireStaffAuth auth={staffAuth}>
+                  <StaffTableOperationRoute operation={operation} />
+                </RequireStaffAuth>
+              )}
+            />
+          ),
+        )}
+        {/* 메모 is the note half of the same A08 panel. */}
+        <Route
+          path="/staff/tables/:tableId/note"
+          element={(
+            <RequireStaffAuth auth={staffAuth}>
+              <StaffTableOperationRoute operation="edit" />
             </RequireStaffAuth>
           )}
         />
