@@ -3,7 +3,7 @@
  * Keep this file aligned with docs/qr-order/google-sheets-schema.md.
  */
 const QR_ORDER_APP = Object.freeze({
-  BOOTSTRAP_VERSION: '1.4.0',
+  BOOTSTRAP_VERSION: '1.5.0',
   PROTECTION_PREFIX: 'QR Order bootstrap:',
   HEADER_BACKGROUND: '#1b64da',
   HEADER_FOREGROUND: '#ffffff',
@@ -45,6 +45,8 @@ const QR_ORDER_ENUMS = Object.freeze({
   ]),
   CALL_STATUS: Object.freeze(['PENDING', 'ACKNOWLEDGED', 'CANCELLED']),
   STAFF_DEVICE_LABEL: Object.freeze(['카운터', '주방', '서빙', '결제']),
+  SESSION_STATUS: Object.freeze(['OPEN', 'CLOSED']),
+  SESSION_PAYMENT_STATUS: Object.freeze(['UNPAID', 'PAID', 'WAIVED']),
 });
 
 const QR_ORDER_STATUS_TO_PUBLIC = Object.freeze({
@@ -66,6 +68,7 @@ const QR_ORDER_SHEET_ORDER = Object.freeze([
   'OrderItems',
   'OrderItemOptions',
   'Calls',
+  'TableSessions',
   'Settings',
   'AuditLogs',
 ]);
@@ -172,18 +175,20 @@ const QR_ORDER_SCHEMA = Object.freeze({
       'idempotency_key', 'request_fingerprint', 'table_id', 'status',
       'public_status', 'payment_status', 'total_amount', 'note',
       'write_payload_json', 'write_state', 'status_updated_at', 'created_at',
-      'updated_at', 'paid_at', 'cancelled_at', 'cancel_reason',
+      'updated_at', 'paid_at', 'cancelled_at', 'cancel_reason', 'session_id',
     ]),
     required: Object.freeze([
       'order_id', 'display_number', 'display_code', 'client_request_id',
       'idempotency_key', 'request_fingerprint', 'table_id', 'status',
       'public_status', 'payment_status', 'total_amount', 'write_payload_json',
       'write_state', 'status_updated_at', 'created_at', 'updated_at',
+      'session_id',
     ]),
     unique: Object.freeze(['order_id', 'display_number', 'display_code', 'idempotency_key']),
     text: Object.freeze([
       'order_id', 'display_code', 'client_request_id', 'idempotency_key',
       'request_fingerprint', 'table_id', 'note', 'write_payload_json', 'cancel_reason',
+      'session_id',
     ]),
     integers: Object.freeze(['display_number', 'total_amount']),
     nonNegative: Object.freeze(['total_amount']),
@@ -272,6 +277,38 @@ const QR_ORDER_SCHEMA = Object.freeze({
     dropdowns: Object.freeze({
       reason: QR_ORDER_ENUMS.CALL_REASON,
       status: QR_ORDER_ENUMS.CALL_STATUS,
+    }),
+    minRows: 2000,
+  }),
+  TableSessions: Object.freeze({
+    headers: Object.freeze([
+      'session_id', 'table_id', 'origin_table_id', 'status', 'discount_rate',
+      'merged_into_session_id', 'payment_status', 'subtotal_amount',
+      'discount_amount', 'final_amount', 'opened_at', 'closed_at', 'paid_at',
+      'updated_at',
+    ]),
+    required: Object.freeze([
+      'session_id', 'table_id', 'origin_table_id', 'status', 'discount_rate',
+      'payment_status', 'opened_at', 'updated_at',
+    ]),
+    unique: Object.freeze(['session_id']),
+    text: Object.freeze([
+      'session_id', 'table_id', 'origin_table_id', 'status',
+      'merged_into_session_id', 'payment_status',
+    ]),
+    integers: Object.freeze([
+      'discount_rate', 'subtotal_amount', 'discount_amount', 'final_amount',
+    ]),
+    nonNegative: Object.freeze([
+      'discount_rate', 'subtotal_amount', 'discount_amount', 'final_amount',
+    ]),
+    positive: Object.freeze([]),
+    money: Object.freeze(['subtotal_amount', 'discount_amount', 'final_amount']),
+    dates: Object.freeze(['opened_at', 'closed_at', 'paid_at', 'updated_at']),
+    checkboxes: Object.freeze([]),
+    dropdowns: Object.freeze({
+      status: QR_ORDER_ENUMS.SESSION_STATUS,
+      payment_status: QR_ORDER_ENUMS.SESSION_PAYMENT_STATUS,
     }),
     minRows: 2000,
   }),
@@ -369,6 +406,10 @@ const QR_ORDER_SETTINGS_DEFAULTS = Object.freeze([
     key: 'STAFF_SESSION_HOURS', value: '14', type: 'INTEGER',
     description: '운영 토큰 유효 시간',
   }),
+  Object.freeze({
+    key: 'TABLE_DISCOUNT_RATE', value: '20', type: 'INTEGER',
+    description: '지정 테이블 할인율(%)',
+  }),
 ]);
 
 const QR_ORDER_PROTECTIONS = Object.freeze({
@@ -397,6 +438,7 @@ const QR_ORDER_PROTECTIONS = Object.freeze({
     Object.freeze({ a1: 'A:G', label: 'order identity and idempotency' }),
     Object.freeze({ a1: 'I:I', label: 'derived public status' }),
     Object.freeze({ a1: 'K:S', label: 'amount snapshots and managed state' }),
+    Object.freeze({ a1: 'U:U', label: 'table session identity' }),
   ]),
   OrderItems: Object.freeze([
     Object.freeze({ a1: 'A:J', label: 'order item snapshots' }),
@@ -406,6 +448,9 @@ const QR_ORDER_PROTECTIONS = Object.freeze({
   ]),
   Calls: Object.freeze([
     Object.freeze({ a1: 'A:J', label: 'call lifecycle records' }),
+  ]),
+  TableSessions: Object.freeze([
+    Object.freeze({ a1: 'A:N', label: 'table session lifecycle records' }),
   ]),
   Settings: Object.freeze([
     Object.freeze({ a1: 'A:A', label: 'setting key' }),

@@ -84,6 +84,7 @@ function collectDiagnostics_(spreadsheet) {
   checkCatalogRules_(tables, report);
   checkOrderIntegrity_(tables, report);
   checkCallIntegrity_(tables, report);
+  checkSessionIntegrity_(tables, report);
   finishDiagnosticsReport_(report);
   return report;
 }
@@ -446,6 +447,7 @@ function checkForeignKeys_(tables, report) {
   const orderIds = valueSet_(tables.Orders, 'order_id');
   const itemIds = valueSet_(tables.OrderItems, 'order_item_id');
   const optionIds = valueSet_(tables.MenuOptions, 'option_id');
+  const sessionIds = valueSet_(tables.TableSessions, 'session_id');
 
   checkForeignKeyRows_(tables.Menu, 'category_id', categoryIds, 'Menu', 'Categories.category_id', report);
   checkForeignKeyRows_(tables.MenuOptionGroups, 'menu_id', menuIds,
@@ -455,7 +457,15 @@ function checkForeignKeys_(tables, report) {
   checkForeignKeyRows_(tables.MenuOptions, 'menu_id', menuIds,
     'MenuOptions', 'Menu.menu_id', report);
   checkForeignKeyRows_(tables.Orders, 'table_id', tableIds, 'Orders', 'Tables.table_id', report);
+  checkForeignKeyRows_(tables.Orders, 'session_id', sessionIds,
+    'Orders', 'TableSessions.session_id', report);
   checkForeignKeyRows_(tables.Calls, 'table_id', tableIds, 'Calls', 'Tables.table_id', report);
+  checkForeignKeyRows_(tables.TableSessions, 'table_id', tableIds,
+    'TableSessions', 'Tables.table_id', report);
+  checkForeignKeyRows_(tables.TableSessions, 'origin_table_id', tableIds,
+    'TableSessions', 'Tables.table_id', report);
+  checkForeignKeyRows_(tables.TableSessions, 'merged_into_session_id', sessionIds,
+    'TableSessions', 'TableSessions.session_id', report);
   checkForeignKeyRows_(tables.OrderItems, 'order_id', orderIds,
     'OrderItems', 'Orders.order_id', report);
   checkForeignKeyRows_(tables.OrderItems, 'menu_id', menuIds, 'OrderItems', 'Menu.menu_id', report);
@@ -749,6 +759,58 @@ function checkCallIntegrity_(tables, report) {
   });
 }
 
+function checkSessionIntegrity_(tables, report) {
+  const sessions = tables.TableSessions || [];
+  const byId = new Map(sessions.map(session => [String(session.session_id), session]));
+  checkCompositeUnique_(
+    sessions.filter(session => session.status === 'OPEN'),
+    ['table_id'],
+    'TableSessions',
+    report
+  );
+  sessions.forEach(session => {
+    const discountRate = Number(session.discount_rate);
+    if (!Number.isInteger(discountRate) || discountRate < 0 || discountRate > 100) {
+      addDiagnostic_(report, 'ERROR', 'INVALID_SESSION_DISCOUNT_RATE',
+        'discount_rate는 0 이상 100 이하 정수여야 합니다.',
+        'TableSessions', session.__rowNumber, 'discount_rate');
+    }
+    if (!isBlankValue_(session.merged_into_session_id)) {
+      const primary = byId.get(String(session.merged_into_session_id));
+      if (String(session.session_id) === String(session.merged_into_session_id) ||
+          !primary || !isBlankValue_(primary.merged_into_session_id)) {
+        addDiagnostic_(report, 'ERROR', 'INVALID_SESSION_MERGE_CHAIN',
+          '합석은 자기 자신을 가리키지 않는 1단계 관계여야 합니다.',
+          'TableSessions', session.__rowNumber, 'merged_into_session_id');
+      }
+    }
+    if (session.status === 'CLOSED' && isBlankValue_(session.closed_at)) {
+      addDiagnostic_(report, 'ERROR', 'CLOSED_SESSION_WITHOUT_TIMESTAMP',
+        'CLOSED 세션에는 closed_at이 필요합니다.',
+        'TableSessions', session.__rowNumber, 'closed_at');
+    }
+    if (session.payment_status === 'PAID') {
+      if (isBlankValue_(session.paid_at)) {
+        addDiagnostic_(report, 'ERROR', 'PAID_SESSION_WITHOUT_TIMESTAMP',
+          'PAID 세션에는 paid_at이 필요합니다.',
+          'TableSessions', session.__rowNumber, 'paid_at');
+      }
+      if (isBlankValue_(session.merged_into_session_id)) {
+        const subtotal = Number(session.subtotal_amount);
+        const discount = Number(session.discount_amount);
+        const finalAmount = Number(session.final_amount);
+        if (![subtotal, discount, finalAmount].every(Number.isSafeInteger) ||
+            finalAmount !== subtotal - discount ||
+            discount !== Math.floor(subtotal * discountRate / 100)) {
+          addDiagnostic_(report, 'ERROR', 'INVALID_PAID_SESSION_SNAPSHOT',
+            '결제 snapshot 금액과 할인 계산이 일치하지 않습니다.',
+            'TableSessions', session.__rowNumber, 'final_amount');
+        }
+      }
+    }
+  });
+}
+
 function checkCompositeUnique_(rows, headers, sheetName, report) {
   const seen = new Map();
   rows.forEach(row => {
@@ -767,15 +829,6 @@ function checkCompositeUnique_(rows, headers, sheetName, report) {
       seen.set(key, row.__rowNumber);
     }
   });
-}
-
-function groupRows_(rows, header) {
-  return (rows || []).reduce((map, row) => {
-    const key = String(row[header]);
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(row);
-    return map;
-  }, new Map());
 }
 
 function showDiagnosticsReport_(report) {

@@ -125,3 +125,12 @@ function stringValue_(value) {
 function valuesEqual_(left, right) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
+
+function groupRows_(rows, header) {
+  return (rows || []).reduce((map, row) => {
+    const key = String(row[header]);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key).push(row);
+    return map;
+  }, new Map());
+}

@@ -6,7 +6,8 @@ const vm = require('node:vm');
 
 const appsScriptDir = path.resolve(__dirname, '..');
 const source = [
-  'Http.gs', 'Repositories.gs', 'CatalogSeed.gs', 'TableCatalogService.gs',
+  'Config.gs', 'Http.gs', 'Repositories.gs', 'CatalogSeed.gs',
+  'TableSessionService.gs', 'TableCatalogService.gs',
   'TableProvisioning.gs', 'Code.gs',
 ]
   .map(file => fs.readFileSync(path.join(appsScriptDir, file), 'utf8'))
@@ -37,6 +38,11 @@ const context = vm.createContext({
         mimeType: null,
         setMimeType(mimeType) { this.mimeType = mimeType; return this; },
       };
+    },
+  },
+  LockService: {
+    getScriptLock() {
+      return { tryLock() { return true; }, releaseLock() {} };
     },
   },
   encodeURIComponent,
@@ -135,6 +141,7 @@ context.__optionRows = [
     name: '옵션 A', price_delta: 0, available: true, default_selected: true, sort_order: 10,
   },
 ];
+context.__tableSessionRows = [];
 context.getConfiguredSpreadsheet_ = function getConfiguredSpreadsheet() { return {}; };
 context.readSheetTable_ = function readSheetTable(spreadsheet, sheetName) {
   const rowsBySheet = {
@@ -144,8 +151,13 @@ context.readSheetTable_ = function readSheetTable(spreadsheet, sheetName) {
     Menu: context.__menuRows,
     MenuOptionGroups: context.__groupRows,
     MenuOptions: context.__optionRows,
+    TableSessions: context.__tableSessionRows,
   };
   return { rows: rowsBySheet[sheetName] || [] };
+};
+context.appendObjectsBySchema_ = function appendObjects(spreadsheet, sheetName, objects) {
+  if (sheetName === 'TableSessions') context.__tableSessionRows.push(...objects);
+  return { startRow: context.__tableSessionRows.length - objects.length + 2, rowCount: objects.length };
 };
 assert.equal(
   evaluate("validateTable_('T01', '" + token + "', true, {}).table_id"),
@@ -174,6 +186,7 @@ const resolved = JSON.parse(evaluate('doPost(' + resolveEvent + ').text'));
 assert.equal(resolved.success, true);
 assert.equal(resolved.data.table.tableId, 'T01');
 assert.equal(resolved.data.statusPollSeconds, 15);
+assert.equal(context.__tableSessionRows.length, 1);
 
 const menuEvent = JSON.stringify({
   pathInfo: '/menu',

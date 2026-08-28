@@ -66,6 +66,7 @@ function createOrder(payload, requestId) {
       const totalAmount = calculateOrderTotal_(lines);
       const display = allocateDisplayNumber_(spreadsheet);
       const now = new Date();
+      const session = ensureOpenTableSession_(spreadsheet, String(table.table_id), now);
       orderId = Utilities.getUuid();
       const appendResult = appendObjectsBySchema_(spreadsheet, 'Orders', [{
         order_id: orderId,
@@ -88,6 +89,7 @@ function createOrder(payload, requestId) {
         paid_at: '',
         cancelled_at: '',
         cancel_reason: '',
+        session_id: String(session.session_id),
       }]);
       createdRowNumber = appendResult.startRow;
 

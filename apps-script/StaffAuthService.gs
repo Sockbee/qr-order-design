@@ -30,7 +30,20 @@ function isStaffApiRoute_(route) {
 }
 
 function dispatchStaffRoute_(route, payload, requestId, staff) {
-  // Service handlers are added in the following operational API review units.
+  if (route === 'staff/calls/list') return listStaffCalls(payload);
+  if (route === 'staff/calls/acknowledge') {
+    return acknowledgeStaffCalls(payload, requestId, staff);
+  }
+  if (route === 'staff/tables/bill') return getStaffTableBill(payload);
+  if (route === 'staff/tables/discount') {
+    return setStaffTableDiscount(payload, requestId, staff);
+  }
+  if (route === 'staff/tables/move') return moveStaffTable(payload, requestId, staff);
+  if (route === 'staff/tables/merge') return mergeStaffTables(payload, requestId, staff);
+  if (route === 'staff/tables/split') return splitStaffTable(payload, requestId, staff);
+  if (route === 'staff/tables/confirm-payment') {
+    return confirmStaffTablePayment(payload, requestId, staff);
+  }
   throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
 }
 

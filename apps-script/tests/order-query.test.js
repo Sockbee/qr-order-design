@@ -7,7 +7,8 @@ const vm = require('node:vm');
 const appsScriptDir = path.resolve(__dirname, '..');
 const source = [
   'Config.gs', 'Http.gs', 'Repositories.gs', 'TableCatalogService.gs',
-  'OrderValidation.gs', 'OrderService.gs', 'OrderQueryService.gs', 'Code.gs',
+  'TableSessionService.gs', 'OrderValidation.gs', 'OrderService.gs',
+  'OrderQueryService.gs', 'Code.gs',
 ].map(file => fs.readFileSync(path.join(appsScriptDir, file), 'utf8')).join('\n');
 
 let uuidCounter = 0;
@@ -81,6 +82,7 @@ const state = {
   Orders: [],
   OrderItems: [],
   OrderItemOptions: [],
+  TableSessions: [],
   AuditLogs: [],
 };
 
