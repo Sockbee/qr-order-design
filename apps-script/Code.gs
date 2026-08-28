@@ -20,6 +20,8 @@ function doPost(event) {
     if (route === 'orders/create') return createOrder(payload, requestId);
     if (route === 'orders/get') return getOrder(payload);
     if (route === 'orders/list') return listOrders(payload);
+    if (route === 'calls/create') return createCall(payload, requestId);
+    if (route === 'calls/cancel') return cancelCall(payload, requestId);
     throw new ApiError('NOT_FOUND', '지원하지 않는 API 경로입니다.', false);
   });
 }

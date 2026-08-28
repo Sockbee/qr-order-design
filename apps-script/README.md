@@ -1,8 +1,9 @@
 # QR Order Apps Script bootstrap
 
-Google Spreadsheet의 canonical 10개 Sheet를 생성하고 schema, Settings, validation,
+Google Spreadsheet의 canonical 11개 Sheet를 생성하고 schema, Settings, validation,
 보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 고객용
-`resolve-table`, `menu`, `orders/create`, `orders/get`, `orders/list` API를 포함하는
+`resolve-table`, `menu`, `orders/create`, `orders/get`, `orders/list`, `calls/create`,
+`calls/cancel` API를 포함하는
 Apps Script V8 프로젝트다.
 
 ## 포함 파일
@@ -17,6 +18,7 @@ Apps Script V8 프로젝트다.
 - `OrderValidation.gs`: 주문 payload, 메뉴/옵션/수량/가격 검증과 fingerprint 생성
 - `OrderService.gs`: idempotent 주문 생성, snapshot 저장, 부분 write 복구
 - `OrderQueryService.gs`: 인증된 단건/목록 주문 snapshot 조회
+- `CallService.gs`: 고객 직원 호출 생성/취소, idempotency, 호출 간격 제한
 - `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
 - `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
@@ -61,6 +63,8 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 - `POST {WEB_APP_URL}/exec/orders/create`
 - `POST {WEB_APP_URL}/exec/orders/get`
 - `POST {WEB_APP_URL}/exec/orders/list`
+- `POST {WEB_APP_URL}/exec/calls/create`
+- `POST {WEB_APP_URL}/exec/calls/cancel`
 - path routing이 제한된 환경에서는 각 endpoint를 `?action=...` 형식으로도 지원
 
 POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
@@ -149,6 +153,7 @@ MenuOptions
 Orders
 OrderItems
 OrderItemOptions
+Calls
 Settings
 AuditLogs
 ```
