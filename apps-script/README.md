@@ -1,14 +1,14 @@
 # QR Order Apps Script bootstrap
 
-Google Spreadsheet의 canonical 11개 Sheet를 생성하고 schema, Settings, validation,
+Google Spreadsheet의 canonical 12개 Sheet를 생성하고 schema, Settings, validation,
 보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 고객용
 `resolve-table`, `menu`, `orders/create`, `orders/get`, `orders/list`, `calls/create`,
-`calls/cancel` API를 포함하는
+`calls/cancel` API와 운영 인증·호출·테이블 정산 API를 포함하는
 Apps Script V8 프로젝트다.
 
 ## 포함 파일
 
-- `Config.gs`: 10개 Sheet의 정확한 header, enum, 초기 Settings, 보호 범위
+- `Config.gs`: 12개 Sheet의 정확한 header, enum, 초기 Settings, 보호 범위
 - `Repositories.gs`: header 기반 Spreadsheet read/write helper
 - `Setup.gs`: `bootstrapSpreadsheet()`, formatting, validation, protection
 - `CatalogSeed.gs`: 카테고리 4개와 메뉴 19개의 idempotent 초기 데이터
@@ -19,6 +19,11 @@ Apps Script V8 프로젝트다.
 - `OrderService.gs`: idempotent 주문 생성, snapshot 저장, 부분 write 복구
 - `OrderQueryService.gs`: 인증된 단건/목록 주문 snapshot 조회
 - `CallService.gs`: 고객 직원 호출 생성/취소, idempotency, 호출 간격 제한
+- `TableSessionService.gs`: 테이블 세션 생성, 기존 주문 backfill, 청구 그룹 계산
+- `StaffAuthService.gs`: 운영 로그인, HMAC token, throttle, 운영 action dispatch
+- `StaffCallService.gs`: 미확인 호출 그룹 조회와 테이블 단위 일괄 확인
+- `StaffTableService.gs`: 청구, 할인, 이동, 합석, 분리, 결제 확정
+- `StaffDashboardService.gs`: 테이블 현황·상세, 스테이션 queue, 상태, 메뉴, 운영 주문
 - `Code.gs`, `Http.gs`: Web App path dispatch와 JSON envelope
 - `appsscript.json`: Asia/Seoul, V8, anonymous web app 설정
 
@@ -29,6 +34,8 @@ Apps Script V8 프로젝트다.
 3. 프로젝트 설정의 Script Properties에 다음을 저장한다.
    - `SPREADSHEET_ID`: 대상 Spreadsheet URL의 `/d/`와 `/edit` 사이 값
    - `TOKEN_PEPPER`: `openssl rand -hex 32` 등으로 만든 32바이트 이상 난수
+   - `STAFF_PASSCODE_HASH`: `SHA-256(TOKEN_PEPPER + ':' + passcode)` 64자리 hex
+   - `STAFF_TOKEN_SECRET`: `openssl rand -hex 32` 등으로 만든 별도 서명 비밀값
 4. 함수 목록에서 `bootstrapSpreadsheet`를 선택해 실행하고 권한을 승인한다.
 5. Spreadsheet를 새로고침하면 `QR 주문 관리` 메뉴가 표시된다.
 6. `QR 주문 관리 > 카테고리/메뉴 초기 데이터 추가`를 실행한다.
@@ -65,6 +72,23 @@ CSV를 받지 않고 창을 닫으면 복구할 수 없으므로 `Tables` 행을
 - `POST {WEB_APP_URL}/exec/orders/list`
 - `POST {WEB_APP_URL}/exec/calls/create`
 - `POST {WEB_APP_URL}/exec/calls/cancel`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/login`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/calls/list`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/calls/acknowledge`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/bill`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/discount`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/move`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/merge`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/split`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/confirm-payment`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/list`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/tables/detail`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/orders/status`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/orders/queue`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/menu/list`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/menu/availability`
+- `POST {STAFF_WEB_APP_URL}/exec/staff/orders/create`
+- 모든 운영 action은 `staff/` prefix를 사용하며 body에 `staffToken`을 포함
 - path routing이 제한된 환경에서는 각 endpoint를 `?action=...` 형식으로도 지원
 
 POST body는 `Content-Type: text/plain;charset=utf-8`로 다음 JSON 문자열을 전송한다.
@@ -139,6 +163,12 @@ Spreadsheet ID, 원본 token, token hash가 포함되지 않는다.
 - 없는 Sheet와 Settings key만 추가한다.
 - header가 정확하면 기존 데이터를 유지한다.
 - 데이터가 있는 Sheet의 header가 schema와 다르면 자동 덮어쓰지 않고 중단한다.
+- 예외적으로 기존 Orders A:T/A:U가 정확히 일치하면 끝 열 U:V에 누락된
+  `session_id`/`note_audience`만 추가한다.
+- 기존 OrderItems A:J가 정확히 일치하면 K:L에 `status`/`updated_at`을 추가하고 기존
+  항목을 `ACTIVE`로 backfill한다.
+- `session_id`가 비어 있는 기존 주문은 table별로 backfill한다. 결제 완료 주문은 닫힌
+  이력 세션, 미결제 주문은 열린 세션으로 분리해 과거 결제분의 재청구를 막는다.
 - `QR Order bootstrap:` prefix가 붙은 보호 범위만 교체한다.
 - 사용자가 별도로 만든 보호 범위는 삭제하지 않는다.
 
@@ -154,6 +184,7 @@ Orders
 OrderItems
 OrderItemOptions
 Calls
+TableSessions
 Settings
 AuditLogs
 ```

@@ -237,6 +237,7 @@ Sample:
 | S | `cancelled_at` | datetime | N |  | N | N | trigger | 취소 시각 |
 | T | `cancel_reason` | string | N | `재료 소진` | N | N | 운영진 | CANCELLED이면 권장 필수 |
 | U | `session_id` | UUID string FK | Y | `9b71...` | N | Y | Apps Script | TableSessions 참조. 주문 접수 시점의 OPEN 세션 |
+| V | `note_audience` | enum | N | `KITCHEN` | N | N | Apps Script | `GENERAL/KITCHEN/SERVING`; 빈 legacy 값은 GENERAL |
 
 enum:
 
@@ -244,6 +245,7 @@ enum:
 - `public_status`: `accepted`, `preparing`, `served`, `closed`, `cancelled`
 - `payment_status`: `UNPAID`, `PAID`, `WAIVED`, `REFUNDED`
 - `write_state`: `WRITING`, `COMMITTED`, `FAILED`
+- `note_audience`: `GENERAL`, `KITCHEN`, `SERVING`
 
 상태 mapping은 다음과 같이 고정한다.
 
@@ -257,9 +259,9 @@ CANCELLED            -> cancelled
 
 Sample:
 
-| order_id | display_number | display_code | client_request_id | idempotency_key | request_fingerprint | table_id | status | public_status | payment_status | total_amount | note | write_payload_json | write_state | status_updated_at | created_at | updated_at | paid_at | cancelled_at | cancel_reason |
-|---|---:|---|---|---|---|---|---|---|---|---:|---|---|---|---|---|---|---|---|---|
-| d08c… | 1042 | A-1042 | 8eaf… | T12:8eaf… | a18c… | T12 | RECEIVED | accepted | UNPAID | 23000 |  | `[{"lineNo":1,...}]` | COMMITTED | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 |  |  |  |
+| order_id | display_number | display_code | client_request_id | idempotency_key | request_fingerprint | table_id | status | public_status | payment_status | total_amount | note | write_payload_json | write_state | status_updated_at | created_at | updated_at | paid_at | cancelled_at | cancel_reason | session_id | note_audience |
+|---|---:|---|---|---|---|---|---|---|---|---:|---|---|---|---|---|---|---|---|---|---|---|
+| d08c… | 1042 | A-1042 | 8eaf… | T12:8eaf… | a18c… | T12 | RECEIVED | accepted | UNPAID | 23000 |  | `[{"lineNo":1,...}]` | COMMITTED | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 |  |  |  | 9b71… | GENERAL |
 
 ## 10. OrderItems
 
@@ -275,6 +277,8 @@ Sample:
 | `quantity` | integer | Y | `1` | N | N | Apps Script | 서버 검증 수량 |
 | `line_total` | integer | Y | `10000` | N | N | Apps Script | `unit_price_snapshot * quantity` |
 | `created_at` | datetime | Y | `2026-08-25 19:24:00` | N | N | Apps Script | 기록 시각 |
+| `status` | enum | Y | `ACTIVE` | N | N | Apps Script | `ACTIVE/CANCELLED`; 취소 행도 snapshot 보존 |
+| `updated_at` | datetime | Y | `2026-08-25 19:30:00` | N | N | Apps Script | 수량·취소 마지막 변경 |
 
 OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는다. 모든 표시와 통계는 snapshot 열을 사용한다.
 
@@ -435,6 +439,13 @@ Orders를 `table_id`에만 매달면 이 넷 중 어느 것도 표현할 수 없
 
 세션은 `resolveTable`에서 해당 `table_id`의 `OPEN` 세션이 없을 때 생성한다. 주문 생성 시 그 세션 id를 `Orders.session_id`에 기록한다.
 
+기존 Orders A:T 또는 A:U를 운영 중인 Spreadsheet는 bootstrap 시 U의 `session_id`와
+V의 `note_audience`를 끝 열로만 추가한다. 기존 OrderItems A:J에는 K:L의 `status`,
+`updated_at`을 추가하고 빈 상태는 `ACTIVE`, 빈 수정 시각은 `created_at`으로 backfill한다.
+backfill할 때 같은 table의 결제 완료 주문은 닫힌 이력 세션으로, 나머지는 열린
+세션으로 분리한다. 방문 경계를 복원할 정보가 없는 과거 데이터의 최소 안전 단위이며,
+결제 완료 주문이 현재 청구에 다시 포함되는 것을 방지한다.
+
 ### 청구 그룹
 
 `merged_into_session_id`가 비어 있는 세션이 **대표**다. 청구 그룹 = 대표 + 대표를 가리키는 세션들.
@@ -453,7 +464,8 @@ final_amount    = subtotal - discount_amount
 ```
 
 - 원 단위 정수이며 버림(floor)이다. 반올림하면 표시 금액과 입금액이 1원 어긋날 수 있다.
-- 이 계산은 **조회 시점마다 다시 한다.** 결제 확정 전까지 Sheet에 저장하지 않는다.
+- 이 계산은 **결제 전 조회 시점마다 다시 한다.** 결제 확정 전까지 Sheet에 저장하지
+  않는다. 결제 후 조회는 대표 세션의 확정 snapshot을 사용한다.
 
 ### 할인
 
@@ -520,38 +532,38 @@ Orders가 수천 행을 넘기 시작하면 당일 Sheet만 활성 데이터로 
 
 ## 17. 운영 View와 통계
 
-View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:U를 기준으로 한다. 열 문자(H, J, N, P …)는 `session_id`를 끝에 추가한 뒤에도 그대로다.
+View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:V를 기준으로 한다. 열 문자(H, J, N, P …)는 suffix 열을 추가한 뒤에도 그대로다.
 
 ### 상태별 View
 
 `View_AllOrders!A1`
 
 ```gs
-=QUERY(Orders!A:U,"select * where N = 'COMMITTED' order by P desc",1)
+=QUERY(Orders!A:V,"select * where N = 'COMMITTED' order by P desc",1)
 ```
 
 `View_Kitchen!A1`
 
 ```gs
-=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and (H = 'CONFIRMED' or H = 'PREPARING') order by P asc",1)
+=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and (H = 'CONFIRMED' or H = 'PREPARING') order by P asc",1)
 ```
 
 `View_Serving!A1`
 
 ```gs
-=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and H = 'SERVING' order by O asc",1)
+=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and H = 'SERVING' order by O asc",1)
 ```
 
 `View_Payment!A1`
 
 ```gs
-=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and J = 'UNPAID' and H <> 'CANCELLED' order by G asc, P asc",1)
+=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and J = 'UNPAID' and H <> 'CANCELLED' order by G asc, P asc",1)
 ```
 
 `View_Completed!A1`
 
 ```gs
-=QUERY(Orders!A:U,"select * where N = 'COMMITTED' and H = 'COMPLETED' order by Q desc",1)
+=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and H = 'COMPLETED' order by Q desc",1)
 ```
 
 `View_TableBills!A1` — TableSessions 열 순서 A:N 기준
@@ -565,7 +577,7 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 `View_WriteFailures!A1`
 
 ```gs
-=QUERY(Orders!A:U,"select * where N <> 'COMMITTED' order by P asc",1)
+=QUERY(Orders!A:V,"select * where N <> 'COMMITTED' order by P asc",1)
 ```
 
 `View_Calls!A1` — Calls 열 순서 A:J 기준
@@ -589,13 +601,13 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 메뉴별 판매량/매출은 snapshot으로 계산한다.
 
 ```gs
-=QUERY(OrderItems!A:J,"select E, sum(H), sum(I) where E is not null group by E label sum(H) '판매수량', sum(I) '매출'",1)
+=QUERY(OrderItems!A:L,"select E, sum(H), sum(I) where E is not null and K = 'ACTIVE' group by E label sum(H) '판매수량', sum(I) '매출'",1)
 ```
 
 테이블별 주문 금액:
 
 ```gs
-=QUERY(Orders!A:U,"select G, sum(K) where N = 'COMMITTED' and H <> 'CANCELLED' group by G label sum(K) '주문금액'",1)
+=QUERY(Orders!A:V,"select G, sum(K) where N = 'COMMITTED' and H <> 'CANCELLED' group by G label sum(K) '주문금액'",1)
 ```
 
 시간대별 주문량은 helper View에서 `=HOUR(Orders!P2)`를 만든 뒤 QUERY로 집계하거나 Pivot Table을 권장한다. 취소 주문은 `status=CANCELLED`, `write_state=COMMITTED` Filter View로 확인한다.
@@ -612,7 +624,7 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - SINGLE 그룹의 min/max가 유효한가
 - default option 수가 max를 넘지 않는가
 - `NEXT_DISPLAY_NUMBER`가 기존 최대 display number보다 큰가
-- Orders의 `total_amount`가 OrderItems `line_total` 합과 일치하는가
+- Orders의 `total_amount`가 ACTIVE OrderItems `line_total` 합과 일치하는가
 - OrderItems `line_total = unit_price_snapshot * quantity`인가
 - OrderItems의 base + option delta 합이 unit snapshot과 일치하는가
 - terminal status의 timestamp와 cancel reason 정책이 충족되는가

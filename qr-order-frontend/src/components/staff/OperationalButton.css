@@ -12,6 +12,10 @@
   cursor: pointer;
 }
 
+.op-button--block {
+  width: 100%;
+}
+
 .op-button--lg {
   height: var(--layout-staff-control-height);
 }

@@ -11,7 +11,13 @@ import {
   listStaffCalls,
   mapStaffCallGroups,
 } from '../api/staff/calls'
-import { staffCallGroups, staffTables } from '../data/staff'
+import {
+  staffCallGroups,
+  staffKitchenQueue,
+  staffPaymentQueue,
+  staffServingQueue,
+  staffTables,
+} from '../data/staff'
 import type { StaffCallGroup, StaffTableHomeData } from '../types/staff'
 
 /**
@@ -68,7 +74,12 @@ export function useStaffTableHome(): StaffTableHomeState {
   const acknowledgedTimers = useRef<number[]>([])
 
   const fallback = useMemo(
-    () => buildTableHomeData(staffTables, staffCallGroups),
+    () => buildTableHomeData(staffTables, staffCallGroups, {
+      tables: 0,
+      kitchen: staffKitchenQueue().length,
+      serving: staffServingQueue().length,
+      payment: staffPaymentQueue().filter((row) => !row.bill.paid).length,
+    }),
     [],
   )
 
@@ -104,6 +115,7 @@ export function useStaffTableHome(): StaffTableHomeState {
           buildTableHomeData(
             mapStaffTables(tables),
             mapStaffCallGroups(calls),
+            tables.stationCounts,
           ),
         )
         setError(null)
@@ -187,6 +199,7 @@ export function useStaffTableHome(): StaffTableHomeState {
               table.tableId === tableId ? { ...table, hasCall: false } : table,
             ),
             base.callGroups.filter((row) => row.tableId !== tableId),
+            base.stationCounts,
           )
         })
         resolve()
@@ -205,6 +218,7 @@ export function useStaffTableHome(): StaffTableHomeState {
                       : table,
                   ),
                   current.callGroups.filter((row) => row.tableId !== tableId),
+                  current.stationCounts,
                 )
               : current,
           )

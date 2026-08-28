@@ -88,10 +88,22 @@ function assertEventOpen_(settings) {
 }
 
 function resolveTable(payload) {
-  const spreadsheet = getConfiguredSpreadsheet_();
-  const table = validateTable_(payload.tableId, payload.tableToken, true, spreadsheet);
-  const settings = settingsMap_(spreadsheet);
-  assertEventOpen_(settings);
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(QR_ORDER_LIMITS.LOCK_TIMEOUT_MS)) {
+    throw new ApiError('LOCK_TIMEOUT', '요청이 몰리고 있습니다. 잠시 후 다시 시도해 주세요.', true);
+  }
+  let spreadsheet;
+  let table;
+  let settings;
+  try {
+    spreadsheet = getConfiguredSpreadsheet_();
+    table = validateTable_(payload.tableId, payload.tableToken, true, spreadsheet);
+    settings = settingsMap_(spreadsheet);
+    assertEventOpen_(settings);
+    ensureOpenTableSession_(spreadsheet, String(table.table_id));
+  } finally {
+    lock.releaseLock();
+  }
 
   const statusPollSeconds = Number(getRequiredSetting_(settings, 'STATUS_POLL_SECONDS'));
   if (!Number.isInteger(statusPollSeconds) || statusPollSeconds < 1) {

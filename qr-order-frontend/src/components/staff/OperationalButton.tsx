@@ -13,6 +13,8 @@ interface OperationalButtonProps
    */
   loading?: boolean
   size?: 'md' | 'lg'
+  /** Full width, as the A09 submit button is drawn. */
+  block?: boolean
 }
 
 /**
@@ -27,6 +29,7 @@ export function OperationalButton({
   variant = 'primary',
   loading = false,
   size = 'lg',
+  block = false,
   disabled,
   className,
   ...rest
@@ -39,6 +42,7 @@ export function OperationalButton({
         `op-button--${variant}`,
         `op-button--${size}`,
         loading ? 'op-button--loading' : '',
+        block ? 'op-button--block' : '',
         className ?? '',
       ]
         .filter(Boolean)

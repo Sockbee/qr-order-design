@@ -1,0 +1,179 @@
+/* A08 — Edit Order / Note (97:1407). */
+.edit-panel {
+  display: flex;
+  flex-direction: column;
+  width: var(--layout-staff-panel-width);
+  flex-shrink: 0;
+  min-height: 0;
+  border-left: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+}
+
+.edit-panel__head {
+  flex-shrink: 0;
+  padding: 18px 20px var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.edit-panel__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.edit-panel__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+.edit-panel__close {
+  flex-shrink: 0;
+  width: var(--layout-min-touch-target);
+  height: var(--layout-min-touch-target);
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-title-section);
+  cursor: pointer;
+}
+
+.edit-panel__lead {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-muted);
+}
+
+.edit-panel__list {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-4) 20px;
+  overflow-y: auto;
+}
+
+.edit-panel__items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.edit-panel__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.edit-panel__item-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.edit-panel__item-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.edit-panel__item-name {
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.edit-panel__item-amount {
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+}
+
+.edit-panel__item-option {
+  flex: 1;
+  min-width: 0;
+  padding: var(--space-3) 12px;
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+  font: var(--type-caption-default);
+}
+
+.edit-panel__note {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  padding: var(--space-4) 20px 20px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.edit-panel__note-label {
+  margin: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+
+.edit-panel__note-input {
+  width: 100%;
+  padding: 12px var(--space-4);
+  border: 2px solid var(--color-border-selected);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+  resize: none;
+}
+
+.edit-panel__note-input:focus {
+  outline: none;
+}
+
+.edit-panel__audiences {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/*
+ * The tag says which team the memo is addressed to. Colour reinforces it but
+ * the label carries it — the chips read correctly in greyscale.
+ */
+.edit-panel__audience {
+  padding: var(--space-2) 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font: var(--type-micro-badge);
+  cursor: pointer;
+}
+
+.edit-panel__audience--kitchen {
+  background: var(--color-staff-status-cooking-bg);
+  color: var(--color-staff-status-cooking-fg);
+}
+
+.edit-panel__audience--serving {
+  background: var(--color-staff-status-ready-bg);
+  color: var(--color-staff-status-ready-fg);
+}
+
+.edit-panel__audience--general {
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+}
+
+.edit-panel__audience--selected {
+  border-color: currentColor;
+}
+
+.edit-panel__note-actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.edit-panel__note-actions .op-button {
+  flex: 1;
+  min-width: 0;
+}

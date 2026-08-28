@@ -135,6 +135,10 @@ TableSessions가 Tables와 Orders 사이에 들어가 이를 흡수한다.
 
 `Orders.session_id`는 열 **U에 추가**한다. 중간 삽입은 A:T 열 문자에 의존하는 기존 View 수식을 전부 깨뜨린다.
 
+운영 주문 수정 기능도 같은 원칙을 따른다. 메모 대상은 Orders **V**, 항목 생명주기는
+OrderItems **K:L**에 suffix로 추가한다. 취소 항목은 삭제하지 않고 `CANCELLED`로 남겨
+가격·옵션 snapshot과 감사 가능성을 보존한다.
+
 이 결정은 기존 행에 대한 backfill을 요구한다. 행사 전 setup에서 각 `table_id`마다 세션 1개를 만들고 기존 Orders를 연결한다. 행사 중에는 적용하지 않는다.
 
 ### Decision A8 — 운영 API는 별도 배포 + 공용 passcode에서 발급한 서명 토큰으로 보호한다
