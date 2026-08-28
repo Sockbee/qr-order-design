@@ -1,0 +1,36 @@
+.station-picker {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.station-picker__option {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 64px;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-row);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-strong);
+  font: var(--type-body-strong);
+  cursor: pointer;
+}
+
+/*
+ * 2px, so selection reads from arm's length without relying on the tint
+ * alone — the same reason the label stays full strength.
+ */
+.station-picker__option--selected {
+  border: 2px solid var(--color-border-selected);
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
+
+.station-picker__option:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

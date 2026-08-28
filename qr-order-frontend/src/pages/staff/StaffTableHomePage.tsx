@@ -65,7 +65,7 @@ export function StaffTableHomePage({
     (data?.callingTableCount ?? 0) + (data?.delayedTableCount ?? 0)
 
   return (
-    <div className="staff-home">
+    <div className="staff-home" data-staff-app>
       <StaffNavigation
         items={[
           {
