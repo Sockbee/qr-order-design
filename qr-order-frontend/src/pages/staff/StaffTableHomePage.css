@@ -115,3 +115,15 @@
   padding: var(--layout-staff-gutter);
   overflow-y: auto;
 }
+
+/*
+ * The operation error alert floats above the grid but under the dialog, so a
+ * failed move stays readable once its dialog closes.
+ */
+.staff-operation-error {
+  position: fixed;
+  left: calc(var(--layout-staff-rail-width) + var(--layout-staff-gutter));
+  right: var(--layout-staff-gutter);
+  bottom: var(--layout-staff-gutter);
+  z-index: 5;
+}

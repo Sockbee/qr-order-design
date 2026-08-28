@@ -1,0 +1,181 @@
+/* Shared pieces of the A04–A07 dialog bodies. */
+.operation-dialog__label {
+  margin: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+
+.operation-dialog__arrow {
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-muted);
+}
+
+.operation-dialog__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.operation-dialog__picked {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.operation-dialog__picked-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 2px solid var(--color-border-selected);
+  border-radius: var(--radius-row);
+  background: var(--color-bg-weak);
+  color: var(--color-text-weak);
+}
+
+/* The split preview shows the result, which is not a selection. */
+.operation-dialog__picked-card--plain {
+  border: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-strong);
+}
+
+.operation-dialog__picked-table {
+  margin: 0;
+  font: var(--type-title-section);
+  color: inherit;
+}
+
+.operation-dialog__picked-amount {
+  margin: 0;
+  font: var(--type-caption-strong);
+  color: inherit;
+}
+
+.operation-dialog__options {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+}
+
+.operation-dialog__option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-row);
+  background: var(--color-bg-canvas);
+  text-align: left;
+  cursor: pointer;
+}
+
+.operation-dialog__option--selected {
+  border: 2px solid var(--color-border-selected);
+  background: var(--color-bg-weak);
+}
+
+.operation-dialog__radio {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border: 2px solid var(--color-border-default);
+  border-radius: 50%;
+  background: var(--color-bg-canvas);
+}
+
+.operation-dialog__option--selected .operation-dialog__radio {
+  border-color: var(--color-border-selected);
+  /* Filled centre, drawn with a ring rather than a nested element. */
+  box-shadow: inset 0 0 0 4px var(--color-bg-canvas);
+  background: var(--color-border-selected);
+}
+
+.operation-dialog__option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.operation-dialog__option-title {
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.operation-dialog__option--selected .operation-dialog__option-title {
+  color: var(--color-text-weak);
+}
+
+.operation-dialog__option-body {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.operation-dialog__option--selected .operation-dialog__option-body {
+  color: var(--color-text-weak);
+}
+
+.operation-dialog__money {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-surface);
+}
+
+.operation-dialog__money-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.operation-dialog__money-row span,
+.operation-dialog__money-final span {
+  flex: 1;
+  min-width: 0;
+}
+
+.operation-dialog__money-row strong {
+  font: var(--type-caption-strong);
+}
+
+.operation-dialog__money-row--discount {
+  color: var(--color-text-weak);
+}
+
+.operation-dialog__money-final {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--color-text-strong);
+}
+
+.operation-dialog__money-final span {
+  font: var(--type-body-strong);
+}
+
+.operation-dialog__money-final strong {
+  font: var(--type-title-screen);
+}
+
+/* The second merge slot before a table has been picked. */
+.operation-dialog__picked-card--empty {
+  border: 1px dashed var(--color-border-default);
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+}

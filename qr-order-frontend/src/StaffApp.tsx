@@ -10,6 +10,11 @@ import {
 } from 'react-router-dom'
 import { TableDetailPanel } from './components/staff/TableDetailPanel'
 import { StaffLoginPage } from './pages/staff/StaffLoginPage'
+import {
+  StaffAddOrderRoute,
+  StaffTableOperationRoute,
+} from './pages/staff/StaffOperationRoutes'
+import type { StaffOperation } from './pages/staff/StaffOperationRoutes'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { useStaffAuth } from './hooks/useStaffAuth'
 import { useStaffTableDetail } from './hooks/useStaffTableDetail'
@@ -124,6 +129,35 @@ function StaffApp() {
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffTableHomeRoute auth={auth} />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/tables/:tableId/order"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffAddOrderRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        {(['move', 'merge', 'split', 'discount', 'edit', 'cancel'] as StaffOperation[]).map(
+          (operation) => (
+            <Route
+              key={operation}
+              path={`/staff/tables/:tableId/${operation}`}
+              element={(
+                <RequireStaffAuth auth={auth}>
+                  <StaffTableOperationRoute operation={operation} />
+                </RequireStaffAuth>
+              )}
+            />
+          ),
+        )}
+        <Route
+          path="/staff/tables/:tableId/note"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffTableOperationRoute operation="edit" />
             </RequireStaffAuth>
           )}
         />
