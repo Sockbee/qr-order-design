@@ -33,7 +33,7 @@ body {
  * iPad layout riding the same bundle, so it opts out of the column rather
  * than the column having to know about it.
  */
-#root:has(> .staff-home) {
+#root:has(> [data-staff-app]) {
   max-width: none;
 }
 

@@ -1,5 +1,5 @@
 import { ApiClientError } from '../client'
-import { readStoredString } from '../../utils/storage'
+import { readStored, writeStored } from '../../utils/storage'
 
 const API_VERSION = 'v1'
 
@@ -13,6 +13,39 @@ const API_VERSION = 'v1'
  * custom header would trigger a CORS preflight (§4.9).
  */
 export const STAFF_TOKEN_KEY = 'qr-order:staff:token'
+
+/** The four stations A09 offers. Anything else is `INVALID_DEVICE_LABEL`. */
+export const STAFF_STATIONS = ['카운터', '주방', '서빙', '결제'] as const
+export type StaffStation = (typeof STAFF_STATIONS)[number]
+
+export interface StaffSession {
+  staffToken: string
+  deviceLabel: StaffStation
+  /** ISO timestamp. Checked locally so a dead token never leaves the device. */
+  expiresAt: string
+}
+
+export function readStaffSession(): StaffSession | null {
+  const stored = readStored<StaffSession | null>(STAFF_TOKEN_KEY, null)
+  if (!stored?.staffToken || !stored.expiresAt) return null
+  if (Date.parse(stored.expiresAt) <= Date.now()) return null
+  return stored
+}
+
+/**
+ * True when a session was stored but has run out — the difference between
+ * "never signed in" and "signed in this morning, came back after 14 hours".
+ * A09 shows a calmer message for the second case.
+ */
+export function hasExpiredStaffSession(): boolean {
+  const stored = readStored<StaffSession | null>(STAFF_TOKEN_KEY, null)
+  if (!stored?.expiresAt) return false
+  return Date.parse(stored.expiresAt) <= Date.now()
+}
+
+export function writeStaffSession(session: StaffSession | null): void {
+  writeStored(STAFF_TOKEN_KEY, session)
+}
 
 type ApiMeta = {
   apiVersion: string
@@ -38,7 +71,7 @@ export function hasStaffApi(): boolean {
 }
 
 export function readStaffToken(): string | null {
-  return readStoredString(STAFF_TOKEN_KEY)
+  return readStaffSession()?.staffToken ?? null
 }
 
 /**
@@ -50,16 +83,22 @@ const AUTH_ERROR_CODES = new Set([
   'STAFF_TOKEN_REVOKED',
   'STAFF_TOKEN_INVALID',
   'STAFF_TOKEN_MISSING',
+  'STAFF_AUTH_REQUIRED',
 ])
 
 export function isStaffAuthError(error: unknown): boolean {
   return error instanceof ApiClientError && AUTH_ERROR_CODES.has(error.code)
 }
 
+/**
+ * `/staff/login` is the one operational endpoint without a `staffToken` —
+ * it is what issues one.
+ */
 export async function callStaffApi<T>(
   action: string,
   payload: Record<string, unknown>,
   signal?: AbortSignal,
+  options: { anonymous?: boolean } = {},
 ): Promise<T> {
   const configuredUrl = import.meta.env.VITE_STAFF_APPS_SCRIPT_URL?.trim()
   if (!configuredUrl) {
@@ -70,22 +109,30 @@ export async function callStaffApi<T>(
     )
   }
 
-  const staffToken = readStaffToken()
-  if (!staffToken) {
-    throw new ApiClientError(
-      'STAFF_TOKEN_MISSING',
-      '로그인이 필요합니다.',
-      false,
-    )
+  let staffToken: string | null = null
+  if (!options.anonymous) {
+    staffToken = readStaffToken()
+    if (!staffToken) {
+      throw new ApiClientError(
+        'STAFF_TOKEN_MISSING',
+        '로그인이 필요합니다.',
+        false,
+      )
+    }
   }
 
   const url = new URL(configuredUrl)
-  url.searchParams.set('action', action)
+  const staffAction = action.startsWith('staff/') ? action : `staff/${action}`
+  url.searchParams.set('action', staffAction)
   const response = await fetch(url, {
     method: 'POST',
     redirect: 'follow',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ apiVersion: API_VERSION, staffToken, ...payload }),
+    body: JSON.stringify({
+      apiVersion: API_VERSION,
+      ...(staffToken ? { staffToken } : {}),
+      ...payload,
+    }),
     signal,
   })
   if (!response.ok) {
