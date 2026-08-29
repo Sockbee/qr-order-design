@@ -1,0 +1,8 @@
+project_id          = "your-gcp-project-id"
+environment         = "staging"
+container_image     = "us-docker.pkg.dev/cloudrun/container/hello:latest"
+bootstrap_mode      = true
+allowed_origins     = "https://deploy-preview-1--your-site.netlify.app"
+frontend_base_url   = "https://deploy-preview-1--your-site.netlify.app"
+deletion_protection = false
+# alert_notification_channels = ["projects/your-gcp-project-id/notificationChannels/123"]

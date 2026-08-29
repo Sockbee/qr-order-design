@@ -40,3 +40,13 @@ apps-script/.script-properties.json
 apps-script/credentials*.json
 apps-script/client_secret*.json
 apps-script/service-account*.json
+
+# Spring / Gradle
+**/.gradle/
+**/build/
+
+# Terraform local state and plans
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
