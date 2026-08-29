@@ -1,4 +1,7 @@
-# QR 주문 백엔드 아키텍처
+# QR 주문 백엔드 아키텍처 (legacy Apps Script 기준)
+
+> 현재 구현은 [Spring Boot + GCP 마이그레이션](./spring-gcp-migration.md)을 따릅니다.
+> 이 문서는 기존 Apps Script 계약과 설계 판단을 보존하는 참고 자료입니다.
 
 > 상태: 구현 기준안
 >

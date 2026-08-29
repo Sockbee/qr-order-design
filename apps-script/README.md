@@ -1,4 +1,7 @@
-# QR Order Apps Script bootstrap
+# QR Order Apps Script bootstrap (legacy)
+
+> Spring Boot/Cloud Run 전환 이후 신규 배포에는 사용하지 않습니다. 운영 전환이
+> 검증될 때까지 계약 비교와 비상 참고를 위해 읽기 전용으로 보존합니다.
 
 Google Spreadsheet의 canonical 12개 Sheet를 생성하고 schema, Settings, validation,
 보호 범위와 무결성 진단을 설정한다. 테이블 QR token 발급/회전과 고객용

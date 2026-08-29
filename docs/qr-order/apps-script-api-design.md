@@ -1,4 +1,7 @@
-# Google Apps Script API 설계
+# Google Apps Script API 설계 (legacy)
+
+> Spring Boot 전환 전 계약을 보존하는 참고 문서입니다. 현재 구현은
+> [spring-gcp-migration.md](./spring-gcp-migration.md)를 기준으로 합니다.
 
 > 기준 schema: [google-sheets-schema.md](./google-sheets-schema.md)
 >
