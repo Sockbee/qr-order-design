@@ -58,7 +58,7 @@ function describe(error: unknown): StaffAuthError {
     case 'API_NOT_CONFIGURED':
       return {
         title: '운영 API 주소가 설정되지 않았어요',
-        detail: 'VITE_STAFF_APPS_SCRIPT_URL을 설정한 뒤 다시 열어 주세요.',
+        detail: 'VITE_API_BASE_URL을 설정한 뒤 다시 열어 주세요.',
         tone: 'danger',
         throttledUntil: null,
       }

@@ -10,10 +10,8 @@ import type { CallReason } from '../../types/call'
 import type { StaffCallGroup } from '../../types/staff'
 
 /**
- * A01 needs the whole floor in one snapshot. apps-script-api-design.md has no
- * such action yet — §4.12 `tables/bill` is one table's billing, not the grid —
- * so `tables/list` is specified here from what A01 (90:2) actually draws and
- * still has to be implemented on the Apps Script side. See the PR document.
+ * A01 consumes the whole floor in one Spring Boot snapshot. This response is
+ * intentionally shaped around the screen rather than exposing database rows.
  */
 export interface StaffTableListItem {
   tableId: string

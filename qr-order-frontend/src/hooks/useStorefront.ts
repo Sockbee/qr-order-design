@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchStorefront } from '../api/catalog'
 import type { StorefrontData } from '../api/catalog'
-import { ApiClientError, hasAppsScriptApi } from '../api/client'
+import { ApiClientError, hasApi } from '../api/client'
 import type { TableCredentials } from '../types/session'
 
 interface StorefrontState {
@@ -17,7 +17,7 @@ interface StorefrontState {
 export function useStorefront(
   credentials: TableCredentials | null,
 ): StorefrontState {
-  const configured = hasAppsScriptApi()
+  const configured = hasApi()
   const enabled = credentials !== null && configured
   const sessionKey = credentials
     ? `${credentials.tableId}:${credentials.tableToken}`
@@ -50,6 +50,13 @@ export function useStorefront(
       controller.abort()
     }
   }, [credentials, enabled, requestKey])
+
+  useEffect(() => {
+    if (!enabled) return
+    const refresh = () => setAttempt((current) => current + 1)
+    window.addEventListener('qr-order:catalog-changed', refresh)
+    return () => window.removeEventListener('qr-order:catalog-changed', refresh)
+  }, [enabled])
 
   const retry = useCallback(() => setAttempt((current) => current + 1), [])
   const hasCurrentResult = result.key === requestKey

@@ -69,10 +69,13 @@ export async function fetchStorefront(
     tableId: credentials.tableId,
     tableToken: credentials.tableToken,
   }
-  const [resolved, menu] = await Promise.all([
-    callAppsScript<ResolveTableResponse>('resolve-table', payload, signal),
-    callAppsScript<MenuResponse>('menu', payload, signal),
-  ])
+  const bootstrap = await callAppsScript<ResolveTableResponse & MenuResponse>(
+    'bootstrap',
+    payload,
+    signal,
+  )
+  const resolved = bootstrap
+  const menu = bootstrap
 
   const tableNumber = Number(resolved.table.tableId.slice(1))
   if (!Number.isSafeInteger(tableNumber) || tableNumber < 1) {

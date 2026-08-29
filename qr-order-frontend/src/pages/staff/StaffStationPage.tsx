@@ -66,6 +66,7 @@ export function StaffStationPage({
           { label: '주방', to: '/staff/kitchen', count: counts?.kitchen ?? null },
           { label: '서빙', to: '/staff/serving', count: counts?.serving ?? null },
           { label: '결제', to: '/staff/payment', count: counts?.payment ?? null },
+          { label: '설정', to: '/staff/settings', count: null },
         ]}
       />
 

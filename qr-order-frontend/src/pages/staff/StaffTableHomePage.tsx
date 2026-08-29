@@ -89,6 +89,7 @@ export function StaffTableHomePage({
           { label: '주방', to: '/staff/kitchen', count: data?.stationCounts.kitchen ?? null },
           { label: '서빙', to: '/staff/serving', count: data?.stationCounts.serving ?? null },
           { label: '결제', to: '/staff/payment', count: data?.stationCounts.payment ?? null },
+          { label: '설정', to: '/staff/settings', count: null },
         ]}
       />
 

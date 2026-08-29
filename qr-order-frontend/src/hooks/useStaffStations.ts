@@ -21,8 +21,10 @@ import type {
   StaffStationCounts,
   StaffStationOrder,
 } from '../types/staff'
+import { useStaffEventState } from './useStaffEvents'
 
 const MAX_POLL_INTERVAL_MS = 60_000
+const SSE_RECONCILE_INTERVAL_MS = 60_000
 
 interface StaffStationsState {
   kitchen: StaffStationOrder[]
@@ -54,6 +56,7 @@ function toApiError(caught: unknown): ApiClientError {
  */
 export function useStaffStations(): StaffStationsState {
   const configured = hasStaffApi()
+  const { revision: eventRevision, connected: eventsConnected } = useStaffEventState()
   const [data, setData] = useState<{
     kitchen: StaffStationOrder[]
     serving: StaffStationOrder[]
@@ -98,7 +101,7 @@ export function useStaffStations(): StaffStationsState {
         })
         setResolved([])
         setError(null)
-        schedule(STAFF_POLL_INTERVAL_MS)
+        schedule(eventsConnected ? SSE_RECONCILE_INTERVAL_MS : STAFF_POLL_INTERVAL_MS)
       } catch (caught) {
         if (disposed || requestController.signal.aborted) return
         const apiError = toApiError(caught)
@@ -132,7 +135,7 @@ export function useStaffStations(): StaffStationsState {
       controller?.abort()
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [attempt, configured])
+  }, [attempt, configured, eventRevision, eventsConnected])
 
   const fallback = useMemo(() => {
     const kitchen = staffKitchenQueue()

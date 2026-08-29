@@ -21,6 +21,7 @@ import {
   StaffServingRoute,
 } from './pages/staff/StaffStationRoutes'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
+import { StaffSettingsPage } from './pages/staff/StaffSettingsPage'
 import { useStaffAuth } from './hooks/useStaffAuth'
 import { useStaffTableDetail } from './hooks/useStaffTableDetail'
 import { useStaffTableHome } from './hooks/useStaffTableHome'
@@ -187,6 +188,14 @@ function StaffApp() {
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffPaymentRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/settings"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffSettingsPage />
             </RequireStaffAuth>
           )}
         />

@@ -8,9 +8,12 @@ import {
 } from '../api/staff/detail'
 import { staffTableDetail } from '../data/staff'
 import type { StaffOrderStatus, StaffTableDetail } from '../types/staff'
+import { useStaffEventState } from './useStaffEvents'
 
 /** How long the dropdown holds its success tick before returning to idle. */
 const SUCCESS_HOLD_MS = 1_500
+const STAFF_DETAIL_FALLBACK_POLL_MS = 10_000
+const STAFF_DETAIL_RECONCILE_MS = 60_000
 
 interface StaffTableDetailState {
   detail: StaffTableDetail | null
@@ -37,6 +40,7 @@ export function useStaffTableDetail(
   tableId: string | null,
 ): StaffTableDetailState {
   const configured = hasStaffApi()
+  const { revision: eventRevision, connected: eventsConnected } = useStaffEventState()
   const [remote, setRemote] = useState<StaffTableDetail | null>(null)
   const [error, setError] = useState<ApiClientError | null>(null)
   const [attempt, setAttempt] = useState(0)
@@ -58,6 +62,7 @@ export function useStaffTableDetail(
     if (!configured || !tableId) return
 
     let disposed = false
+    let timer: number | undefined
     const controller = new AbortController()
     getStaffTableDetail(tableId, controller.signal)
       .then((response) => {
@@ -69,12 +74,19 @@ export function useStaffTableDetail(
         if (disposed || controller.signal.aborted) return
         setError(toApiError(caught))
       })
+      .finally(() => {
+        if (!disposed) timer = window.setTimeout(
+          () => setAttempt((value) => value + 1),
+          eventsConnected ? STAFF_DETAIL_RECONCILE_MS : STAFF_DETAIL_FALLBACK_POLL_MS,
+        )
+      })
 
     return () => {
       disposed = true
       controller.abort()
+      if (timer !== undefined) window.clearTimeout(timer)
     }
-  }, [attempt, configured, tableId])
+  }, [attempt, configured, eventRevision, eventsConnected, tableId])
 
   // Drop the success tick after a beat so the control returns to idle.
   useEffect(() => {

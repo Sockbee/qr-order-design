@@ -1,7 +1,7 @@
 /**
  * Fallback content for API-free staff UI development, mirroring the sample
  * floor drawn on A01 — Table Home (90:2). Only `useStaffTableHome` reads it,
- * and only while `VITE_STAFF_APPS_SCRIPT_URL` is absent. Pages must never
+ * and only while `VITE_API_BASE_URL` is absent. Pages must never
  * import it directly.
  */
 

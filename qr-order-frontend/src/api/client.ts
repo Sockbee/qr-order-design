@@ -38,16 +38,16 @@ export class ApiClientError extends Error {
   }
 }
 
-export function hasAppsScriptApi(): boolean {
-  return Boolean(import.meta.env.VITE_APPS_SCRIPT_URL?.trim())
+export function hasApi(): boolean {
+  return Boolean(import.meta.env.VITE_API_BASE_URL?.trim())
 }
 
-export async function callAppsScript<T>(
+export async function callApi<T>(
   action: string,
   payload: Record<string, unknown>,
   signal?: AbortSignal,
 ): Promise<T> {
-  const configuredUrl = import.meta.env.VITE_APPS_SCRIPT_URL?.trim()
+  const configuredUrl = import.meta.env.VITE_API_BASE_URL?.trim()
   if (!configuredUrl) {
     throw new ApiClientError(
       'API_NOT_CONFIGURED',
@@ -56,24 +56,14 @@ export async function callAppsScript<T>(
     )
   }
 
-  const url = new URL(configuredUrl)
-  url.searchParams.set('action', action)
+  const baseUrl = configuredUrl.replace(/\/$/, '')
+  const url = `${baseUrl}/api/v1/customer/${action}`
   const response = await fetch(url, {
     method: 'POST',
-    redirect: 'follow',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
     body: JSON.stringify({ apiVersion: API_VERSION, ...payload }),
     signal,
   })
-  if (!response.ok) {
-    throw new ApiClientError(
-      'HTTP_ERROR',
-      '주문 서버에 연결할 수 없습니다.',
-      response.status >= 500,
-      { status: response.status },
-    )
-  }
-
   let envelope: ApiEnvelope<T>
   try {
     envelope = (await response.json()) as ApiEnvelope<T>
@@ -92,5 +82,18 @@ export async function callAppsScript<T>(
       envelope.error.details,
     )
   }
+  if (!response.ok) {
+    throw new ApiClientError(
+      'HTTP_ERROR',
+      '주문 서버에 연결할 수 없습니다.',
+      response.status >= 500,
+      { status: response.status },
+    )
+  }
   return envelope.data
 }
+
+/** @deprecated Remove after all downstream imports have moved to callApi. */
+export const callAppsScript = callApi
+/** @deprecated Remove after all downstream imports have moved to hasApi. */
+export const hasAppsScriptApi = hasApi

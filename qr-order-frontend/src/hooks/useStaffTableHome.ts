@@ -19,6 +19,7 @@ import {
   staffTables,
 } from '../data/staff'
 import type { StaffCallGroup, StaffTableHomeData } from '../types/staff'
+import { useStaffEventState } from './useStaffEvents'
 
 /**
  * 10s, tighter than the customer app's 15s: a call sitting unseen is the
@@ -28,6 +29,7 @@ import type { StaffCallGroup, StaffTableHomeData } from '../types/staff'
 export const STAFF_POLL_INTERVAL_MS = 10_000
 const MAX_POLL_INTERVAL_MS = 60_000
 const MAX_JITTER_MS = 1_000
+const SSE_RECONCILE_INTERVAL_MS = 60_000
 
 /**
  * How long an acknowledged row stays on screen as 확인됨 before it drops out.
@@ -63,6 +65,7 @@ interface StaffTableHomeState {
 
 export function useStaffTableHome(): StaffTableHomeState {
   const configured = hasStaffApi()
+  const { revision: eventRevision, connected: eventsConnected } = useStaffEventState()
   const [data, setData] = useState<StaffTableHomeData | null>(null)
   const [error, setError] = useState<ApiClientError | null>(null)
   const [loading, setLoading] = useState(configured)
@@ -120,7 +123,7 @@ export function useStaffTableHome(): StaffTableHomeState {
         )
         setError(null)
         setLoading(false)
-        schedule(STAFF_POLL_INTERVAL_MS)
+        schedule(eventsConnected ? SSE_RECONCILE_INTERVAL_MS : STAFF_POLL_INTERVAL_MS)
       } catch (caught) {
         if (disposed || requestController.signal.aborted) return
         const apiError = toApiError(caught)
@@ -156,7 +159,7 @@ export function useStaffTableHome(): StaffTableHomeState {
       controller?.abort()
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [attempt, configured])
+  }, [attempt, configured, eventRevision, eventsConnected])
 
   useEffect(() => {
     const timers = acknowledgedTimers.current
