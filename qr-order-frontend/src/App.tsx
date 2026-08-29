@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   BrowserRouter,
   Navigate,
@@ -21,7 +21,7 @@ import { useStaffCall } from './hooks/useStaffCall'
 import { useOrderPolling } from './hooks/useOrderPolling'
 import { useStorefront } from './hooks/useStorefront'
 import type { OrderSession } from './hooks/useOrderSession'
-import { mapRemoteOrders } from './api/orders'
+import { createOrder, mapCreatedOrder, mapRemoteOrders } from './api/orders'
 import {
   categories as mockCategories,
   menuItems as mockMenuItems,
@@ -205,7 +205,13 @@ function OrderConfirmationRoute({
   session,
   menuItems,
   tableNumber,
-}: RouteProps & Pick<CatalogRouteProps, 'menuItems'> & { tableNumber: number }) {
+  credentials,
+  liveMode,
+}: RouteProps & Pick<CatalogRouteProps, 'menuItems'> & {
+  tableNumber: number
+  credentials: TableCredentials | null
+  liveMode: boolean
+}) {
   const navigate = useNavigate()
   /*
    * Placing an order empties the cart, and react-router runs navigation in a
@@ -213,6 +219,8 @@ function OrderConfirmationRoute({
    * flag keeps the guard below from bouncing us to /cart on the way out.
    */
   const [placing, setPlacing] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const requestIdRef = useRef<string | null>(null)
 
   if (session.cart.length === 0 && !placing) {
     return <Navigate to="/cart" replace />
@@ -223,14 +231,48 @@ function OrderConfirmationRoute({
       menuItems={menuItems}
       cart={session.cart}
       tableNumber={tableNumber}
-      onBack={() => navigate('/cart')}
-      onEdit={() => navigate('/cart')}
+      submitting={placing}
+      errorMessage={errorMessage ?? undefined}
+      onBack={() => {
+        if (!placing) navigate('/cart')
+      }}
+      onEdit={() => {
+        if (!placing) navigate('/cart')
+      }}
       onConfirm={() => {
+        if (placing) return
         setPlacing(true)
-        const placed = session.placeOrder()
-        // `replace` so back never returns to the confirmation of an order that
-        // has already been placed (UX-STRUCTURE §5.2).
-        navigate(`/orders/${placed.number}/done`, { replace: true })
+        setErrorMessage(null)
+
+        if (!liveMode) {
+          const placed = session.placeOrder()
+          navigate(`/orders/${placed.number}/done`, { replace: true })
+          return
+        }
+        if (!credentials) {
+          setPlacing(false)
+          setErrorMessage('테이블 QR 정보를 다시 확인해 주세요.')
+          return
+        }
+
+        requestIdRef.current ??= crypto.randomUUID()
+        void createOrder(credentials, session.cart, requestIdRef.current)
+          .then((response) => {
+            const placed = session.placeOrder(
+              mapCreatedOrder(response, tableNumber),
+            )
+            // `replace` so back never returns to a successfully submitted
+            // order confirmation (UX-STRUCTURE §5.2).
+            navigate(`/orders/${placed.number}/done`, { replace: true })
+          })
+          .catch((error: unknown) => {
+            setPlacing(false)
+            setErrorMessage(
+              error instanceof Error
+                ? error.message
+                : '주문을 접수하지 못했습니다. 다시 시도해 주세요.',
+            )
+          })
       }}
     />
   )
@@ -366,6 +408,8 @@ function App() {
               session={session}
               menuItems={menuItems}
               tableNumber={tableNumber}
+              credentials={credentials}
+              liveMode={storefront.configured}
             />
           )}
         />
