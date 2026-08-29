@@ -14,6 +14,8 @@ interface OrderConfirmationPageProps {
   onBack: () => void
   onEdit: () => void
   onConfirm: () => void
+  submitting?: boolean
+  errorMessage?: string
 }
 
 export function OrderConfirmationPage({
@@ -23,6 +25,8 @@ export function OrderConfirmationPage({
   onBack,
   onEdit,
   onConfirm,
+  submitting = false,
+  errorMessage,
 }: OrderConfirmationPageProps) {
   const total = calculateCartTotal(cart)
 
@@ -58,7 +62,19 @@ export function OrderConfirmationPage({
           후불 결제 · 식사 후 카운터에서 결제해 주세요
         </p>
 
-        <Button size="medium" variant="weak" label="수정하기" onClick={onEdit} />
+        {errorMessage && (
+          <p className="order-confirmation__error" role="alert">
+            {errorMessage}
+          </p>
+        )}
+
+        <Button
+          size="medium"
+          variant="weak"
+          label="수정하기"
+          disabled={submitting}
+          onClick={onEdit}
+        />
       </main>
 
       <div className="order-confirmation__footer">
@@ -66,7 +82,8 @@ export function OrderConfirmationPage({
           block
           size="xlarge"
           variant="fill"
-          label="주문 확정"
+          label={submitting ? '주문 접수 중' : '주문 확정'}
+          loading={submitting}
           disabled={cart.length === 0}
           onClick={onConfirm}
         />

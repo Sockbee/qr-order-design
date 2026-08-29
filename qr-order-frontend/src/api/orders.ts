@@ -1,6 +1,80 @@
 import { callAppsScript } from './client'
+import type { CartLine } from '../types/menu'
 import type { OrderStatus, PlacedOrder } from '../types/order'
 import type { TableCredentials } from '../types/session'
+
+export interface CreateOrderResponse {
+  orderId: string
+  displayNumber: number
+  displayCode: string
+  table: { tableId: string; displayName: string }
+  status: string
+  publicStatus: OrderStatus
+  paymentStatus: string
+  totalAmount: number
+  createdAt: string
+  idempotentReplay: boolean
+  items: Array<{
+    lineNo: number
+    menuId: string
+    name: string
+    basePrice: number
+    unitPrice: number
+    quantity: number
+    lineTotal: number
+    selectedOptions: Array<{
+      optionId: string
+      groupName: string
+      name: string
+      priceDelta: number
+    }>
+  }>
+}
+
+export function createOrder(
+  credentials: TableCredentials,
+  cart: CartLine[],
+  clientRequestId: string,
+  signal?: AbortSignal,
+): Promise<CreateOrderResponse> {
+  return callAppsScript<CreateOrderResponse>(
+    'orders/create',
+    {
+      tableId: credentials.tableId,
+      tableToken: credentials.tableToken,
+      clientRequestId,
+      note: '',
+      items: cart.map((line) => ({
+        menuId: line.itemId,
+        quantity: line.quantity,
+        selectedOptionIds: line.selectedOptionIds ?? [],
+      })),
+    },
+    signal,
+  )
+}
+
+export function mapCreatedOrder(
+  response: CreateOrderResponse,
+  tableNumber: number,
+): PlacedOrder {
+  return {
+    id: response.orderId,
+    number: response.displayCode,
+    tableNumber,
+    lines: response.items.map((item) => ({
+      itemId: item.menuId,
+      nameSnapshot: item.name,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      selectedOptionIds: item.selectedOptions.map((option) => option.optionId),
+      selectedOptionNames: item.selectedOptions.map((option) => option.name),
+    })),
+    total: response.totalAmount,
+    placedAt: response.createdAt,
+    status: response.publicStatus,
+  }
+}
 
 export interface OrderListItem {
   orderId: string

@@ -33,6 +33,16 @@
   color: var(--color-text-body);
 }
 
+.order-confirmation__error {
+  width: 100%;
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-row);
+  background: var(--color-status-attention-bg);
+  font: var(--type-caption-default);
+  color: var(--color-status-attention-fg);
+}
+
 .order-confirmation__footer {
   padding: var(--space-4);
   background: var(--color-bg-canvas);
