@@ -32,6 +32,7 @@ import java.time.Instant;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -89,12 +90,29 @@ class QrOrderApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$['urls.primaryName']", is("all")));
 
-        mvc.perform(get("/v3/api-docs/all"))
+        String allDocs = mvc.perform(get("/v3/api-docs/all"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.paths['/api/v1/customer/bootstrap']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/staff/login']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/admin/snapshot']").exists())
-                .andExpect(jsonPath("$.tags.length()", is(4)));
+                .andExpect(jsonPath("$.tags.length()", is(4)))
+                .andReturn().getResponse().getContentAsString();
+        var openApi = mapper.readTree(allDocs);
+        int documentedRequestBodies = 0;
+        for (var path : openApi.get("paths").properties()) {
+            for (var operation : path.getValue().properties()) {
+                var requestBody = operation.getValue().get("requestBody");
+                if (requestBody == null) continue;
+                documentedRequestBodies++;
+                var schema = requestBody.get("content").get("application/json").get("schema");
+                assertTrue(schema.has("$ref"), path.getKey() + " request body must reference a concrete schema");
+                String schemaName = schema.get("$ref").asString().replace("#/components/schemas/", "");
+                var component = openApi.get("components").get("schemas").get(schemaName);
+                assertTrue(component != null && component.has("properties"),
+                        path.getKey() + " request schema must declare named properties");
+            }
+        }
+        assertEquals(31, documentedRequestBodies);
 
         mvc.perform(get("/v3/api-docs/customer"))
                 .andExpect(status().isOk())

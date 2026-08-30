@@ -3,7 +3,7 @@ package com.caucse.qrorder.api;
 import com.caucse.qrorder.auth.StaffTokenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,8 +28,7 @@ public class StaffAuthController {
             description = "공용 passcode와 station/device 라벨로 14시간 유효한 staffToken을 발급합니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     required = true,
-                    content = @Content(examples = @ExampleObject(
-                            value = "{\"passcode\":\"shared-passcode\",\"deviceLabel\":\"주방\"}"))))
+                    content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffLogin.class))))
     ApiEnvelope<Map<String, Object>> login(@RequestBody Map<String, Object> body) {
         return ApiEnvelope.ok(tokens.login(String.valueOf(body.getOrDefault("passcode", "")),
                 String.valueOf(body.getOrDefault("deviceLabel", ""))));

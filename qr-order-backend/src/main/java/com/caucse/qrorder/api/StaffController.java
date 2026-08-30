@@ -41,7 +41,8 @@ public class StaffController {
     ApiEnvelope<Map<String, Object>> calls() { return ApiEnvelope.ok(service.listCalls()); }
 
     @PostMapping("/calls/acknowledge")
-    @Operation(summary = "직원 호출 확인 처리")
+    @Operation(summary = "직원 호출 확인 처리", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.Table.class))))
     ApiEnvelope<Map<String, Object>> acknowledge(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.acknowledgeCall(required(body, "tableId"), staff));
     }
@@ -51,34 +52,43 @@ public class StaffController {
     ApiEnvelope<Map<String, Object>> tables() { return ApiEnvelope.ok(service.listTables()); }
 
     @PostMapping("/tables/detail")
-    @Operation(summary = "테이블 주문 상세 조회")
+    @Operation(summary = "테이블 주문 상세 조회", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.Table.class))))
     ApiEnvelope<Map<String, Object>> detail(@RequestBody Map<String, Object> body) { return ApiEnvelope.ok(service.tableDetail(required(body, "tableId"))); }
 
     @PostMapping("/tables/bill")
-    @Operation(summary = "테이블 계산서 조회")
+    @Operation(summary = "테이블 계산서 조회", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.Table.class))))
     ApiEnvelope<Map<String, Object>> bill(@RequestBody Map<String, Object> body) { return ApiEnvelope.ok(service.billResponse(required(body, "tableId"))); }
 
-    @Operation(summary = "테이블 할인율 변경")
+    @Operation(summary = "테이블 할인율 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.TableDiscount.class))))
     @PostMapping("/tables/discount") ApiEnvelope<Void> discount(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.discount(required(body, "tableId"), number(body, "discountRate"), staff));
     }
-    @Operation(summary = "테이블 주문 이동")
+    @Operation(summary = "테이블 주문 이동", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.TableMove.class))))
     @PostMapping("/tables/move") ApiEnvelope<Void> move(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.move(required(body, "fromTableId"), required(body, "toTableId"), staff));
     }
-    @Operation(summary = "테이블 합석")
+    @Operation(summary = "테이블 합석", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.TableMerge.class))))
     @PostMapping("/tables/merge") ApiEnvelope<Void> merge(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.merge(required(body, "primaryTableId"), required(body, "secondaryTableId"), staff));
     }
-    @Operation(summary = "합석 테이블 분리")
+    @Operation(summary = "합석 테이블 분리", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.Table.class))))
     @PostMapping("/tables/split") ApiEnvelope<Void> split(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.split(required(body, "tableId"), staff));
     }
-    @Operation(summary = "결제 확정", description = "expectedFinalAmount가 서버 계산 금액과 일치할 때만 확정합니다.")
+    @Operation(summary = "결제 확정", description = "expectedFinalAmount가 서버 계산 금액과 일치할 때만 확정합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+                    content = @Content(schema = @Schema(implementation = OpenApiRequests.PaymentConfirm.class))))
     @PostMapping("/tables/confirm-payment") ApiEnvelope<Void> payment(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.confirmPayment(required(body, "tableId"), number(body, "expectedFinalAmount"), staff));
     }
-    @Operation(summary = "주문 상태 변경")
+    @Operation(summary = "주문 상태 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.OrderStatus.class))))
     @PostMapping("/orders/status") ApiEnvelope<Void> status(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.updateStatus(body, staff));
     }
@@ -86,15 +96,18 @@ public class StaffController {
     @Operation(summary = "조리 주문 큐 조회")
     ApiEnvelope<Map<String, Object>> queues() { return ApiEnvelope.ok(service.queues()); }
 
-    @Operation(summary = "운영진 주문 추가")
+    @Operation(summary = "운영진 주문 추가", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffOrderCreate.class))))
     @PostMapping("/orders/create") ApiEnvelope<Map<String, Object>> create(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.createOrder(body, staff));
     }
-    @Operation(summary = "주문 항목 수정")
+    @Operation(summary = "주문 항목 수정", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffOrderUpdate.class))))
     @PostMapping("/orders/update") ApiEnvelope<Void> update(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.updateOrder(body, staff));
     }
-    @Operation(summary = "테이블 미결제 주문 취소")
+    @Operation(summary = "테이블 미결제 주문 취소", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.Table.class))))
     @PostMapping("/orders/cancel") ApiEnvelope<Void> cancel(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.cancelOrders(required(body, "tableId"), staff));
     }
@@ -102,7 +115,8 @@ public class StaffController {
     @Operation(summary = "운영 메뉴 목록 조회")
     ApiEnvelope<Map<String, Object>> menu() { return ApiEnvelope.ok(service.menu()); }
 
-    @Operation(summary = "메뉴 품절 상태 변경")
+    @Operation(summary = "메뉴 품절 상태 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.MenuAvailability.class))))
     @PostMapping("/menu/availability") ApiEnvelope<Void> availability(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.availability(required(body, "itemId"), bool(body, "soldOut"), staff));
     }
