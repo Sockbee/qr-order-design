@@ -25,7 +25,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/staff")
-@Tag(name = "Staff")
+@Tag(name = "Staff", description = "운영 대시보드, 주문·테이블·호출 처리")
 @SecurityRequirement(name = OpenApiConfig.STAFF_BEARER)
 public class StaffController {
     private final StaffOperationsService service;

@@ -41,6 +41,7 @@ springdoc:
   swagger-ui:
     enabled: ${SWAGGER_UI_ENABLED:true}
     path: /swagger-ui.html
+    urls-primary-name: all
     display-request-duration: true
     operations-sorter: method
     tags-sorter: alpha

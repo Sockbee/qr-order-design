@@ -85,9 +85,22 @@ class QrOrderApiIntegrationTest {
 
     @Test
     void exposesGroupedOpenApiWithBearerAndSseDocumentation() throws Exception {
+        mvc.perform(get("/v3/api-docs/swagger-config"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$['urls.primaryName']", is("all")));
+
+        mvc.perform(get("/v3/api-docs/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.paths['/api/v1/customer/bootstrap']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/staff/login']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/admin/snapshot']").exists())
+                .andExpect(jsonPath("$.tags.length()", is(4)));
+
         mvc.perform(get("/v3/api-docs/customer"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.info.title", is("QR Order API")))
+                .andExpect(jsonPath("$.tags.length()", is(1)))
+                .andExpect(jsonPath("$.tags[0].name", is("Customer")))
                 .andExpect(jsonPath("$.paths['/api/v1/customer/bootstrap'].post.summary", is("고객 화면 초기화")))
                 .andExpect(jsonPath("$.paths['/api/v1/customer/events'].post.responses['200'].content['text/event-stream']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/customer/bootstrap'].post.responses.default['$ref']",
@@ -95,12 +108,15 @@ class QrOrderApiIntegrationTest {
 
         mvc.perform(get("/v3/api-docs/staff"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tags.length()", is(2)))
                 .andExpect(jsonPath("$.components.securitySchemes.staffBearer.type", is("http")))
                 .andExpect(jsonPath("$.paths['/api/v1/staff/tables/list'].post.security[0].staffBearer").isArray())
                 .andExpect(jsonPath("$.paths['/api/v1/staff/login'].post.security").doesNotExist());
 
         mvc.perform(get("/v3/api-docs/admin"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tags.length()", is(1)))
+                .andExpect(jsonPath("$.tags[0].name", is("Admin")))
                 .andExpect(jsonPath("$.paths['/api/v1/admin/tables/{id}/rotate-token'].post.summary",
                         is("테이블 토큰 회전")));
     }

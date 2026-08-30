@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.media.BooleanSchema;
@@ -26,13 +25,7 @@ import org.springframework.context.annotation.Configuration;
                 version = "v1",
                 description = "QR 주문 고객·운영·관리 API. 모든 JSON 응답은 success/data/error/meta envelope를 사용합니다.",
                 license = @License(name = "Private API")
-        ),
-        tags = {
-                @Tag(name = "Customer", description = "QR 테이블 인증, 메뉴, 주문, 직원 호출 및 실시간 이벤트"),
-                @Tag(name = "Staff Auth", description = "공용 운영 passcode 로그인"),
-                @Tag(name = "Staff", description = "운영 대시보드, 주문·테이블·호출 처리"),
-                @Tag(name = "Admin", description = "메뉴, 설정, 옵션 및 테이블 관리")
-        }
+        )
 )
 @SecurityScheme(
         name = OpenApiConfig.STAFF_BEARER,
@@ -80,6 +73,11 @@ public class OpenApiConfig {
                 responses.addApiResponse("default", new ApiResponse().$ref("#/components/responses/ApiError"));
             }
         }));
+    }
+
+    @Bean
+    GroupedOpenApi allApi(OpenApiCustomizer standardErrorEnvelope) {
+        return group("all", "/api/v1/**", standardErrorEnvelope);
     }
 
     @Bean

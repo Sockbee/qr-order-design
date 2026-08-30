@@ -14,7 +14,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/staff")
-@Tag(name = "Staff Auth")
+@Tag(name = "Staff Auth", description = "공용 운영 passcode 로그인")
 public class StaffAuthController {
     private final StaffTokenService tokens;
 

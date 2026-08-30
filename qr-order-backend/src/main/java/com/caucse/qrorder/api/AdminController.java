@@ -19,7 +19,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/admin")
-@Tag(name = "Admin")
+@Tag(name = "Admin", description = "메뉴, 설정, 옵션 및 테이블 관리")
 @SecurityRequirement(name = OpenApiConfig.STAFF_BEARER)
 public class AdminController {
     private final AdminService admin;

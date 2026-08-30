@@ -22,7 +22,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/customer")
-@Tag(name = "Customer")
+@Tag(name = "Customer", description = "QR 테이블 인증, 메뉴, 주문, 직원 호출 및 실시간 이벤트")
 public class CustomerController {
     private final TableCatalogService catalog;
     private final CustomerOrderService orders;

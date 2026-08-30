@@ -26,7 +26,11 @@ Required production variables:
 
 - Swagger UI: `http://localhost:8080/swagger-ui.html`
 - 전체 OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- 기본 전체 JSON: `/v3/api-docs/all`
 - 그룹별 JSON: `/v3/api-docs/customer`, `/v3/api-docs/staff`, `/v3/api-docs/admin`
+
+Swagger UI는 `all` 문서를 기본 선택해 모든 API를 태그별로 표시합니다. 상단
+definition 선택에서 customer, staff, admin만 따로 확인할 수도 있습니다.
 
 운영·관리 API는 Swagger UI 오른쪽 위 `Authorize`에 로그인 응답의
 `staffToken`만 입력합니다. 고객 API는 별도 Authorization header 대신 기존 QR의
