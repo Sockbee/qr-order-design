@@ -44,7 +44,7 @@ export function CategoryTabs({
 
   return (
     <div
-      className="sticky top-14 z-[2] flex overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-canvas border-b border-border-default"
+      className="sticky top-[calc(var(--layout-app-bar-height)+var(--layout-safe-area-top))] z-[2] flex overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-canvas"
       role="tablist"
       aria-label="메뉴 카테고리"
       ref={listRef}

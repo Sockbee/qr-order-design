@@ -17,7 +17,7 @@ export function BottomOrderBar({
   const empty = itemCount === 0
 
   return (
-    <div className="sticky bottom-0 z-[2] bg-canvas border-t border-border-default">
+    <div className="sticky bottom-0 z-[2] bg-canvas ">
       <div className="flex p-4">
         <Button
           block

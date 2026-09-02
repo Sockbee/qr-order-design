@@ -35,7 +35,7 @@ export function OrderCompletePage({
         <p className="text-sm leading-[21px] font-normal text-body">주문번호 {order.number}</p>
       </main>
 
-      <div className="flex flex-col gap-2 p-4 bg-canvas border-t border-border-default">
+      <div className="flex flex-col gap-2 p-4 bg-canvas ">
         <Button
           block
           size="xlarge"

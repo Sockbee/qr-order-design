@@ -53,6 +53,31 @@ Display/Total(36/54)로 커졌습니다.
   설명 추가, §Sources of Truth의 Known frames 표에 이번에 참조한 노드
   10개를 모두 추가했습니다.
 
+### 목 데이터 후속 조정
+
+- `src/data/session.ts` — 매장명·안내 문구를 Figma S01 프레임의 목업
+  텍스트("소프트 일일호프" / "결제는 식사 후 카운터에서 진행해 주세요.")로
+  맞췄습니다. 기존 값("행복식당 본점" / 두 문장짜리 안내)은 API 미연동
+  상태의 임의 목 데이터였을 뿐이라 실제 값과는 무관합니다.
+- `src/data/menu.ts` — 테스트용으로 메뉴를 9개에서 26개(추천 5·식사 7·
+  안주 7·음료 7)로 확장하고, 라디오/체크박스/옵션없음/품절옵션을 고루
+  섞었습니다. 카테고리마다 품절 아이템도 최소 1개씩 포함.
+
+### AppBar 상단 safe-area
+
+`src/styles/tokens.css`에 `--layout-safe-area-top: env(safe-area-inset-top, 0px)`
+추가, 기존 `--layout-safe-area`(하단)와 대칭. `AppBar`가 sticky 헤더 내부에
+이 값만큼의 spacer div를 두어 노치/다이나믹 아일랜드 기기에서 상태바에
+헤더가 가리지 않게 했습니다 — 헤더 자체의 padding이 아니라 내부 spacer라
+sticky 요소 전체가 함께 움직여 스크롤해도 유지됩니다. 논노치 기기는 0이라
+레이아웃 변화 없음(직접 확인). `MenuPage`가 쓰는 `CategoryTabs`의 sticky
+오프셋(`top-14` → `top-[calc(var(--layout-app-bar-height)+var(--layout-safe-area-top))]`)
+도 같이 조정해 AppBar 바로 아래에 계속 붙도록 했습니다.
+
+메뉴/주문확인 화면 상단 여백을 더 늘리는 방향도 검토했으나, 사용자가 실제로
+말한 건 "헤더와 화면 맨 위 사이" 여백이었어서 그 변경은 롤백하고 이 spacer로
+대체했습니다.
+
 ### 버그 수정 — CSS 캐스케이드 레이어
 
 작업 중 `src/index.css`의 전역 리셋 규칙 `h1,h2,h3,p{font:inherit}`,
