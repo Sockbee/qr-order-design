@@ -50,3 +50,5 @@ apps-script/service-account*.json
 *.tfstate
 *.tfstate.*
 *.tfplan
+infra/terraform.tfvars
+infra/*.auto.tfvars
