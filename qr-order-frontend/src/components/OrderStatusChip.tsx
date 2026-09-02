@@ -1,5 +1,4 @@
 import type { OrderStatus } from '../types/order'
-import './OrderStatusChip.css'
 
 const LABELS: Record<OrderStatus, string> = {
   accepted: '접수됨',
@@ -7,6 +6,14 @@ const LABELS: Record<OrderStatus, string> = {
   served: '서빙 완료',
   closed: '완료',
   cancelled: '취소됨',
+}
+
+const STATUS_CLASSES: Record<OrderStatus, string> = {
+  accepted: 'bg-[var(--color-status-accepted-bg)] text-[var(--color-status-accepted-fg)]',
+  preparing: 'bg-[var(--color-status-preparing-bg)] text-[var(--color-status-preparing-fg)]',
+  served: 'bg-[var(--color-status-served-bg)] text-[var(--color-status-served-fg)]',
+  closed: 'bg-[var(--color-status-closed-bg)] text-[var(--color-status-closed-fg)]',
+  cancelled: 'bg-[var(--color-status-cancelled-bg)] text-[var(--color-status-cancelled-fg)]',
 }
 
 interface OrderStatusChipProps {
@@ -25,8 +32,10 @@ interface OrderStatusChipProps {
  */
 export function OrderStatusChip({ status }: OrderStatusChipProps) {
   return (
-    <span className={`order-status-chip order-status-chip--${status}`}>
-      <span className="order-status-chip__dot" aria-hidden="true" />
+    <span
+      className={`inline-flex items-center gap-1.5 py-1 px-2.5 rounded-[6px] text-[12px] leading-[18px] whitespace-nowrap ${STATUS_CLASSES[status]}`}
+    >
+      <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
       {LABELS[status]}
     </span>
   )

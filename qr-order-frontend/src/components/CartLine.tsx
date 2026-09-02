@@ -1,6 +1,5 @@
-import { QuantitySelector } from './QuantitySelector'
+import { QuantitySelector } from './customer/QuantitySelector'
 import { formatPrice } from '../utils/price'
-import './CartLine.css'
 
 interface CartLineProps {
   name: string
@@ -22,16 +21,20 @@ export function CartLine({
   onQuantityChange,
 }: CartLineProps) {
   return (
-    <div className="cart-line">
-      <div className="cart-line__thumbnail">
-        {imageUrl && <img src={imageUrl} alt="" />}
+    <div className="flex gap-3 items-start w-full">
+      <div className="flex-none w-14 h-14 rounded-btn-sm bg-surface overflow-hidden">
+        {imageUrl && <img className="w-full h-full object-cover" src={imageUrl} alt="" />}
       </div>
 
-      <div className="cart-line__info">
-        <p className="cart-line__name">{name}</p>
-        {options && <p className="cart-line__options">{options}</p>}
-        <div className="cart-line__price-row">
-          <p className="cart-line__price">{formatPrice(lineTotal)}</p>
+      <div className="flex flex-1 min-w-0 flex-col gap-1">
+        <p className="font-bold text-base leading-6 text-strong truncate">{name}</p>
+        {options && (
+          <p className="w-full text-sm leading-[21px] font-normal text-body">{options}</p>
+        )}
+        <div className="flex items-center gap-1.5 w-full">
+          <p className="flex-1 min-w-0 font-bold text-base leading-6 text-strong">
+            {formatPrice(lineTotal)}
+          </p>
           <QuantitySelector
             value={quantity}
             onChange={onQuantityChange}

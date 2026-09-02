@@ -5,7 +5,6 @@ import { CartLine } from '../components/CartLine'
 import { PriceBreakdown } from '../components/PriceBreakdown'
 import { calculateCartTotal, describeCartLineOptions } from '../utils/cart'
 import type { CartLine as CartLineModel, MenuItemDetail } from '../types/menu'
-import './CartPage.css'
 
 interface CartPageProps {
   menuItems: MenuItemDetail[]
@@ -27,10 +26,10 @@ export function CartPage({
   const total = calculateCartTotal(cart)
 
   return (
-    <div className="cart-page">
+    <div className="flex flex-col min-h-dvh bg-canvas">
       <AppBar title="장바구니" onBack={onBack} />
 
-      <main className="cart-page__content">
+      <main className="flex flex-1 flex-col gap-4 pt-4 px-4 pb-0">
         {cart.length > 0 ? (
           cart.map((line, index) => {
             const item = menuItems.find(
@@ -54,7 +53,9 @@ export function CartPage({
             )
           })
         ) : (
-          <p className="cart-page__empty">장바구니가 비어 있어요.</p>
+          <p className="py-8 px-0 text-sm leading-[21px] font-normal text-body text-center">
+            장바구니가 비어 있어요.
+          </p>
         )}
 
         <Button

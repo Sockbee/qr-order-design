@@ -1,5 +1,4 @@
 import { formatPrice } from '../utils/price'
-import './OrderLine.css'
 
 interface OrderLineProps {
   name: string
@@ -10,11 +9,13 @@ interface OrderLineProps {
 
 export function OrderLine({ name, quantity, amount }: OrderLineProps) {
   return (
-    <div className="order-line">
-      <p className="order-line__name">
+    <div className="flex items-center gap-2 w-full">
+      <p className="flex-1 min-w-0 text-base leading-6 font-normal text-strong overflow-hidden text-ellipsis whitespace-nowrap">
         {name} × {quantity}
       </p>
-      <p className="order-line__amount">{formatPrice(amount)}</p>
+      <p className="flex-none font-bold text-base leading-6 text-strong whitespace-nowrap">
+        {formatPrice(amount)}
+      </p>
     </div>
   )
 }

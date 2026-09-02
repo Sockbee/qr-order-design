@@ -93,6 +93,7 @@
   --layout-hero-height: 160px;
   --layout-min-touch-target: 48px;
   --layout-safe-area: max(34px, env(safe-area-inset-bottom, 0px));
+  --layout-safe-area-top: env(safe-area-inset-top, 0px);
 }
 
 /*
