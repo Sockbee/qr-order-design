@@ -6,7 +6,6 @@ import { StatusTracker } from '../components/StatusTracker'
 import { menuItems } from '../data/menu'
 import { formatPrice } from '../utils/price'
 import type { PlacedOrder } from '../types/order'
-import './OrderStatusPage.css'
 
 interface OrderStatusPageProps {
   orders: PlacedOrder[]
@@ -50,15 +49,15 @@ export function OrderStatusPage({
    */
   if (orders.length === 0) {
     return (
-      <div className="order-status">
+      <div className="flex flex-col min-h-dvh bg-canvas">
         {appBar}
-        <main className="order-status__empty">
-          <p className="order-status__empty-title">아직 주문 내역이 없어요</p>
-          <p className="order-status__empty-body">
+        <main className="flex-1 flex flex-col items-center justify-center gap-1.5 py-0 px-4 text-center">
+          <p className="font-bold text-base leading-6 text-body">아직 주문 내역이 없어요</p>
+          <p className="text-sm leading-[21px] font-normal text-muted">
             메뉴에서 주문하면 여기에 표시됩니다
           </p>
         </main>
-        <div className="order-status__footer">
+        <div className="p-4 bg-canvas border-t border-border-default">
           <Button
             block
             size="xlarge"
@@ -67,16 +66,16 @@ export function OrderStatusPage({
             onClick={onOrderMore}
           />
         </div>
-        <div className="order-status__safe-area" />
+        <div className="h-[var(--layout-safe-area)] bg-canvas" />
       </div>
     )
   }
 
   return (
-    <div className="order-status">
+    <div className="flex flex-col min-h-dvh bg-canvas">
       {appBar}
 
-      <main className="order-status__content">
+      <main className="flex flex-1 flex-col gap-6 pt-4 px-4 pb-0">
         <StatusTracker status={currentStatus} />
 
         {rounds.map(({ order, round }) => (
@@ -105,15 +104,15 @@ export function OrderStatusPage({
           </OrderRound>
         ))}
 
-        <div className="order-status__session-total">
-          <p className="order-status__session-label">현재까지 합계</p>
-          <p className="order-status__session-value">
+        <div className="flex items-center gap-2 w-full font-bold text-[22px] leading-[33px] text-strong">
+          <p className="flex-1 min-w-0">현재까지 합계</p>
+          <p className="flex-none whitespace-nowrap">
             {formatPrice(sessionTotal)}
           </p>
         </div>
       </main>
 
-      <div className="order-status__footer">
+      <div className="flex flex-col gap-2 p-4 bg-canvas border-t border-border-default">
         <Button
           block
           size="xlarge"
@@ -129,7 +128,7 @@ export function OrderStatusPage({
           onClick={onCallStaff}
         />
       </div>
-      <div className="order-status__safe-area" />
+      <div className="h-[var(--layout-safe-area)] bg-canvas" />
     </div>
   )
 }

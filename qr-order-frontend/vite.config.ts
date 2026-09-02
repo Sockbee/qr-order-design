@@ -1,3 +1,4 @@
+import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
@@ -23,7 +24,7 @@ function staffHistoryFallback() {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [staffHistoryFallback(), react()],
+  plugins: [staffHistoryFallback(), react(), tailwindcss()],
   build: {
     rollupOptions: {
       input: {

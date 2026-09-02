@@ -5,7 +5,6 @@ import { PriceBreakdown } from '../components/PriceBreakdown'
 import { TableChip } from '../components/TableChip'
 import { calculateCartTotal } from '../utils/cart'
 import type { CartLine, MenuItemDetail } from '../types/menu'
-import './OrderConfirmationPage.css'
 
 interface OrderConfirmationPageProps {
   menuItems: MenuItemDetail[]
@@ -31,13 +30,13 @@ export function OrderConfirmationPage({
   const total = calculateCartTotal(cart)
 
   return (
-    <div className="order-confirmation">
+    <div className="flex flex-col min-h-dvh bg-canvas">
       <AppBar title="주문 확인" onBack={onBack} />
 
-      <main className="order-confirmation__content">
+      <main className="flex flex-1 flex-col items-start gap-6 pt-4 px-4 pb-0">
         <TableChip tableNumber={tableNumber} />
 
-        <div className="order-confirmation__summary">
+        <div className="flex flex-col gap-3 w-full">
           {cart.map((line, index) => {
             const item = menuItems.find(
               (candidate) => candidate.id === line.itemId,
@@ -58,12 +57,15 @@ export function OrderConfirmationPage({
 
         <PriceBreakdown total={total} />
 
-        <p className="order-confirmation__payment-note">
+        <p className="w-full text-sm leading-[21px] font-normal text-body">
           후불 결제 · 식사 후 카운터에서 결제해 주세요
         </p>
 
         {errorMessage && (
-          <p className="order-confirmation__error" role="alert">
+          <p
+            className="w-full m-0 p-2 rounded-row bg-[var(--color-status-attention-bg)] text-sm leading-[21px] font-normal text-[var(--color-status-attention-fg)]"
+            role="alert"
+          >
             {errorMessage}
           </p>
         )}
@@ -77,7 +79,7 @@ export function OrderConfirmationPage({
         />
       </main>
 
-      <div className="order-confirmation__footer">
+      <div className="p-4 bg-canvas border-t border-border-default">
         <Button
           block
           size="xlarge"
@@ -88,7 +90,7 @@ export function OrderConfirmationPage({
           onClick={onConfirm}
         />
       </div>
-      <div className="order-confirmation__safe-area" />
+      <div className="h-[var(--layout-safe-area)] bg-canvas" />
     </div>
   )
 }

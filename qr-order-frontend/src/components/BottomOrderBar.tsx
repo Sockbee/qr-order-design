@@ -1,6 +1,5 @@
 import { Button } from './Button'
 import { formatPrice } from '../utils/price'
-import './BottomOrderBar.css'
 
 interface BottomOrderBarProps {
   total: number
@@ -18,8 +17,8 @@ export function BottomOrderBar({
   const empty = itemCount === 0
 
   return (
-    <div className="bottom-order-bar">
-      <div className="bottom-order-bar__row">
+    <div className="sticky bottom-0 z-[2] bg-canvas border-t border-border-default">
+      <div className="flex p-4">
         <Button
           block
           size="xlarge"
@@ -30,7 +29,7 @@ export function BottomOrderBar({
           onClick={onOrder}
         />
       </div>
-      <div className="bottom-order-bar__safe-area" />
+      <div className="h-[var(--layout-safe-area)] bg-canvas" />
     </div>
   )
 }

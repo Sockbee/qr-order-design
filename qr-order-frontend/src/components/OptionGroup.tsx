@@ -1,7 +1,6 @@
 import { Badge } from './Badge'
 import { OptionSelector } from './OptionSelector'
 import type { MenuOption, MenuOptionGroup } from '../types/menu'
-import './OptionGroup.css'
 
 interface OptionGroupProps {
   group: MenuOptionGroup
@@ -19,9 +18,12 @@ export function OptionGroup({
     maxSelections !== undefined && selectedIds.length >= maxSelections
 
   return (
-    <section className="option-group" aria-labelledby={`option-group-${id}`}>
-      <div className="option-group__head">
-        <h3 className="option-group__label" id={`option-group-${id}`}>
+    <section className="flex flex-col gap-2 w-full" aria-labelledby={`option-group-${id}`}>
+      <div className="flex items-center gap-1.5 w-full">
+        <h3
+          className="flex-1 min-w-0 font-bold text-sm leading-[21px] text-strong"
+          id={`option-group-${id}`}
+        >
           {label}
         </h3>
         <Badge size="small" tone={required ? 'weak' : 'neutral'}>
@@ -29,7 +31,7 @@ export function OptionGroup({
         </Badge>
       </div>
 
-      <div className="option-group__options">
+      <div className="flex flex-col gap-2">
         {options.map((option) => {
           const selected = selectedIds.includes(option.id)
           return (
@@ -50,7 +52,9 @@ export function OptionGroup({
       </div>
 
       {maxReached && (
-        <p className="option-group__hint">최대 {maxSelections}개까지 선택할 수 있어요.</p>
+        <p className="text-sm leading-[21px] font-normal text-body">
+          최대 {maxSelections}개까지 선택할 수 있어요.
+        </p>
       )}
     </section>
   )

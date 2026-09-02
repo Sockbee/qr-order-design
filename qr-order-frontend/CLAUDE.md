@@ -247,27 +247,48 @@ stays literal (for example the XLarge button's `0 20px` padding).
 
 ## 4. Styling
 
-Use plain CSS. There is no CSS framework and no CSS-in-JS — do not add one.
-Tailwind in particular must not be installed, even though Figma MCP returns Tailwind markup;
-that output is a reference to translate, never code to paste.
+The customer app and the staff app style differently — they are separate SPAs
+sharing one Vite build, and only the customer app moved to Tailwind.
 
-Each component owns a sibling stylesheet imported from the component file
-(`Button.tsx` imports `./Button.css`). Class names are BEM-ish and namespaced by component
-(`.menu-item__price`, `.category-tab--active` style).
+**Customer app** (`src/pages/*`, `src/components/*` excluding `components/staff/`
+and the two forked exceptions below): use Tailwind utility classes. Tailwind is
+wired in `src/styles/tailwind.css` (imported from `main.tsx` only, never from
+`staff-main.tsx`) with an `@theme` block that re-exposes the brand tokens from
+`src/styles/tokens.css` as utilities (`bg-primary`, `text-strong`,
+`rounded-btn-lg`, ...). Prefer those named utilities when a token exists; fall
+back to Tailwind's arbitrary-value syntax (`h-[38px]`, `bg-[var(--color-status-accepted-bg)]`)
+for one-off or not-yet-themed values rather than inventing new `@theme` entries
+for something used once. Figma is no longer the source of truth for this app —
+the customer app is being redesigned and Tailwind's job here is iteration speed,
+not reproducing a Figma frame pixel-for-pixel.
 
-Prefer:
+**Staff app** (`src/pages/staff/*`, `src/components/staff/*`): unchanged, plain
+CSS. Each component owns a sibling stylesheet imported from the component file
+(`Component.tsx` imports `./Component.css`). Class names are BEM-ish and
+namespaced by component (`.menu-item__price`, `.category-tab--active` style).
+There is no CSS-in-JS anywhere in this project — do not add one.
 
-* semantic class names
-* CSS variables
+**The two exceptions**: `CategoryTabs` and `QuantitySelector` were shared by
+both apps before this split. Each now exists twice — the original plain-CSS
+version at `src/components/CategoryTabs.tsx` / `QuantitySelector.tsx` (staff
+only), and a Tailwind version at `src/components/customer/CategoryTabs.tsx` /
+`QuantitySelector.tsx` (customer only), same prop contract. Do not let these
+two drift apart in behavior — only in styling mechanism. Do not add a third
+shared component this way without a real reason; fork only when a component
+genuinely needs both a customer (Tailwind) and staff (plain CSS) consumer.
+
+Prefer, for both apps:
+
+* semantic class names / utility composition
+* CSS variables (`tokens.css`) as the source of truth for values
 * flexbox / grid
 * mobile-first styles
 
-Avoid:
+Avoid, for both apps:
 
 * unnecessary absolute positioning
 * excessive fixed heights
 * duplicated inline styles
-* CSS hacks used only to visually imitate the Figma screenshot
 
 The implementation should behave correctly, not merely resemble a static screenshot.
 
