@@ -1,4 +1,4 @@
-import { Badge } from '../components/Badge'
+import logo from '../assets/logo.png'
 import { Button } from '../components/Button'
 import { TableChip } from '../components/TableChip'
 import type { TableSession } from '../types/session'
@@ -23,9 +23,9 @@ export function TableConfirmationPage({
   if (loading) {
     return (
       <div className="flex flex-col min-h-dvh bg-canvas" aria-busy="true">
-        <main className="flex flex-1 flex-col items-start gap-4 pt-20 px-4 pb-0">
-          <div className="bg-weak rounded-[4px] w-[180px] h-8" />
-          <div className="bg-weak rounded-[4px] w-16 h-7" />
+        <main className="flex flex-1 flex-col items-center justify-center gap-9 pt-10 px-4 pb-0">
+          <div className="bg-weak rounded-[4px] w-[220px] h-[54px]" />
+          <div className="bg-weak rounded-[4px] size-[198px]" />
           <div className="bg-weak rounded-[4px] w-24 h-8" />
           <div className="bg-weak rounded-[4px] w-full h-10" />
         </main>
@@ -40,11 +40,11 @@ export function TableConfirmationPage({
   if (!session || errorMessage) {
     return (
       <div className="flex flex-col min-h-dvh bg-canvas">
-        <main className="flex flex-1 flex-col items-start gap-4 pt-20 px-4 pb-0">
-          <h1 className="font-bold text-2xl leading-9 text-strong">
+        <main className="flex flex-1 flex-col items-center justify-center gap-9 pt-10 px-4 pb-0">
+          <h1 className="font-display font-normal text-4xl leading-[54px] text-strong text-center">
             테이블 정보를 불러오지 못했어요
           </h1>
-          <p className="w-full text-sm leading-[21px] font-normal text-body">
+          <p className="w-full text-sm leading-[21px] font-normal text-body text-center">
             {errorMessage ?? 'QR 코드를 다시 스캔해 주세요.'}
           </p>
         </main>
@@ -64,18 +64,20 @@ export function TableConfirmationPage({
     )
   }
 
-  const { storeName, open, tableNumber, notice } = session
+  const { storeName, tableNumber, notice } = session
 
   return (
     <div className="flex flex-col min-h-dvh bg-canvas">
-      <main className="flex flex-1 flex-col items-start gap-4 pt-20 px-4 pb-0">
-        <h1 className="font-bold text-2xl leading-9 text-strong">{storeName}</h1>
+      <main className="flex flex-1 flex-col items-center justify-center gap-9 pt-10 px-4 pb-0">
+        <h1 className="font-display font-normal text-4xl leading-[54px] text-strong whitespace-nowrap">
+          {storeName}
+        </h1>
 
-        <Badge size="medium">{open ? '영업 중' : '영업 종료'}</Badge>
+        <img className="size-[198px]" src={logo} alt="" />
 
         <TableChip tableNumber={tableNumber} />
 
-        <p className="w-full text-sm leading-[21px] font-normal text-body">{notice}</p>
+        <p className="w-full text-sm leading-[21px] font-normal text-body text-center">{notice}</p>
       </main>
 
       <div className="p-4 bg-canvas">

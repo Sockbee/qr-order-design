@@ -22,7 +22,7 @@ export function AppBar({ title, onBack, actions }: AppBarProps) {
       {onBack && (
         <button
           type="button"
-          className="relative inline-flex items-center justify-center w-[22px] h-[33px] p-0 border-0 bg-transparent font-bold text-[22px] leading-[33px] text-strong cursor-pointer before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:w-12 before:h-12 before:-translate-x-1/2 before:-translate-y-1/2"
+          className="relative inline-flex items-center justify-center w-[22px] h-[33px] p-0 border-0 bg-transparent font-display font-normal text-[22px] leading-[33px] text-strong cursor-pointer before:content-[''] before:absolute before:top-1/2 before:left-1/2 before:w-12 before:h-12 before:-translate-x-1/2 before:-translate-y-1/2"
           onClick={onBack}
           aria-label="뒤로 가기"
         >

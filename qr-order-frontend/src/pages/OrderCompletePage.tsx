@@ -17,18 +17,18 @@ export function OrderCompletePage({
     <div className="flex flex-col min-h-dvh bg-canvas">
       <main className="flex flex-1 flex-col items-center gap-4 pt-30 px-4 pb-0">
         <p
-          className="flex items-center justify-center w-16 h-16 rounded-full bg-weak text-link font-bold text-2xl leading-9"
+          className="flex items-center justify-center w-16 h-16 rounded-full bg-weak text-link font-display font-normal text-2xl leading-9"
           aria-hidden="true"
         >
           ✓
         </p>
 
-        <h1 className="font-bold text-[22px] leading-[33px] text-strong text-center">
+        <h1 className="font-display font-normal text-[22px] leading-[33px] text-strong text-center">
           <span className="block">테이블 {order.tableNumber} 주문이</span>
           <span className="block">접수되었어요</span>
         </h1>
 
-        <p className="font-bold text-4xl leading-[54px] text-strong">
+        <p className="font-display font-normal text-4xl leading-[54px] text-strong">
           {formatPrice(order.total)}
         </p>
 

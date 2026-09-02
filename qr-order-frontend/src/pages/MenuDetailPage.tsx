@@ -120,7 +120,7 @@ export function MenuDetailPage({
 
       <main className="flex flex-1 flex-col gap-6 pt-4 px-4 pb-0">
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 font-bold text-[22px] leading-[33px] text-strong">
+          <div className="flex items-center gap-2 font-display font-normal text-[22px] leading-[33px] text-strong">
             <h2 className="flex-1 min-w-0">{item.name}</h2>
             <span className="flex-none whitespace-nowrap">
               {formatPrice(item.price)}

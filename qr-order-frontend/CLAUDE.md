@@ -94,8 +94,16 @@ code. A node id can easily point at a neighbouring frame.
 Known frames:
 
 ```text
-14:2   S01 — Table Confirmation
-14:15  S02 — Menu Browsing
+14:2     S01 — Table Confirmation
+14:15    S02 — Menu Browsing
+15:39    S04 — Menu Detail
+15:95    S05 — Cart
+16:80    S06 — Order Confirmation
+16:106   S07 — Order Complete
+16:121   S08 — Order Status
+105:92   S09 — Call Staff (CallStaffSheet, asking state)
+105:146  S09b — Call Staff · 호출 완료 (CallStaffSheet, called state)
+105:189  S08b — Order History · 비어 있음 (OrderStatusPage empty state)
 ```
 
 Do not approximate the design from screenshots if Figma metadata is available.
@@ -242,6 +250,21 @@ Three standing constraints, all from DESIGN.md:
 Add a new token when a value repeats or is a design decision worth naming. Do not create a
 token for every unique pixel value; verified component geometry that falls outside the scale
 stays literal (for example the XLarge button's `0 20px` padding).
+
+**Customer-only palette override.** `tokens.css` is shared by both apps (`index.css` imports
+it, and both `main.tsx` and `staff-main.tsx` import `index.css`), so its `:root` values are
+the staff app's palette. The customer app's warm/hanok palette (Figma verified 2026-09-02)
+lives as a second `:root` override block in **`src/styles/tailwind.css`** — same custom
+property *names*, new values, later in cascade order, and that file is only ever imported
+from `main.tsx`. Never edit `tokens.css`'s color values to reskin the customer app; add or
+change the override block in `tailwind.css` instead. Non-color tokens (radius, spacing,
+layout) and the status colors are still shared and unchanged.
+
+**Display font.** Title/Screen, Title/Section and Display/Total render in **BM을지로**
+(`src/assets/font/BMEULJIROTTF.ttf`), a single-weight face wired as `@font-face` +
+`--font-display` in `tailwind.css`, customer-only. Always pair the `font-display` utility
+with `font-normal` — the face has no bold master. Body/Caption/Label/Micro tokens stay Noto
+Sans KR as before, on both apps.
 
 ---
 

@@ -9,12 +9,6 @@ const STEPS: { status: TrackableOrderStatus; label: string }[] = [
   { status: 'closed', label: '완료' },
 ]
 
-const PHASE_CLASSES = {
-  done: 'bg-weak text-link',
-  current: 'bg-primary text-on-primary',
-  upcoming: 'bg-surface text-muted',
-} as const
-
 interface StatusTrackerProps {
   status: TrackableOrderStatus
 }
@@ -23,7 +17,7 @@ export function StatusTracker({ status }: StatusTrackerProps) {
   const currentIndex = STEPS.findIndex((step) => step.status === status)
 
   return (
-    <ol className="flex items-center gap-2 w-full m-0 p-0 list-none" aria-label="주문 진행 상태">
+    <ol className="grid grid-cols-4 w-full m-0 p-0 list-none" aria-label="주문 진행 상태">
       {STEPS.map((step, index) => {
         const phase =
           index < currentIndex
@@ -31,14 +25,37 @@ export function StatusTracker({ status }: StatusTrackerProps) {
             : index === currentIndex
               ? 'current'
               : 'upcoming'
+        const filled = index <= currentIndex
 
         return (
           <li
             key={step.status}
-            className={`flex-none py-2 px-2.5 rounded-btn-sm text-sm leading-[21px] font-bold whitespace-nowrap ${PHASE_CLASSES[phase]}`}
+            className="flex flex-col items-center gap-2"
             aria-current={phase === 'current' ? 'step' : undefined}
           >
-            {step.label}
+            <div className="relative flex items-center justify-center w-full h-3.5">
+              {index > 0 && (
+                <div
+                  aria-hidden="true"
+                  className={`absolute top-1/2 right-1/2 w-full h-0.5 -translate-y-1/2 rounded-[1px] ${
+                    filled ? 'bg-border-selected' : 'bg-border-default'
+                  }`}
+                />
+              )}
+              <span
+                aria-hidden="true"
+                className={`relative z-[1] rounded-full ${phase === 'current' ? 'size-3.5' : 'size-2.5'} ${
+                  filled ? 'bg-border-selected' : 'bg-border-default'
+                }`}
+              />
+            </div>
+            <span
+              className={`text-sm leading-[21px] whitespace-nowrap ${
+                phase === 'current' ? 'font-bold text-strong' : 'font-normal text-muted'
+              }`}
+            >
+              {step.label}
+            </span>
           </li>
         )
       })}

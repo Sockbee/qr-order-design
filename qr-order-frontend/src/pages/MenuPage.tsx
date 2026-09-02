@@ -110,7 +110,7 @@ export function MenuPage({
           </div>
         ) : selectedCategory ? (
           <>
-            <h2 className="font-bold text-[22px] leading-[33px] text-strong mb-2">
+            <h2 className="font-display font-normal text-[22px] leading-[33px] text-strong mb-2">
               {selectedCategory.heading}
             </h2>
             {visibleItems.length > 0 ? (

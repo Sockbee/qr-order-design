@@ -104,7 +104,7 @@ export function OrderStatusPage({
           </OrderRound>
         ))}
 
-        <div className="flex items-center gap-2 w-full font-bold text-[22px] leading-[33px] text-strong">
+        <div className="flex items-center gap-2 w-full font-display font-normal text-[22px] leading-[33px] text-strong">
           <p className="flex-1 min-w-0">현재까지 합계</p>
           <p className="flex-none whitespace-nowrap">
             {formatPrice(sessionTotal)}

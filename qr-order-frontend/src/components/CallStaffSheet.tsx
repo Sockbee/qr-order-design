@@ -71,13 +71,13 @@ export function CallStaffSheet({
         {called ? (
           <>
             <div
-              className="self-center flex items-center justify-center w-14 h-14 rounded-full bg-weak text-link font-bold text-[22px] leading-[33px]"
+              className="self-center flex items-center justify-center w-14 h-14 rounded-full bg-weak text-link font-display font-normal text-[22px] leading-[33px]"
               aria-hidden="true"
             >
               ✓
             </div>
             <h2
-              className="m-0 font-bold text-[22px] leading-[33px] text-strong text-center self-center"
+              className="m-0 font-display font-normal text-[22px] leading-[33px] text-strong text-center self-center"
               id={titleId}
             >
               직원을 불렀어요
@@ -112,7 +112,7 @@ export function CallStaffSheet({
           </>
         ) : (
           <>
-            <h2 className="m-0 font-bold text-[22px] leading-[33px] text-strong" id={titleId}>
+            <h2 className="m-0 font-display font-normal text-[22px] leading-[33px] text-strong" id={titleId}>
               직원을 부를까요?
             </h2>
             <p className="-mt-2.5 mx-0 mb-0 text-sm leading-[21px] font-normal text-body">

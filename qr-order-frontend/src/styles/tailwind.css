@@ -9,7 +9,39 @@
  */
 @import 'tailwindcss';
 
+/*
+ * Customer-only palette override (warm/hanok redesign, Figma verified
+ * 2026-09-02). Redeclares the same custom-property NAMES tokens.css defines,
+ * with new values — same specificity, later in cascade order than tokens.css's
+ * :root (index.css is imported before this file in main.tsx), so it wins only
+ * on the customer page. staff-main.tsx never imports this file, so the staff
+ * app keeps the original tokens.css values untouched.
+ */
+:root {
+  --color-bg-canvas: #fbedd9;
+  --color-bg-surface: #f7f1e8;
+  --color-bg-weak: #f9e3c5;
+  --color-bg-primary: #bd5204;
+  --color-bg-primary-pressed: #9c4403;
+  --color-text-strong: #4d2205;
+  --color-text-body: #4e4645;
+  --color-text-weak: #a62c2d;
+  --color-border-default: #a69182;
+  --color-border-selected: #a62c2d;
+}
+
+/* BM을지로 — display/heading face. Single weight; always paired with font-normal. */
+@font-face {
+  font-family: 'BM Euljiro';
+  src: url('../assets/font/BMEULJIROTTF.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
+  --font-display: 'BM Euljiro', var(--font-sans);
+
   --color-primary: var(--color-bg-primary);
   --color-primary-pressed: var(--color-bg-primary-pressed);
   --color-canvas: var(--color-bg-canvas);
