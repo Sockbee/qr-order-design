@@ -97,6 +97,7 @@ export function StaffAddOrderPage({
           { label: '주방', to: '/staff/kitchen', count: null },
           { label: '서빙', to: '/staff/serving', count: null },
           { label: '결제', to: '/staff/payment', count: null },
+          { label: '설정', to: '/staff/settings', count: null },
         ]}
       />
 

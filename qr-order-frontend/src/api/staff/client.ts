@@ -4,13 +4,8 @@ import { readStored, writeStored } from '../../utils/storage'
 const API_VERSION = 'v1'
 
 /**
- * The staff API is a *separate* Apps Script deployment
- * (apps-script-api-design.md §1): the customer bundle must never ship the
- * operational URL, so this is its own env var and its own client.
- *
- * `staffToken` travels in the request body, not an Authorization header —
- * the Apps Script event object cannot read arbitrary request headers and a
- * custom header would trigger a CORS preflight (§4.9).
+ * Staff and customer actions share one Spring Boot API origin. Staff calls
+ * authenticate with the standard Bearer token issued by the login endpoint.
  */
 export const STAFF_TOKEN_KEY = 'qr-order:staff:token'
 
@@ -67,7 +62,7 @@ type ApiEnvelope<T> =
     }
 
 export function hasStaffApi(): boolean {
-  return Boolean(import.meta.env.VITE_STAFF_APPS_SCRIPT_URL?.trim())
+  return Boolean(import.meta.env.VITE_API_BASE_URL?.trim())
 }
 
 export function readStaffToken(): string | null {
@@ -100,7 +95,7 @@ export async function callStaffApi<T>(
   signal?: AbortSignal,
   options: { anonymous?: boolean } = {},
 ): Promise<T> {
-  const configuredUrl = import.meta.env.VITE_STAFF_APPS_SCRIPT_URL?.trim()
+  const configuredUrl = import.meta.env.VITE_API_BASE_URL?.trim()
   if (!configuredUrl) {
     throw new ApiClientError(
       'API_NOT_CONFIGURED',
@@ -121,29 +116,22 @@ export async function callStaffApi<T>(
     }
   }
 
-  const url = new URL(configuredUrl)
   const staffAction = action.startsWith('staff/') ? action : `staff/${action}`
-  url.searchParams.set('action', staffAction)
+  const baseUrl = configuredUrl.replace(/\/$/, '')
+  const url = `${baseUrl}/api/v1/${staffAction}`
   const response = await fetch(url, {
     method: 'POST',
-    redirect: 'follow',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(staffToken ? { Authorization: `Bearer ${staffToken}` } : {}),
+    },
     body: JSON.stringify({
       apiVersion: API_VERSION,
-      ...(staffToken ? { staffToken } : {}),
       ...payload,
     }),
     signal,
   })
-  if (!response.ok) {
-    throw new ApiClientError(
-      'HTTP_ERROR',
-      '운영 서버에 연결할 수 없습니다.',
-      response.status >= 500,
-      { status: response.status },
-    )
-  }
-
   let envelope: ApiEnvelope<T>
   try {
     envelope = (await response.json()) as ApiEnvelope<T>
@@ -160,6 +148,14 @@ export async function callStaffApi<T>(
       envelope.error.message,
       envelope.error.retryable,
       envelope.error.details,
+    )
+  }
+  if (!response.ok) {
+    throw new ApiClientError(
+      'HTTP_ERROR',
+      '운영 서버에 연결할 수 없습니다.',
+      response.status >= 500,
+      { status: response.status },
     )
   }
   return envelope.data

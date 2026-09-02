@@ -42,13 +42,13 @@ Routing uses `react-router-dom`. Session state (cart, orders) lives in `App` **a
 router and is passed to route elements as props — route elements unmount on navigation, so
 state or persistence effects owned by them would be lost mid-transition.
 
-The S08 server state uses one session-level `useOrderPolling` instance. It calls the
-Apps Script `orders/list` action every 15 seconds, pauses while the document is hidden, and
-retains the last successful response during retry backoff. Configure the deployment through
-`VITE_APPS_SCRIPT_URL`; never commit a real table token.
+The S08 server state uses one session-level `useOrderPolling` instance. It consumes
+Spring Boot SSE events, reconciles every 60 seconds, falls back to `orders/list` polling
+every 15 seconds, and pauses while the document is hidden. Configure the deployment through
+`VITE_API_BASE_URL`; never commit a real table token.
 
 S01, S02 and S04 use the session-level `useStorefront` data source. It resolves the real
-store/table and menu catalog from Apps Script, then passes the same mapped menu objects to
+store/table and menu catalog from the Spring Boot API, then passes the same mapped menu objects to
 the cart and confirmation screens. `src/data` is fallback content only when the API is not
 configured; production paths must never silently fall back after an API or QR error.
 
@@ -204,7 +204,7 @@ src/
 ```
 
 `src/hooks/` holds shared hooks (`useOrderSession`, `usePersistentState`, `useStorefront`,
-`useOrderPolling`). `src/data/` is used only when `VITE_APPS_SCRIPT_URL` is absent.
+`useOrderPolling`). `src/data/` is used only when `VITE_API_BASE_URL` is absent.
 
 Do not over-engineer abstractions for components used only once.
 
@@ -348,12 +348,12 @@ Keep component props small and explicit.
 
 ## 8. State and Data
 
-Store/table, menu catalog and order status use the Apps Script API when
-`VITE_APPS_SCRIPT_URL` is configured. Fallback content lives in `src/data/`, typed against
+Store/table, menu catalog and order status use the Spring Boot API when
+`VITE_API_BASE_URL` is configured. Fallback content lives in `src/data/`, typed against
 `src/types/`, and is only for API-free UI development. Components and pages take mapped
 domain types as props and must not import fallback data directly.
 
-Keep Apps Script response types and mapping inside `src/api/`; UI components must not depend
+Keep backend response types and mapping inside `src/api/`; UI components must not depend
 on backend field names.
 
 Do not introduce a global state library unless the application's actual complexity requires one.

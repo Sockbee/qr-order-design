@@ -2,7 +2,7 @@ import type { CartLine, MenuCategory, MenuItemDetail } from '../types/menu'
 
 /**
  * Fallback content for API-free UI development. Production storefronts use
- * the Apps Script menu response and never fall back after an API error.
+ * the backend menu response and never fall back after an API error.
  */
 export const categories: MenuCategory[] = [
   { id: 'recommended', label: '추천', heading: '추천 메뉴' },

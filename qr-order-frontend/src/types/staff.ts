@@ -2,7 +2,7 @@
  * Staff POS domain types.
  *
  * Figma: page "Staff POS — iPad" (81:132). These are the mapped types the
- * staff pages consume — never the Apps Script field names, which stay behind
+ * staff pages consume — never backend transport details, which stay behind
  * `src/api/staff/`.
  */
 

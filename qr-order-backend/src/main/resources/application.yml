@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: qr-order-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/qr_order}
+    username: ${DB_USER:qr_order}
+    password: ${DB_PASSWORD:qr_order}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      minimum-idle: 1
+      connection-timeout: 3000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  mvc:
+    async:
+      request-timeout: 1800000
+
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+springdoc:
+  api-docs:
+    enabled: ${OPENAPI_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_UI_ENABLED:true}
+    path: /swagger-ui.html
+    urls-primary-name: all
+    display-request-duration: true
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+    persist-authorization: false
+
+qr-order:
+  token-pepper: ${TOKEN_PEPPER:local-development-token-pepper-please-change}
+  staff-passcode-hash: ${STAFF_PASSCODE_HASH:}
+  staff-token-secret: ${STAFF_TOKEN_SECRET:local-development-staff-token-secret-please-change}
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4173}
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  sse:
+    timeout-ms: 1500000
+    heartbeat-ms: 20000
+
+logging:
+  structured:
+    format:
+      console: ecs
