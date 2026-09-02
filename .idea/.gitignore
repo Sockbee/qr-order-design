@@ -4,3 +4,7 @@
 # 에디터 기반 HTTP 클라이언트 요청
 /httpRequests/
 /misc.xml
+# DataGrip 로컬 연결 설정 및 introspection 캐시
+/dataSources.xml
+/dataSources.local.xml
+/dataSources/
