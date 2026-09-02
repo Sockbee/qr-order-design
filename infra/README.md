@@ -364,12 +364,15 @@ printf 'Cloud Build SA: %s\nCloud Run SA: %s\n' "$BUILD_SA" "$RUNTIME_SA"
 ```
 
 `BUILD_SA`가 비어 있으면 Cloud Build API 활성화가 아직 전파 중일 수 있습니다. 잠시
-후 다시 실행합니다. 값이 확인되면 이미지 push와 Cloud Run 배포 권한을 부여합니다.
+후 다시 실행합니다. 값이 확인되면 먼저 기본 빌드 역할을 부여합니다. 새 프로젝트에서
+선택되는 Compute Engine 기본 서비스 계정에는 이 역할이 자동으로 없을 수 있습니다.
+이 역할에는 수동으로 업로드한 Cloud Storage 빌드 소스를 읽고, 빌드 로그를 기록하고,
+Artifact Registry에 결과물을 올리는 데 필요한 권한이 포함됩니다.
 
 ```bash
 gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
   --member="serviceAccount:${BUILD_SA}" \
-  --role="roles/artifactregistry.writer"
+  --role="roles/cloudbuild.builds.builder"
 
 gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
   --member="serviceAccount:${BUILD_SA}" \
@@ -408,9 +411,14 @@ bootstrap_mode  = false
 
 ```bash
 cd /Users/samso/Desktop/qr-order-design/infra
-terraform plan -out staging.tfplan
-terraform apply staging.tfplan
+terraform plan -out application.tfplan
+terraform show -no-color application.tfplan | grep -E 'image|DB_PASSWORD|TOKEN_PEPPER'
+terraform apply application.tfplan
 ```
+
+5단계에서 만든 `staging.tfplan`은 부트스트랩 시점의 설정을 저장한 파일이므로 여기서
+재사용하지 않습니다. 확인 출력에는 hello 이미지 대신 Artifact Registry의
+`backend:bootstrap` 이미지와 Secret 환경 변수 추가가 보여야 합니다.
 
 애플리케이션 시작 시 Flyway가 PostgreSQL schema와 seed 데이터를 생성합니다. 여러
 인스턴스가 동시에 시작해도 PostgreSQL 잠금으로 같은 migration의 중복 적용을
@@ -430,19 +438,27 @@ unset DB_PASSWORD TOKEN_PEPPER STAFF_PASSCODE_HASH STAFF_TOKEN_SECRET
 export SERVICE_URL="$(terraform -chdir=/Users/samso/Desktop/qr-order-design/infra \
   output -raw cloud_run_url)"
 printf '%s\n' "$SERVICE_URL"
-curl --fail-with-body "$SERVICE_URL/actuator/health/readiness"
+curl --fail-with-body "$SERVICE_URL/actuator/health/readiness" |
+  jq -e '.status == "UP"'
 ```
 
-정상이면 health 응답의 status가 `UP`입니다.
+정상이면 `true`가 출력됩니다. HTML이나 `false`가 나오면 아직 실제 애플리케이션의
+준비 상태를 확인한 것이 아닙니다.
 
 staging에서만 Swagger/OpenAPI가 열립니다.
 
 ```bash
 open "$SERVICE_URL/swagger-ui/index.html"
-curl --fail-with-body "$SERVICE_URL/v3/api-docs/customer" >/dev/null
-curl --fail-with-body "$SERVICE_URL/v3/api-docs/staff" >/dev/null
-curl --fail-with-body "$SERVICE_URL/v3/api-docs/staff-auth" >/dev/null
+for group in all customer staff admin
+do
+  curl -sS --fail-with-body "$SERVICE_URL/v3/api-docs/$group" >/dev/null &&
+    printf '%s: OK\n' "$group"
+done
 ```
+
+Swagger 화면의 `Staff Auth`는 API 태그이며 별도 OpenAPI 그룹이 아닙니다. 로그인 API는
+`staff`와 `all` 문서에 포함됩니다. 현재 등록된 그룹은 `all`, `customer`, `staff`,
+`admin` 네 개이며 `/v3/api-docs/staff-auth` 경로는 사용하지 않습니다.
 
 `environment = "prod"`에서는 보안을 위해 Swagger UI와 `/v3/api-docs/**`가 모두
 비활성화됩니다.
@@ -463,33 +479,225 @@ Flyway 오류, DB 인증 오류 또는 health check 실패가 없어야 합니�
 
 ## 11. 기존 Tables CSV 가져오기
 
-이 작업은 주문, 호출 또는 테이블 세션이 하나라도 생기기 전에 한 번만 실행합니다.
-CSV의 `token_hash`는 기존 `TOKEN_PEPPER`와 짝이 맞아야 기존 QR이 계속 동작합니다.
+이 작업은 기존에 인쇄한 QR을 새 PostgreSQL에서도 그대로 사용하기 위해 Google Sheets의
+`Tables` 데이터만 한 번 가져오는 절차입니다. 과거 주문, 호출, 세션 데이터는 가져오지
+않습니다.
 
-CSV는 다음 열로 시작해야 합니다. 기존 `created_at`, `updated_at` 열이 뒤에 있으면
-무시됩니다.
+> **실행 시점:** 새 DB에 주문, 호출 또는 테이블 세션이 하나라도 생기기 전에
+> 실행해야 합니다. import API는 운영 데이터가 있으면 `IMPORT_NOT_EMPTY` 오류로 전체
+> 작업을 거부합니다.
+
+### 11.1 어떤 CSV를 사용해야 하나
+
+다음 두 파일을 혼동하지 마세요.
+
+- **사용할 파일:** Google Sheets에서 `Tables` 탭 자체를 다운로드한 CSV
+- **사용하면 안 되는 파일:** Apps Script의 `테이블/QR 초기 발급` 창에서 받은 QR URL
+  CSV. 이 파일의 헤더는 `table_id,display_name,token_version,url`이고 `token_hash`가
+  없어 import할 수 없습니다.
+
+import할 CSV의 첫 여섯 열은 반드시 다음 순서여야 합니다.
 
 ```text
 table_id,display_name,token_hash,token_version,active,sort_order
 ```
 
-staging 프런트에서 `/staff/login`으로 로그인한 뒤 브라우저 로컬 스토리지의 Bearer
-token을 복사하거나, 로그인 API 응답의 `data.staffToken`을 사용합니다. 토큰을 터미널에
-입력할 때 화면에 표시하지 않으려면 다음처럼 실행합니다.
+기존 `Tables` 탭에 이어지는 `created_at`, `updated_at` 열은 그대로 두어도 import에서
+무시됩니다. 각 값은 다음 조건을 만족해야 합니다.
+
+| 열 | 예시 | 조건 |
+|---|---|---|
+| `table_id` | `T01` | `T` + 두 자리 이상의 숫자, CSV 안에서 중복 불가 |
+| `display_name` | `테이블 1` | 빈 값 불가, 쉼표나 줄바꿈을 포함하지 않는 이름 사용 |
+| `token_hash` | 64자리 hex | SHA-256 소문자/대문자 hex, CSV와 DB에서 중복 불가 |
+| `token_version` | `1` | 1 이상의 정수 |
+| `active` | `TRUE` 또는 `FALSE` | 대소문자는 상관없음 |
+| `sort_order` | `1` | 0 이상의 정수 |
+
+현재 importer는 쉼표를 열 구분자로 처리하므로 `display_name`에 쉼표나 줄바꿈이 있으면
+안 됩니다. 일반적인 `테이블 1`, `야외 2` 같은 이름은 그대로 사용할 수 있습니다.
+
+### 11.2 Google Sheets에서 파일 다운로드
+
+1. 기존 QR 주문 Google Spreadsheet를 엽니다.
+2. 화면 아래에서 **`Tables` 탭을 클릭해 현재 탭으로 선택**합니다.
+3. 1행이 위의 header 순서인지 확인합니다.
+4. 상단 메뉴에서 **파일 > 다운로드 > 쉼표로 구분된 값(.csv, 현재 시트)**을
+   선택합니다.
+5. 브라우저가 CSV 파일을 다운로드하면 아직 내용을 편집하지 마세요.
+
+CSV 다운로드는 현재 선택한 탭 하나만 대상으로 하므로 2단계가 중요합니다. 전체
+Spreadsheet를 Excel 파일로 받거나 다른 탭을 선택한 상태에서 다운로드하지 마세요.
+
+### 11.3 안전한 로컬 저장 위치 만들기
+
+이 저장소 안의 `.local-data`를 임시 보관 위치로 사용합니다. 이 디렉터리는
+`.gitignore`에 등록되어 Git에 포함되지 않습니다.
+
+```bash
+mkdir -p /Users/samso/Desktop/qr-order-design/.local-data
+open /Users/samso/Desktop/qr-order-design/.local-data
+```
+
+열린 Finder 창으로 다운로드한 파일을 옮기고 파일명을 정확히 `Tables.csv`로
+바꿉니다. 최종 경로는 다음과 같습니다.
+
+```text
+/Users/samso/Desktop/qr-order-design/.local-data/Tables.csv
+```
+
+다른 위치에 저장해도 되지만 이후 명령의 `TABLES_CSV`를 실제 절대 경로로 바꿔야
+합니다. 파일에는 원본 token이 아닌 hash만 있지만 QR 인증 데이터이므로 Git, Slack,
+메일 또는 공개 Drive에 올리지 마세요.
+
+파일 권한을 현재 사용자만 읽고 쓸 수 있게 제한하고 Git 제외 여부를 확인합니다.
+
+```bash
+chmod 600 /Users/samso/Desktop/qr-order-design/.local-data/Tables.csv
+
+cd /Users/samso/Desktop/qr-order-design
+git check-ignore -v .local-data/Tables.csv
+```
+
+마지막 명령에서 `.gitignore` 규칙이 출력되어야 합니다.
+
+### 11.4 CSV를 전송하기 전에 확인
+
+파일 존재 여부, 행 수와 header를 확인합니다. 다음 명령은 token hash 값을 출력하지
+않습니다.
+
+```bash
+export TABLES_CSV="/Users/samso/Desktop/qr-order-design/.local-data/Tables.csv"
+
+test -f "$TABLES_CSV" && printf '파일 확인: OK\n'
+wc -l "$TABLES_CSV"
+head -n 1 "$TABLES_CSV"
+```
+
+첫 줄은 다음과 같이 시작해야 합니다.
+
+```text
+table_id,display_name,token_hash,token_version,active,sort_order
+```
+
+`wc -l` 결과는 header 한 줄과 테이블 데이터 행을 합한 수입니다. 예를 들어 테이블이
+10개면 일반적으로 11줄입니다. 마지막 줄바꿈이 없으면 한 줄 적게 표시될 수 있습니다.
+
+### 11.5 staff token 받기
+
+가장 쉬운 방법은 배포된 staging Swagger를 이용하는 것입니다.
+
+1. `$SERVICE_URL/swagger-ui/index.html`을 엽니다.
+2. `Staff Auth`의 `POST /api/v1/staff/login`을 펼칩니다.
+3. **Try it out**을 누르고 `passcode`에는 운영 passcode, `deviceLabel`에는
+   `마이그레이션`을 입력합니다.
+4. **Execute**를 누릅니다.
+5. HTTP 200 응답의 `data.staffToken` 값만 복사합니다. 앞뒤 큰따옴표는 제외합니다.
+
+터미널에서 token을 화면에 표시하지 않고 입력합니다.
 
 ```bash
 printf 'staff token 입력: '
 read -s STAFF_TOKEN
 printf '\n'
 export STAFF_TOKEN
+```
+
+Swagger 대신 터미널에서 로그인하려면 다음 명령을 사용할 수 있습니다. passcode는
+화면이나 shell history에 남지 않습니다.
+
+```bash
+printf '운영진 passcode 입력: '
+read -s STAFF_PASSCODE
+printf '\n'
+
+export STAFF_TOKEN="$(
+  jq -n \
+    --arg passcode "$STAFF_PASSCODE" \
+    --arg deviceLabel "마이그레이션" \
+    '{passcode: $passcode, deviceLabel: $deviceLabel}' |
+  curl -sS --fail-with-body \
+    -H 'Content-Type: application/json' \
+    --data-binary @- \
+    "$SERVICE_URL/api/v1/staff/login" |
+  jq -er '.data.staffToken'
+)"
+unset STAFF_PASSCODE
+```
+
+token이 준비됐는지 값 자체를 출력하지 않고 확인합니다.
+
+```bash
+test -n "$STAFF_TOKEN" && printf 'staff token 확인: OK\n'
+```
+
+### 11.6 import 실행
+
+`SERVICE_URL`, `STAFF_TOKEN`, `TABLES_CSV` 세 변수가 준비된 상태에서 실행합니다.
+
+```bash
+export SERVICE_URL="$(terraform -chdir=/Users/samso/Desktop/qr-order-design/infra \
+  output -raw cloud_run_url)"
+export TABLES_CSV="/Users/samso/Desktop/qr-order-design/.local-data/Tables.csv"
 
 cd /Users/samso/Desktop/qr-order-design
-./scripts/import-tables.sh "$SERVICE_URL" "$STAFF_TOKEN" /absolute/path/to/Tables.csv
+./scripts/import-tables.sh "$SERVICE_URL" "$STAFF_TOKEN" "$TABLES_CSV"
+```
+
+성공하면 HTTP 200과 함께 다음 형태의 응답이 나옵니다. `importedCount`가 기존 테이블
+개수와 같은지 확인합니다.
+
+```json
+{
+  "success": true,
+  "data": {
+    "importedCount": 10
+  },
+  "error": null,
+  "meta": {}
+}
+```
+
+사용이 끝난 staff token을 현재 shell에서 제거합니다.
+
+```bash
 unset STAFF_TOKEN
 ```
 
-import가 성공하면 운영 관리 화면의 테이블 목록과 기존 인쇄 QR 하나 이상을 반드시
-확인합니다.
+### 11.7 import 후 검증
+
+1. `/staff/settings` 또는 운영 관리 화면에서 모든 테이블의 표시명과 활성 상태를
+   확인합니다.
+2. 기존에 인쇄된 QR 하나를 휴대전화로 스캔합니다.
+3. 테이블명이 올바르게 표시되고 메뉴가 조회되는지 확인합니다.
+4. 서로 다른 테이블 QR도 하나 이상 추가로 검사합니다.
+5. 검증 전에는 token 회전을 실행하지 마세요. 회전하면 해당 테이블의 기존 QR이 즉시
+   무효화됩니다.
+
+기존 QR이 `TABLE_TOKEN_INVALID`로 실패하면 다음 두 값의 조합이 기존 시스템과 맞지
+않는 것입니다.
+
+- Secret Manager에 넣은 `TOKEN_PEPPER`
+- CSV에서 가져온 해당 테이블의 `token_hash`
+
+원본 token은 인쇄된 QR URL에만 있고 hash에서 복원할 수 없습니다. 기존
+`TOKEN_PEPPER`를 다시 확인한 뒤, 운영 데이터가 생기기 전에 import를 바로잡아야
+합니다.
+
+### 11.8 자주 발생하는 import 오류
+
+| 오류 | 의미와 조치 |
+|---|---|
+| `Tables CSV not found` | `TABLES_CSV` 절대 경로와 파일명을 확인 |
+| HTTP 401 / `STAFF_TOKEN_*` | token을 다시 발급하고 앞뒤 큰따옴표 없이 입력 |
+| `IMPORT_NOT_EMPTY` | 이미 주문·호출·세션이 있음. 임의 삭제하지 말고 DB 초기화 여부를 먼저 결정 |
+| `Tables CSV 열을 확인해 주세요.` | QR URL CSV를 잘못 사용했거나 첫 여섯 열 순서가 다름 |
+| `ID 또는 token hash를 확인` | table ID 형식, 빈 표시명, 64자리 hash 또는 중복 확인 |
+| `숫자 열을 확인` | `token_version`과 `sort_order`가 정수인지 확인 |
+| `version, active, sort order를 확인` | version ≥ 1, sort order ≥ 0, active가 true/false인지 확인 |
+
+마이그레이션과 기존 QR 검증이 모두 끝나면 `.local-data/Tables.csv`는 암호화된 운영
+백업 위치로 옮기거나 로컬에서 안전하게 삭제합니다.
 
 ## 12. Netlify 프런트엔드 연결
 
@@ -594,10 +802,37 @@ gcloud auth application-default set-quota-project "$GCP_PROJECT_ID"
 첫 `terraform apply`가 필요한 API를 활성화합니다. 활성화 직후에는 권한 전파에 잠시
 시간이 걸릴 수 있으므로 같은 plan을 확인한 뒤 다시 적용합니다.
 
+### Cloud Build의 Cloud Storage `storage.objects.get` 오류
+
+`gcloud builds submit`은 소스를 `<project-id>_cloudbuild` 버킷에 올린 뒤 빌드 서비스
+계정으로 다시 읽습니다. 새 프로젝트의 Compute Engine 기본 서비스 계정에는 이 권한이
+자동으로 없을 수 있습니다. 7단계에서 조회한 실제 `BUILD_SA`에
+`roles/cloudbuild.builds.builder`를 부여하고 다시 실행합니다.
+
+```bash
+gcloud projects add-iam-policy-binding "$GCP_PROJECT_ID" \
+  --member="serviceAccount:${BUILD_SA}" \
+  --role="roles/cloudbuild.builds.builder"
+```
+
+IAM 정책 변경은 보통 약 2분, 경우에 따라 7분 이상 걸릴 수 있습니다. 역할을 반복해서
+추가하지 말고 5~10분 후 같은 빌드 명령을 다시 실행하세요. 10분 이상 지난 뒤에도 같은
+오류가 계속되면 Cloud Build 소스 버킷에 읽기 권한을 직접 부여합니다.
+
+```bash
+gcloud storage buckets add-iam-policy-binding \
+  "gs://${GCP_PROJECT_ID}_cloudbuild" \
+  --member="serviceAccount:${BUILD_SA}" \
+  --role="roles/storage.objectViewer"
+```
+
+직접 부여한 버킷 권한도 전파에 수 분이 걸릴 수 있습니다.
+
 ### Cloud Build의 Artifact Registry `Permission denied`
 
-7단계에서 조회한 실제 `BUILD_SA`에 `roles/artifactregistry.writer`가 부여되었는지
-확인합니다.
+실제 `BUILD_SA`에 `roles/cloudbuild.builds.builder`가 부여되었는지 확인합니다. 이
+저장소의 첫 빌드와 일반 배포에 필요한 Artifact Registry 업로드 권한도 이 역할에
+포함됩니다.
 
 ### Cloud Build의 `iam.serviceAccounts.actAs` 오류
 
@@ -617,6 +852,13 @@ gcloud run services logs read qr-order-staging \
 - secret version 오류: 네 secret 모두 활성 버전이 있는지 확인
 - Flyway 오류: migration 오류 직전의 PostgreSQL 메시지 확인
 - health check 오류: 앱이 8080 포트에서 시작했는지 확인
+
+### health 경로에서 `Congratulations | Cloud Run` HTML이 나옴
+
+Spring Boot가 아니라 부트스트랩용 Google hello 이미지가 아직 서비스 중인 상태입니다.
+Artifact Registry의 실제 이미지가 생성되었는지 확인하고 `terraform.tfvars`에서
+`container_image`를 해당 이미지로, `bootstrap_mode`를 `false`로 바꾼 뒤 9단계의
+`terraform plan`과 `terraform apply`를 실행합니다.
 
 ### 브라우저에서 CORS 오류
 
