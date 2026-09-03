@@ -99,7 +99,6 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onClose={() => navigate('/staff/tables')}
                 onAcknowledgeCall={staff.acknowledge}
                 onStatusChange={detail.changeStatus}
-                onAddOrder={() => navigate(`/staff/tables/${tableId}/order`)}
                 onServiceOrder={() =>
                   navigate(`/staff/tables/${tableId}/service`)
                 }
