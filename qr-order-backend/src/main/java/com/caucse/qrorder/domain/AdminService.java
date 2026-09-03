@@ -220,6 +220,46 @@ public class AdminService {
         return Map.of("importedCount", count);
     }
 
+    @Transactional
+    public Map<String, Object> importStaffMembers(String csv, StaffPrincipal staff) {
+        int count = 0;
+        Set<String> seenIds = new java.util.HashSet<>();
+        for (String rawLine : csv.split("\\R")) {
+            String line = rawLine.strip().replaceFirst("^\\uFEFF", "");
+            if (line.isEmpty() || line.toLowerCase().startsWith("staff_id,")) continue;
+            String[] fields = line.split(",", -1);
+            if (fields.length != 5) throw ApiException.invalid("스태프 CSV 열을 확인해 주세요.");
+
+            String id = fields[0].trim();
+            String name = fields[1].trim();
+            String affiliation = fields[2].trim();
+            String activeText = fields[3].trim().toLowerCase();
+            int sortOrder;
+            try {
+                sortOrder = Integer.parseInt(fields[4].trim());
+            } catch (NumberFormatException error) {
+                throw ApiException.invalid("스태프 CSV의 sort_order를 확인해 주세요.");
+            }
+            if (!id.matches("^S-[0-9]{3,}$") || !seenIds.add(id) || name.isBlank()
+                    || name.length() > 100 || affiliation.length() > 100
+                    || !Set.of("true", "false").contains(activeText) || sortOrder < 0) {
+                throw ApiException.invalid("스태프 CSV의 ID, 이름, 소속 또는 정렬 값을 확인해 주세요.");
+            }
+            jdbc.update("""
+                    INSERT INTO staff_members(staff_id,name,affiliation,active,sort_order)
+                    VALUES(?,?,?,?,?)
+                    ON CONFLICT(staff_id) DO UPDATE SET name=excluded.name,
+                      affiliation=excluded.affiliation,active=excluded.active,
+                      sort_order=excluded.sort_order,updated_at=now()
+                    """, id, name, affiliation.isEmpty() ? null : affiliation,
+                    Boolean.parseBoolean(activeText), sortOrder);
+            count++;
+        }
+        if (count == 0) throw ApiException.invalid("가져올 스태프 명단이 없습니다.");
+        changed(staff, "STAFF_MEMBERS_IMPORTED", "STAFF_MEMBER", "bulk", "staff.members.updated");
+        return Map.of("importedCount", count);
+    }
+
     private Map<String, Object> tokenResponse(String tableId, String token) {
         String url = properties.frontendBaseUrl().replaceAll("/$", "") + "/t/" + tableId + "?token=" + token;
         return ApiEnvelope.map("tableId", tableId, "tableToken", token, "url", url, "qrSvg", qrSvg(url));

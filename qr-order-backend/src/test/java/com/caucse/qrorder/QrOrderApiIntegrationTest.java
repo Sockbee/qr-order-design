@@ -78,10 +78,16 @@ class QrOrderApiIntegrationTest {
         jdbc.update("DELETE FROM order_items");
         jdbc.update("DELETE FROM orders");
         jdbc.update("DELETE FROM table_sessions");
+        jdbc.update("DELETE FROM staff_members");
         jdbc.update("DELETE FROM tables");
         jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES('T01','테이블 1',?,1)",
                 StaffTokenService.sha256Hex(PEPPER + ":" + TABLE_TOKEN));
+        jdbc.update("""
+                INSERT INTO staff_members(staff_id,name,affiliation,active,sort_order)
+                VALUES ('S-001','김하늘','기획국',true,10),('S-002','이도윤','홍보국',false,20)
+                """);
         jdbc.update("UPDATE settings SET value='1042' WHERE key='NEXT_DISPLAY_NUMBER'");
+        jdbc.update("UPDATE settings SET value='20' WHERE key='STAFF_DISCOUNT_RATE'");
     }
 
     @Test
@@ -112,7 +118,7 @@ class QrOrderApiIntegrationTest {
                         path.getKey() + " request schema must declare named properties");
             }
         }
-        assertEquals(31, documentedRequestBodies);
+        assertEquals(35, documentedRequestBodies);
 
         mvc.perform(get("/v3/api-docs/customer"))
                 .andExpect(status().isOk())
@@ -288,6 +294,173 @@ class QrOrderApiIntegrationTest {
         staffOperations.confirmPayment("T03", 2_400, staff);
         assertEquals("CLOSED", jdbc.queryForObject(
                 "SELECT status FROM table_sessions WHERE origin_table_id='T01' ORDER BY opened_at DESC LIMIT 1", String.class));
+    }
+
+    @Test
+    void serviceOrdersStayFreeForGuestsAndCanBeSettledExactlyOnce() throws Exception {
+        String token = staffToken();
+
+        mvc.perform(post("/api/v1/staff/members/list").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.members.length()", is(2)))
+                .andExpect(jsonPath("$.data.members[0].name", is("김하늘")))
+                .andExpect(jsonPath("$.data.members[1].active", is(false)));
+
+        String inactiveRequest = """
+                {"tableId":"T01","chargedStaffId":"S-002","serviceMessage":null,
+                 "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
+                """;
+        mvc.perform(post("/api/v1/staff/orders/service").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content(inactiveRequest))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code", is("STAFF_MEMBER_INACTIVE")));
+
+        String serviceRequest = """
+                {"tableId":"T01","chargedStaffId":"S-001",
+                 "serviceMessage":"기다려 주셔서 감사합니다!",
+                 "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
+                """;
+        String response = mvc.perform(post("/api/v1/staff/orders/service")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content(serviceRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.orderKind", is("SERVICE")))
+                .andExpect(jsonPath("$.data.paymentStatus", is("WAIVED")))
+                .andExpect(jsonPath("$.data.totalAmount", is(0)))
+                .andExpect(jsonPath("$.data.serviceGrossAmount", is(1500)))
+                .andExpect(jsonPath("$.data.staffDiscountRate", is(20)))
+                .andExpect(jsonPath("$.data.staffChargeAmount", is(1200)))
+                .andExpect(jsonPath("$.data.chargedStaff.name", is("김하늘")))
+                .andReturn().getResponse().getContentAsString();
+        String serviceOrderId = mapper.readTree(response).get("data").get("orderId").asString();
+
+        mvc.perform(post("/api/v1/customer/orders/list").contentType("application/json").content("""
+                        {"tableId":"T01","tableToken":"%s"}
+                        """.formatted(TABLE_TOKEN)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.sessionTotalAmount", is(0)))
+                .andExpect(jsonPath("$.data.orders[0].orderKind", is("SERVICE")))
+                .andExpect(jsonPath("$.data.orders[0].serviceMessage", is("기다려 주셔서 감사합니다!")))
+                .andExpect(jsonPath("$.data.orders[0].chargedStaffName", is("김하늘")))
+                .andExpect(jsonPath("$.data.orders[0].chargedStaffId").doesNotExist());
+
+        mvc.perform(post("/api/v1/staff/tables/bill").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"tableId\":\"T01\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.subtotalAmount", is(0)))
+                .andExpect(jsonPath("$.data.serviceOrderCount", is(1)))
+                .andExpect(jsonPath("$.data.serviceGrossAmount", is(1500)))
+                .andExpect(jsonPath("$.data.serviceLines[0].chargedStaffName", is("김하늘")));
+
+        mvc.perform(post("/api/v1/staff/orders/queue").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.kitchen[0].orderKind", is("SERVICE")))
+                .andExpect(jsonPath("$.data.kitchen[0].serviceMessage").doesNotExist())
+                .andExpect(jsonPath("$.data.kitchen[0].chargedStaffName").doesNotExist())
+                .andExpect(jsonPath("$.data.kitchen[0].staffChargeAmount").doesNotExist());
+
+        UUID itemId = jdbc.queryForObject(
+                "SELECT order_item_id FROM order_items WHERE order_id=?::uuid", UUID.class, serviceOrderId);
+        ApiException editError = assertThrows(ApiException.class, () -> staffOperations.updateOrder(
+                Map.of("operation", "quantity", "itemId", itemId.toString(), "quantity", 2),
+                new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1)));
+        assertEquals("SERVICE_ORDER_NOT_EDITABLE", editError.code());
+
+        mvc.perform(post("/api/v1/staff/settlements/list").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"includeSettled\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalChargeAmount", is(1200)))
+                .andExpect(jsonPath("$.data.members[0].chargeAmount", is(1200)))
+                .andExpect(jsonPath("$.data.members[0].orders[0].grossAmount", is(1500)));
+
+        mvc.perform(post("/api/v1/staff/settlements/confirm").header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("{\"staffId\":\"S-001\",\"expectedChargeAmount\":1199}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code", is("SETTLEMENT_AMOUNT_CHANGED")))
+                .andExpect(jsonPath("$.error.retryable", is(true)));
+        mvc.perform(post("/api/v1/staff/settlements/confirm").header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("{\"staffId\":\"S-001\",\"expectedChargeAmount\":1200}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.settlementStatus", is("SETTLED")))
+                .andExpect(jsonPath("$.data.settledAmount", is(1200)));
+        mvc.perform(post("/api/v1/staff/settlements/confirm").header("Authorization", "Bearer " + token)
+                        .contentType("application/json")
+                        .content("{\"staffId\":\"S-001\",\"expectedChargeAmount\":1200}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code", is("SETTLEMENT_ALREADY_SETTLED")));
+
+        mvc.perform(post("/api/v1/staff/orders/cancel").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"tableId\":\"T01\"}"))
+                .andExpect(status().isOk());
+        assertEquals(1200, jdbc.queryForObject(
+                "SELECT staff_charge_amount FROM orders WHERE order_id=?::uuid", Integer.class, serviceOrderId));
+        mvc.perform(post("/api/v1/staff/settlements/list").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"includeSettled\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.members[0].chargeAmount", is(0)))
+                .andExpect(jsonPath("$.data.members[0].settledAmount", is(1200)))
+                .andExpect(jsonPath("$.data.members[0].orders.length()", is(0)));
+
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cider"), false);
+        mvc.perform(post("/api/v1/staff/tables/bill").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{\"tableId\":\"T01\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.subtotalAmount", is(1500)))
+                .andExpect(jsonPath("$.data.serviceGrossAmount", is(0)));
+        staffOperations.confirmPayment("T01", 1500,
+                new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1));
+        assertEquals("WAIVED", jdbc.queryForObject(
+                "SELECT payment_status FROM orders WHERE order_id=?::uuid", String.class, serviceOrderId));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM audit_logs WHERE action='SERVICE_ORDER_CREATED'", Integer.class));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM audit_logs WHERE action='STAFF_SETTLEMENT_CONFIRMED'", Integer.class));
+    }
+
+    @Test
+    void importsPrivateStaffRosterWithoutResettingSettlementState() throws Exception {
+        jdbc.update("""
+                UPDATE staff_members
+                SET settlement_status='SETTLED',settled_amount=1200,settled_at=now()
+                WHERE staff_id='S-001'
+                """);
+        String csv = """
+                staff_id,name,affiliation,active,sort_order
+                S-001,변경된 이름,회장단,false,20
+                S-003,예시 부원,기획부,true,30
+                """;
+
+        mvc.perform(post("/api/v1/admin/staff-members/import")
+                        .header("Authorization", "Bearer " + staffToken())
+                        .contentType("application/json")
+                        .content(mapper.writeValueAsString(Map.of("csv", csv))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.importedCount", is(2)));
+
+        Map<String, Object> retained = jdbc.queryForMap("""
+                SELECT name,affiliation,active,sort_order,settlement_status,settled_amount
+                FROM staff_members WHERE staff_id='S-001'
+                """);
+        assertEquals("변경된 이름", retained.get("name"));
+        assertEquals("회장단", retained.get("affiliation"));
+        assertEquals(false, retained.get("active"));
+        assertEquals(20, retained.get("sort_order"));
+        assertEquals("SETTLED", retained.get("settlement_status"));
+        assertEquals(1200, retained.get("settled_amount"));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM audit_logs WHERE action='STAFF_MEMBERS_IMPORTED'", Integer.class));
+    }
+
+    private String staffToken() throws Exception {
+        String loginResponse = mvc.perform(post("/api/v1/staff/login").contentType("application/json")
+                        .content("{\"passcode\":\"" + PASSCODE + "\",\"deviceLabel\":\"카운터\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        return mapper.readTree(loginResponse).get("data").get("staffToken").asString();
     }
 
     private static Map<String, Object> customerOrder(String tableId, String token, String menuId) {

@@ -96,27 +96,96 @@ public class CustomerOrderService {
                 """, orderId, displayNumber, displayCode, clientRequestId, key, fingerprint,
                 tableId, sessionId, total, note);
 
-        for (ValidatedLine line : lines) {
-            UUID itemId = UUID.randomUUID();
-            jdbc.update("""
-                    INSERT INTO order_items(order_item_id, order_id, line_no, menu_id, menu_name_snapshot,
-                      base_price_snapshot, unit_price_snapshot, quantity, line_total)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, itemId, orderId, line.lineNo(), line.menuId(), line.name(), line.basePrice(),
-                    line.unitPrice(), line.quantity(), line.lineTotal());
-            for (SelectedOption option : line.options()) {
-                jdbc.update("""
-                        INSERT INTO order_item_options(order_item_option_id, order_item_id, order_id,
-                          option_group_id, option_group_name_snapshot, option_id, option_name_snapshot,
-                          price_delta_snapshot, sort_order)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                        """, UUID.randomUUID(), itemId, orderId, option.groupId(), option.groupName(),
-                        option.optionId(), option.optionName(), option.priceDelta(), option.sortOrder());
-            }
-        }
+        insertLines(orderId, lines);
         audit(staff ? "STAFF" : "CLIENT", staff ? "STAFF" : tableId, "ORDER_CREATED", "ORDER", orderId.toString(), null, displayCode);
         events.publish("order.created", orderId.toString(), tableId, Map.of("displayCode", displayCode));
         return hydrateCreated(orderId, false);
+    }
+
+    @Transactional
+    public Map<String, Object> createService(Map<String, Object> request, String chargedStaffId,
+                                             String chargedStaffName, int discountRate, String actorId) {
+        rejectUnexpected(request,
+                Set.of("apiVersion", "tableId", "chargedStaffId", "serviceMessage", "items"), "request");
+        String tableId = string(request, "tableId");
+        TableCatalogService.TableRow table = jdbc.query("""
+                SELECT table_id,display_name,token_hash,active,sort_order
+                FROM tables WHERE table_id=? AND active=true
+                """, rs -> rs.next() ? new TableCatalogService.TableRow(rs.getString(1), rs.getString(2),
+                rs.getString(3), rs.getBoolean(4), rs.getInt(5)) : null, tableId);
+        if (table == null) throw ApiException.notFound("TABLE_NOT_FOUND", "테이블을 찾을 수 없습니다.");
+
+        List<Map<String, Object>> inputItems = mapList(request.get("items"));
+        inputItems.forEach(item -> rejectUnexpected(
+                item, Set.of("menuId", "quantity", "selectedOptionIds"), "items"));
+        int maxLines = Integer.parseInt(setting("MAX_ORDER_LINES"));
+        if (inputItems.isEmpty() || inputItems.size() > maxLines) {
+            throw ApiException.invalid("주문 항목 수를 확인해 주세요.");
+        }
+        String serviceMessage = nullableString(request.get("serviceMessage"));
+        if (serviceMessage != null && serviceMessage.length() > 100) {
+            throw ApiException.invalid("손님에게 보낼 메시지는 100자 이하여야 합니다.");
+        }
+        if (discountRate < 0 || discountRate > 100) {
+            throw new IllegalStateException("STAFF_DISCOUNT_RATE must be between 0 and 100");
+        }
+
+        jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
+        UUID sessionId = openOrCreateSession(tableId);
+        String sessionPaymentStatus = jdbc.queryForObject(
+                "SELECT payment_status FROM table_sessions WHERE session_id=?", String.class, sessionId);
+        if (!"UNPAID".equals(sessionPaymentStatus)) {
+            throw ApiException.conflict("SESSION_ALREADY_PAID", "이미 결제 완료된 테이블입니다.");
+        }
+
+        List<ValidatedLine> lines = new ArrayList<>();
+        int grossAmount = 0;
+        for (int index = 0; index < inputItems.size(); index++) {
+            ValidatedLine line = validateLine(inputItems.get(index), index + 1);
+            lines.add(line);
+            grossAmount = Math.addExact(grossAmount, line.lineTotal());
+        }
+        int discountAmount = (int) (grossAmount * (long) discountRate / 100);
+        int chargeAmount = grossAmount - discountAmount;
+
+        long displayNumber = nextDisplayNumber();
+        String displayCode = setting("ORDER_PREFIX") + displayNumber;
+        UUID orderId = UUID.randomUUID();
+        UUID internalRequestId = UUID.randomUUID();
+        String key = "service:" + tableId + ":" + internalRequestId;
+        String fingerprint = fingerprint(tableId, inputItems, serviceMessage);
+        jdbc.update("""
+                INSERT INTO orders(order_id, display_number, display_code, client_request_id,
+                  idempotency_key, request_fingerprint, table_id, session_id, status, public_status,
+                  payment_status, total_amount, note, note_audience, order_kind, service_message,
+                  charged_staff_id, staff_charge_amount)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', 'accepted', 'WAIVED', 0, NULL, 'GENERAL',
+                  'SERVICE', ?, ?, ?)
+                """, orderId, displayNumber, displayCode, internalRequestId, key, fingerprint,
+                tableId, sessionId, serviceMessage, chargedStaffId, chargeAmount);
+
+        insertLines(orderId, lines);
+        String detailJson;
+        try {
+            detailJson = mapper.writeValueAsString(ApiEnvelope.map(
+                    "chargedStaffId", chargedStaffId, "gross", grossAmount, "charge", chargeAmount));
+        } catch (Exception error) {
+            throw new IllegalStateException(error);
+        }
+        jdbc.update("""
+                INSERT INTO audit_logs(log_id,actor_type,actor_id,action,entity_type,entity_id,detail_json)
+                VALUES(?,'STAFF',?,'SERVICE_ORDER_CREATED','ORDER',?,CAST(? AS jsonb))
+                """, UUID.randomUUID(), actorId, orderId.toString(), detailJson);
+        events.publish("order.created", orderId.toString(), tableId,
+                Map.of("displayCode", displayCode, "orderKind", "SERVICE"));
+
+        Map<String, Object> response = new java.util.LinkedHashMap<>(hydrateCreated(orderId, false));
+        response.put("serviceGrossAmount", grossAmount);
+        response.put("staffDiscountRate", discountRate);
+        response.put("staffChargeAmount", chargeAmount);
+        response.put("chargedStaff", ApiEnvelope.map("staffId", chargedStaffId, "name", chargedStaffName));
+        response.put("serviceMessage", serviceMessage);
+        return response;
     }
 
     public Map<String, Object> get(Map<String, Object> request) {
@@ -138,16 +207,24 @@ public class CustomerOrderService {
         String tableId = string(request, "tableId");
         TableCatalogService.TableRow table = catalog.requireTable(tableId, string(request, "tableToken"), false);
         List<Map<String, Object>> orders = jdbc.query("""
-                SELECT order_id, display_code, status, public_status, total_amount, created_at
-                FROM orders WHERE table_id=? ORDER BY created_at DESC
+                SELECT o.order_id, o.display_code, o.status, o.public_status, o.total_amount,
+                       o.order_kind, o.service_message, sm.name AS charged_staff_name, o.created_at
+                FROM orders o
+                LEFT JOIN staff_members sm ON sm.staff_id=o.charged_staff_id
+                WHERE o.table_id=? ORDER BY o.created_at DESC
                 """, (rs, index) -> {
             UUID orderId = rs.getObject("order_id", UUID.class);
-            return ApiEnvelope.map(
+            Map<String, Object> row = ApiEnvelope.map(
                     "orderId", orderId.toString(), "displayCode", rs.getString("display_code"),
                     "status", rs.getString("status"), "publicStatus", rs.getString("public_status"),
-                    "totalAmount", rs.getInt("total_amount"),
+                    "totalAmount", rs.getInt("total_amount"), "orderKind", rs.getString("order_kind"),
                     "createdAt", rs.getObject("created_at", OffsetDateTime.class).toInstant().toString(),
                     "items", listItems(orderId));
+            if ("SERVICE".equals(rs.getString("order_kind"))) {
+                row.put("serviceMessage", rs.getString("service_message"));
+                row.put("chargedStaffName", rs.getString("charged_staff_name"));
+            }
+            return row;
         }, tableId);
         String latest = orders.stream().filter(row -> !"cancelled".equals(row.get("publicStatus")))
                 .map(row -> String.valueOf(row.get("publicStatus"))).findFirst().orElse(null);
@@ -249,6 +326,27 @@ public class CustomerOrderService {
         return next;
     }
 
+    private void insertLines(UUID orderId, List<ValidatedLine> lines) {
+        for (ValidatedLine line : lines) {
+            UUID itemId = UUID.randomUUID();
+            jdbc.update("""
+                    INSERT INTO order_items(order_item_id, order_id, line_no, menu_id, menu_name_snapshot,
+                      base_price_snapshot, unit_price_snapshot, quantity, line_total)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, itemId, orderId, line.lineNo(), line.menuId(), line.name(), line.basePrice(),
+                    line.unitPrice(), line.quantity(), line.lineTotal());
+            for (SelectedOption option : line.options()) {
+                jdbc.update("""
+                        INSERT INTO order_item_options(order_item_option_id, order_item_id, order_id,
+                          option_group_id, option_group_name_snapshot, option_id, option_name_snapshot,
+                          price_delta_snapshot, sort_order)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """, UUID.randomUUID(), itemId, orderId, option.groupId(), option.groupName(),
+                        option.optionId(), option.optionName(), option.priceDelta(), option.sortOrder());
+            }
+        }
+    }
+
     private ValidatedLine validateLine(Map<String, Object> input, int lineNo) {
         String menuId = string(input, "menuId");
         int quantity = integer(input, "quantity");
@@ -304,6 +402,7 @@ public class CustomerOrderService {
                     "table", ApiEnvelope.map("tableId", rs.getString("table_id"), "displayName", rs.getString("display_name")),
                     "status", rs.getString("status"), "publicStatus", rs.getString("public_status"),
                     "paymentStatus", rs.getString("payment_status"), "totalAmount", rs.getInt("total_amount"),
+                    "orderKind", rs.getString("order_kind"),
                     "createdAt", rs.getObject("created_at", OffsetDateTime.class).toInstant().toString(),
                     "idempotentReplay", replay, "items", createdItems(orderId));
         }, orderId);
