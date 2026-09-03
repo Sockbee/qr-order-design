@@ -19,6 +19,7 @@ export interface OrderSession {
   orders: PlacedOrder[]
   addToCart: (line: CartLine) => void
   changeQuantity: (index: number, next: number) => void
+  removeLine: (index: number) => void
   /**
    * Commits a server-created order, or creates the mock order when the API is
    * intentionally not configured.
@@ -52,6 +53,10 @@ export function useOrderSession(
     )
   }
 
+  const removeLine = (index: number) => {
+    setCart((current) => current.filter((_, lineIndex) => lineIndex !== index))
+  }
+
   const placeOrder = (remoteOrder?: PlacedOrder): PlacedOrder => {
     const placed: PlacedOrder = remoteOrder ?? {
       number: `A-${FIRST_ORDER_NUMBER + orders.length}`,
@@ -69,5 +74,5 @@ export function useOrderSession(
     return placed
   }
 
-  return { cart, orders, addToCart, changeQuantity, placeOrder }
+  return { cart, orders, addToCart, changeQuantity, removeLine, placeOrder }
 }

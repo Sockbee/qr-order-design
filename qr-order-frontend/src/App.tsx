@@ -196,6 +196,7 @@ function CartRoute({
       onBack={() => navigate('/menu')}
       onAddMore={() => navigate('/menu')}
       onQuantityChange={session.changeQuantity}
+      onRemoveLine={session.removeLine}
       onOrder={() => navigate('/cart/confirm')}
     />
   )
