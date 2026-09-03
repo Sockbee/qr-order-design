@@ -1,6 +1,6 @@
 import { usePersistentState } from './usePersistentState'
 import { initialCart } from '../data/menu'
-import { calculateCartTotal } from '../utils/cart'
+import { calculateCartTotal, isSameCartLine } from '../utils/cart'
 import { sessionScopedKey } from '../utils/storage'
 import type { CartLine } from '../types/menu'
 import type { PlacedOrder } from '../types/order'
@@ -42,7 +42,15 @@ export function useOrderSession(
   )
 
   const addToCart = (line: CartLine) => {
-    setCart((current) => [...current, line])
+    setCart((current) => {
+      const matchIndex = current.findIndex((existing) => isSameCartLine(existing, line))
+      if (matchIndex === -1) return [...current, line]
+      return current.map((existing, index) =>
+        index === matchIndex
+          ? { ...existing, quantity: existing.quantity + line.quantity }
+          : existing,
+      )
+    })
   }
 
   const changeQuantity = (index: number, next: number) => {
