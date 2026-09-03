@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AppBar } from '../components/AppBar'
 import { BottomOrderBar } from '../components/BottomOrderBar'
-import { CategoryTabs } from '../components/CategoryTabs'
+import { CategoryTabs } from '../components/customer/CategoryTabs'
 import { MenuItem } from '../components/MenuItem'
 import { Button } from '../components/Button'
 import { calculateCartTotal } from '../utils/cart'
@@ -11,7 +11,6 @@ import type {
   MenuItemDetail,
   MenuItemSummary,
 } from '../types/menu'
-import './MenuPage.css'
 
 const CONTENT_PANEL_ID = 'menu-category-panel'
 
@@ -60,7 +59,7 @@ export function MenuPage({
   const cartTotal = calculateCartTotal(cart)
 
   return (
-    <div className="menu-page">
+    <div className="flex flex-col min-h-dvh bg-canvas">
       {/*
         * The cart chip used to live here and duplicated the sticky bar's count
         * and total. That slot now carries the two actions that had no entry
@@ -84,7 +83,7 @@ export function MenuPage({
       )}
 
       <main
-        className="menu-page__content"
+        className="flex-1 pt-2 px-4 pb-0"
         id={CONTENT_PANEL_ID}
         role="tabpanel"
         aria-labelledby={selectedCategory
@@ -92,13 +91,13 @@ export function MenuPage({
           : undefined}
       >
         {loading ? (
-          <div className="menu-page__skeleton-list" aria-busy="true">
+          <div className="flex flex-col" aria-busy="true">
             {[0, 1, 2].map((row) => (
-              <div className="menu-page__skeleton-row" key={row} />
+              <div className="h-28 bg-weak border-b border-border-default" key={row} />
             ))}
           </div>
         ) : errorMessage ? (
-          <div className="menu-page__error">
+          <div className="flex flex-col items-start gap-4 py-8 px-0 text-sm leading-[21px] font-normal text-body">
             <p>{errorMessage}</p>
             {retryable && onRetry && (
               <Button
@@ -111,19 +110,25 @@ export function MenuPage({
           </div>
         ) : selectedCategory ? (
           <>
-            <h2 className="menu-page__section-title">{selectedCategory.heading}</h2>
+            <h2 className="font-display font-normal text-[22px] leading-[33px] text-strong mb-2">
+              {selectedCategory.heading}
+            </h2>
             {visibleItems.length > 0 ? (
-              <div className="menu-page__list">
+              <div className="flex flex-col">
                 {visibleItems.map((item) => (
                   <MenuItem key={item.id} item={item} onSelect={onSelectItem} />
                 ))}
               </div>
             ) : (
-              <p className="menu-page__empty">준비 중인 메뉴입니다.</p>
+              <p className="py-8 px-0 text-sm leading-[21px] font-normal text-body text-center">
+                준비 중인 메뉴입니다.
+              </p>
             )}
           </>
         ) : (
-          <p className="menu-page__empty">등록된 메뉴가 없습니다.</p>
+          <p className="py-8 px-0 text-sm leading-[21px] font-normal text-body text-center">
+            등록된 메뉴가 없습니다.
+          </p>
         )}
       </main>
 

@@ -1,7 +1,6 @@
 import radioSelected from '../assets/radio-selected.svg'
 import radioUnselected from '../assets/radio-unselected.svg'
 import { formatPriceDelta } from '../utils/price'
-import './OptionSelector.css'
 
 interface OptionSelectorProps {
   type: 'radio' | 'check'
@@ -23,36 +22,50 @@ export function OptionSelector({
   name,
   onSelect,
 }: OptionSelectorProps) {
-  const classes = [
-    'option-selector',
-    selected && 'option-selector--selected',
-    disabled && 'option-selector--disabled',
-  ]
-    .filter(Boolean)
-    .join(' ')
+  const textColor = disabled ? 'text-muted' : selected ? 'text-link' : 'text-strong'
 
   return (
-    <label className={classes}>
+    <label
+      className={`flex items-center gap-3 w-full pt-3.5 px-4 pb-3.5 rounded-row cursor-pointer outline outline-1 outline-offset-[-1px] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary has-[:focus-visible]:outline-offset-2 ${
+        disabled
+          ? 'bg-surface outline-border-default cursor-default'
+          : selected
+            ? 'bg-weak outline-border-selected'
+            : 'bg-canvas outline-border-default active:bg-surface'
+      }`}
+    >
       <input
-        className="option-selector__input"
+        className="sr-only"
         type={type === 'radio' ? 'radio' : 'checkbox'}
         name={name}
         checked={selected}
         disabled={disabled}
         onChange={onSelect}
       />
-      <span className="option-selector__control" aria-hidden="true">
+      <span className="relative flex-none w-6 h-6" aria-hidden="true">
         {type === 'radio' ? (
-          <img src={selected ? radioSelected : radioUnselected} alt="" />
+          <img
+            className="w-full h-full"
+            src={selected ? radioSelected : radioUnselected}
+            alt=""
+          />
         ) : (
-          <span className="option-selector__box">{selected && '✓'}</span>
+          <span
+            className={`absolute top-px left-px flex items-center justify-center w-[22px] h-[22px] border-[1.5px] rounded-[6px] text-sm leading-[21px] font-bold ${
+              selected
+                ? 'border-primary bg-primary text-on-primary'
+                : 'border-border-default'
+            }`}
+          >
+            {selected && '✓'}
+          </span>
         )}
       </span>
-      <span className="option-selector__label">
+      <span className={`flex-1 min-w-0 text-base leading-6 font-normal ${textColor}`}>
         {label}
         {disabled && ' (품절)'}
       </span>
-      <span className="option-selector__price">
+      <span className={`flex-none text-sm leading-[21px] font-bold whitespace-nowrap ${textColor}`}>
         {formatPriceDelta(priceDelta)}
       </span>
     </label>

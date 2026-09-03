@@ -37,23 +37,34 @@ body {
   max-width: none;
 }
 
-h1,
-h2,
-h3,
-p {
-  margin: 0;
-  font: inherit;
-}
+/*
+ * Layered so the customer app's Tailwind utilities (@layer utilities) can win
+ * over these resets by cascade-layer priority alone, regardless of specificity.
+ * Unlayered rules always beat layered ones, so without this @layer wrapper
+ * Tailwind's per-element text-size/weight/color utility classes on h1-h3/p/button
+ * would silently lose to this reset — which is exactly what was happening.
+ * The staff app (plain CSS, no Tailwind here) is unaffected either way: its
+ * component stylesheets are unlayered too, and already win via specificity.
+ */
+@layer base {
+  h1,
+  h2,
+  h3,
+  p {
+    margin: 0;
+    font: inherit;
+  }
 
-button {
-  font: inherit;
-  color: inherit;
-  margin: 0;
-}
+  button {
+    font: inherit;
+    color: inherit;
+    margin: 0;
+  }
 
-:where(button):focus-visible {
-  outline: 2px solid var(--color-bg-primary);
-  outline-offset: 2px;
+  :where(button):focus-visible {
+    outline: 2px solid var(--color-bg-primary);
+    outline-offset: 2px;
+  }
 }
 
 img {

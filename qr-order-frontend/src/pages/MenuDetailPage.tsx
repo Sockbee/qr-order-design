@@ -2,10 +2,9 @@ import { useMemo, useState } from 'react'
 import { AppBar } from '../components/AppBar'
 import { Button } from '../components/Button'
 import { OptionGroup } from '../components/OptionGroup'
-import { QuantitySelector } from '../components/QuantitySelector'
+import { QuantitySelector } from '../components/customer/QuantitySelector'
 import { formatPrice } from '../utils/price'
 import type { CartLine, MenuItemDetail, MenuOption } from '../types/menu'
-import './MenuDetailPage.css'
 
 const QUANTITY_LABEL_ID = 'menu-detail-quantity'
 
@@ -108,27 +107,29 @@ export function MenuDetailPage({
     .join(' · ')
 
   return (
-    <div className="menu-detail">
+    <div className="flex flex-col min-h-dvh bg-canvas">
       <AppBar
         title={item.name}
         onBack={onBack}
         actions={[{ label: '직원 호출', onClick: onCallStaff }]}
       />
 
-      <div className="menu-detail__hero">
-        {item.imageUrl && <img src={item.imageUrl} alt="" />}
+      <div className="flex-none h-40 bg-surface overflow-hidden">
+        {item.imageUrl && <img className="w-full h-full object-cover" src={item.imageUrl} alt="" />}
       </div>
 
-      <main className="menu-detail__content">
-        <div className="menu-detail__head">
-          <div className="menu-detail__name-row">
-            <h2 className="menu-detail__name">{item.name}</h2>
-            <span className="menu-detail__price">
+      <main className="flex flex-1 flex-col gap-6 pt-4 px-4 pb-0">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2 font-display font-normal text-[22px] leading-[33px] text-strong">
+            <h2 className="flex-1 min-w-0">{item.name}</h2>
+            <span className="flex-none whitespace-nowrap">
               {formatPrice(item.price)}
             </span>
           </div>
-          <p className="menu-detail__description">{item.description}</p>
-          {originLine && <p className="menu-detail__origin">{originLine}</p>}
+          <p className="text-sm leading-[21px] font-normal text-body">{item.description}</p>
+          {originLine && (
+            <p className="text-sm leading-[21px] font-normal text-body">{originLine}</p>
+          )}
         </div>
 
         {groups.map((group) => (
@@ -140,8 +141,11 @@ export function MenuDetailPage({
           />
         ))}
 
-        <div className="menu-detail__quantity-row">
-          <span className="menu-detail__quantity-label" id={QUANTITY_LABEL_ID}>
+        <div className="flex items-center gap-2">
+          <span
+            className="flex-1 min-w-0 font-bold text-sm leading-[21px] text-strong"
+            id={QUANTITY_LABEL_ID}
+          >
             수량
           </span>
           <QuantitySelector
@@ -154,8 +158,8 @@ export function MenuDetailPage({
         </div>
       </main>
 
-      <div className="menu-detail__footer">
-        <div className="menu-detail__footer-row">
+      <div className="sticky bottom-0 z-[2] bg-canvas border-t border-border-default">
+        <div className="flex p-4">
           <Button
             block
             size="xlarge"
@@ -174,7 +178,7 @@ export function MenuDetailPage({
             }
           />
         </div>
-        <div className="menu-detail__safe-area" />
+        <div className="h-[var(--layout-safe-area)] bg-canvas" />
       </div>
     </div>
   )
