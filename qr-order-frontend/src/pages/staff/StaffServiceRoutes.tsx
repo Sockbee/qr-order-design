@@ -26,7 +26,7 @@ export function StaffServiceRoute() {
   const roster = useStaffMembers()
   const [draft, setDraft] = useState<ServiceDraftLine[]>([])
   const [chargedStaffId, setChargedStaffId] = useState<string | null>(null)
-  const [serviceReason, setServiceReason] = useState('')
+  const [serviceMessage, setServiceMessage] = useState('')
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +78,7 @@ export function StaffServiceRoute() {
     void createServiceOrder(
       tableId,
       chargedStaffId,
-      serviceReason.trim() || null,
+      serviceMessage.trim() || null,
       draft.map((line) => ({
         menuId: line.itemId,
         quantity: line.quantity,
@@ -108,13 +108,13 @@ export function StaffServiceRoute() {
         membersLoading={roster.loading}
         draft={draft}
         chargedStaffId={chargedStaffId}
-        serviceReason={serviceReason}
+        serviceMessage={serviceMessage}
         charge={charge}
         submitting={submitting}
         onAdd={add}
         onQuantityChange={changeQuantity}
         onSelectStaff={setChargedStaffId}
-        onReasonChange={setServiceReason}
+        onMessageChange={setServiceMessage}
         onSubmit={() => setConfirming(true)}
         onClose={close}
       />
@@ -134,7 +134,7 @@ export function StaffServiceRoute() {
         <ServiceChargeDialog
           tableId={tableId}
           staffName={selectedMember.name}
-          serviceReason={serviceReason.trim() || null}
+          serviceMessage={serviceMessage.trim() || null}
           charge={charge}
           lineCount={draft.length}
           submitting={submitting}

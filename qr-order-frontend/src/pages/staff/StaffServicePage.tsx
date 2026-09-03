@@ -9,6 +9,7 @@ import { StaffMenuCard } from '../../components/staff/StaffMenuCard'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
 import { staffNavItems } from '../../components/staff/staffNavItems'
 import { formatStaffAmount } from '../../utils/price'
+import { SERVICE_MESSAGE_MAX_LENGTH } from '../../api/staff/service'
 import type { MenuCategory, MenuItemSummary } from '../../types/menu'
 import type { StaffMember, StaffServiceCharge } from '../../types/staff'
 
@@ -27,13 +28,13 @@ interface StaffServicePageProps {
   membersLoading: boolean
   draft: ServiceDraftLine[]
   chargedStaffId: string | null
-  serviceReason: string
+  serviceMessage: string
   charge: StaffServiceCharge
   submitting: boolean
   onAdd: (itemId: string) => void
   onQuantityChange: (itemId: string, quantity: number) => void
   onSelectStaff: (staffId: string) => void
-  onReasonChange: (reason: string) => void
+  onMessageChange: (message: string) => void
   onSubmit: () => void
   onClose: () => void
 }
@@ -44,15 +45,15 @@ const ALL_CATEGORY: MenuCategory = {
   heading: '전체',
 }
 
-/** §4.20 caps the reason at 100 characters. */
-const REASON_MAX_LENGTH = 100
 
 /**
  * A10 — Service Grant. Structurally A03 (92:817): rail, menu column, 420px
  * panel. Three things differ, all of them consequences of who pays.
  *
- * 1. The panel carries a 부담 스태프 picker and a reason field above the
- *    total, because a grant without a named sponsor is not writable (§4.20).
+ * 1. The panel carries a 부담 스태프 picker and a diner-facing message field
+ *    above the total. A grant without a named sponsor is not writable
+ *    (§4.20), and the message is written *to the diner* — it renders on
+ *    their device, so the field says so where it is typed.
  * 2. The total is shown twice — 손님 청구 ₩0 and the staff member's 부담액 —
  *    since the whole point of the screen is that those are different numbers.
  * 3. There is a confirm dialog. A03 has none because its draft stays
@@ -69,13 +70,13 @@ export function StaffServicePage({
   membersLoading,
   draft,
   chargedStaffId,
-  serviceReason,
+  serviceMessage,
   charge,
   submitting,
   onAdd,
   onQuantityChange,
   onSelectStaff,
-  onReasonChange,
+  onMessageChange,
   onSubmit,
   onClose,
 }: StaffServicePageProps) {
@@ -196,18 +197,33 @@ export function StaffServicePage({
         </div>
 
         <footer className="service-order__panel-foot">
-          <label className="service-order__reason-label" htmlFor="service-reason">
-            사유 <span className="service-order__optional">선택</span>
+          <label
+            className="service-order__message-label"
+            htmlFor="service-message"
+          >
+            손님에게 보낼 메시지{' '}
+            <span className="service-order__optional">선택</span>
           </label>
           <input
-            id="service-reason"
+            id="service-message"
             type="text"
-            className="service-order__reason"
-            placeholder="대기 사과, 메뉴 지연 등"
-            maxLength={REASON_MAX_LENGTH}
-            value={serviceReason}
-            onChange={(event) => onReasonChange(event.target.value)}
+            className="service-order__message"
+            placeholder="오래 기다리셨습니다. 맛있게 드세요!"
+            maxLength={SERVICE_MESSAGE_MAX_LENGTH}
+            value={serviceMessage}
+            onChange={(event) => onMessageChange(event.target.value)}
+            aria-describedby="service-message-help"
           />
+          {/*
+            Stated at the field itself, not in a tooltip. The one mistake this
+            screen has to prevent is an operator typing an internal note into a
+            box whose text lands on the diner's phone.
+          */}
+          <p className="service-order__message-help" id="service-message-help">
+            {`${tableId} 손님 주문 내역에 그대로 표시됩니다`}
+            {serviceMessage.length > 0 &&
+              ` · ${serviceMessage.length}/${SERVICE_MESSAGE_MAX_LENGTH}자`}
+          </p>
 
           <p className="service-order__total service-order__total--guest">
             <span>손님 청구</span>

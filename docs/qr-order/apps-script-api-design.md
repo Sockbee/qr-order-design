@@ -366,6 +366,20 @@ Response `data`:
       "items": [
         { "name": "김치찌개", "quantity": 1, "lineTotal": 10000, "selectedOptions": ["보통", "공기밥 추가"] }
       ]
+    },
+    {
+      "orderId": "f21b...",
+      "displayCode": "A-1071",
+      "status": "RECEIVED",
+      "publicStatus": "accepted",
+      "totalAmount": 0,
+      "orderKind": "SERVICE",
+      "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
+      "chargedStaffName": "김하늘",
+      "createdAt": "2026-08-25T11:02:00.000Z",
+      "items": [
+        { "name": "감자튀김", "quantity": 1, "lineTotal": 6000, "selectedOptions": [] }
+      ]
     }
   ],
   "latestPublicStatus": "preparing",
@@ -375,9 +389,13 @@ Response `data`:
 
 - `orders`는 최신 주문 먼저다.
 - `sessionTotalAmount`는 `COMMITTED`이며 `CANCELLED`가 아닌 주문 합계다. 후불 여부와 무관하다.
-- `orderKind`는 항상 있다. `SERVICE`인 주문은 `totalAmount: 0`이며 `serviceReason`과
+- `orderKind`는 항상 있다. `SERVICE`인 주문은 `totalAmount: 0`이며 `serviceMessage`와
   `chargedStaffName`이 함께 실린다. 손님이 이 항목이 왜 0원이고 누가 낸 것인지 알아야 하기
   때문이다. `chargedStaffId`는 **고객 응답에 넣지 않는다** — 이름만 표시 목적으로 내려간다.
+- `serviceMessage`는 스태프가 지급 시점에 **손님에게 쓴 문장**이며 S08에 그대로 표시된다.
+  비어 있을 수 있고, 그때는 배지와 0원만 보인다.
+- SERVICE 주문의 `items[].lineTotal`은 **정가**다. 청구액이 아니라 무엇을 얼마짜리로
+  받았는지를 보여주는 값이며, 손님 화면은 이 줄에 취소선을 긋고 0원을 함께 보여준다.
 - `sessionTotalAmount`는 SERVICE 주문이 0을 더하므로 계산이 바뀌지 않는다.
 - 고객 status tracker는 가장 최근 비취소 주문의 `publicStatus`를 사용한다.
 - polling은 기본 15초, 탭이 hidden이면 중단, 실패 시 마지막 성공 값을 유지하고 exponential backoff+jitter를 적용한다.
@@ -560,7 +578,7 @@ Response `data`:
   "serviceLines": [
     {
       "displayCode": "A-1071",
-      "serviceReason": "대기 사과",
+      "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
       "grossAmount": 9000,
       "chargedStaffName": "김하늘"
     }
@@ -675,7 +693,7 @@ Request:
   "staffToken": "...",
   "tableId": "T12",
   "chargedStaffId": "S-014",
-  "serviceReason": "대기 사과",
+  "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
   "items": [
     { "menuId": "kimchi-jjigae", "quantity": 1, "selectedOptionIds": ["kimchi-normal"] }
   ]
@@ -698,7 +716,7 @@ Response `data`:
   "staffDiscountRate": 20,
   "staffChargeAmount": 7200,
   "chargedStaff": { "staffId": "S-014", "name": "김하늘" },
-  "serviceReason": "대기 사과",
+  "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
   "createdAt": "2026-08-25T11:02:00.000Z",
   "items": []
 }
@@ -709,7 +727,10 @@ Response `data`:
 - `totalAmount`는 항상 `0`이다. 요청에 금액을 넣을 수 없다(§4.4와 같은 금지 field 규칙).
 - `chargedStaffId`는 **필수**이며 StaffMembers에 존재하고 `active=TRUE`여야 한다. 없으면
   `STAFF_MEMBER_NOT_FOUND`, 비활성이면 `STAFF_MEMBER_INACTIVE`다.
-- `serviceReason`은 선택이며 100자로 제한한다.
+- `serviceMessage`는 **손님 화면에 그대로 표시되는 문구**다. 내부 사유 메모가 아니다.
+  선택이며 100자로 제한한다. 비어 있으면 손님에게는 `서비스` 배지와 0원만 보인다.
+  스태프가 입력한 자유 텍스트가 손님 기기에 렌더링되므로 이스케이프해서 출력하고
+  HTML/마크다운을 해석하지 않는다.
 - 승인자는 요청·응답·Sheet 어디에도 없다. 지급이 총무 아이패드에서만 일어나 승인자가 항상
   총무이며, 상수를 저장하지 않는다.
 - `staffChargeAmount`는 지급 시점에 계산해 `Orders.Z`에 **동결 저장**한다. 이후
@@ -745,7 +766,7 @@ Response `data`:
           "orderId": "f21b...",
           "displayCode": "A-1071",
           "tableId": "T12",
-          "serviceReason": "대기 사과",
+          "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
           "grossAmount": 9000,
           "chargeAmount": 7200,
           "createdAt": "2026-08-25T11:02:00.000Z"
@@ -1729,6 +1750,10 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
   조건절 열 문자는 끝 추가라 무변경이다. bootstrap은 §9의 suffix migration 규칙대로
   canonical prefix 뒤 빈 열에만 자동 추가한다.
 - 정산은 스태프 1인당 행사 후 1회다. 부분 수금과 분할 정산은 지원하지 않는다.
+- 서비스 지급의 자유 입력 필드는 내부 사유가 아니라 **손님에게 보내는 메시지**다. 열 이름을
+  `service_reason`이 아니라 `service_message`로 두는 이유가 이것이다 — "사유"로 읽히면
+  운영진이 내부 표현을 적고 그 문장이 손님 기기에 그대로 뜬다. 주방·서빙 응답에서는 부담자
+  이름과 함께 필드째 제외한다.
 
 ## 10. 구현 시 남은 결정
 

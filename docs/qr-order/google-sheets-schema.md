@@ -240,7 +240,7 @@ Sample:
 | U | `session_id` | UUID string FK | Y | `9b71...` | N | Y | Apps Script | TableSessions 참조. 주문 접수 시점의 OPEN 세션 |
 | V | `note_audience` | enum | N | `KITCHEN` | N | N | Apps Script | `GENERAL/KITCHEN/SERVING`; 빈 legacy 값은 GENERAL |
 | W | `order_kind` | enum | Y | `GUEST` | N | Y | Apps Script | `GUEST`/`SERVICE`. 빈 legacy 값은 `GUEST`로 읽는다 |
-| X | `service_reason` | string <= 100 | N | `대기 사과` | N | N | Apps Script | `SERVICE`일 때만 채운다 |
+| X | `service_message` | string <= 100 | N | `오래 기다리셨습니다. 맛있게 드세요!` | N | N | Apps Script | `SERVICE`일 때만 채운다. **손님 화면에 그대로 표시된다** |
 | Y | `charged_staff_id` | string FK | N | `S-014` | N | Y | Apps Script | StaffMembers 참조. `SERVICE`일 때 필수 |
 | Z | `staff_charge_amount` | integer >= 0 | N | `7200` | N | N | Apps Script | 지급 시점 동결 부담금. `GUEST`는 비운다 |
 
@@ -269,7 +269,7 @@ Sample:
 |---|---:|---|---|---|---|---|---|---|---|---:|---|---|---|---|---|---|---|---|---|---|---|
 | d08c… | 1042 | A-1042 | 8eaf… | T12:8eaf… | a18c… | T12 | RECEIVED | accepted | UNPAID | 23000 |  | `[{"lineNo":1,...}]` | COMMITTED | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 |  |  |  | 9b71… | GENERAL | GUEST |  |  |  |
 
-Sample header에도 W:Z가 이어진다: `order_kind`, `service_reason`, `charged_staff_id`,
+Sample header에도 W:Z가 이어진다: `order_kind`, `service_message`, `charged_staff_id`,
 `staff_charge_amount`.
 
 ### 서비스 지급 주문
@@ -303,20 +303,32 @@ staff_charge_amount   = service_gross_amount - staff_discount_amount
 - 승인자는 기록하지 않는다. 지급은 총무 아이패드에서만 일어나 승인자가 항상 총무로
   고정이며, 상수를 열로 저장하지 않는다(§1의 파생값 금지와 같은 원칙).
 
+#### `service_message`는 손님에게 보내는 문구다
+
+내부 사유 메모가 아니라 **손님 화면에 그대로 렌더링되는 문구**다. 이름을 `service_reason`이
+아니라 `service_message`로 두는 이유가 이것이다 — "사유"로 읽히면 운영진이 `진상 테이블
+달래기` 같은 내부 표현을 적게 되고, 그 문장이 손님 기기에 그대로 뜬다.
+
+- 선택 항목이다. 비어 있으면 손님 화면에는 `서비스` 배지와 0원만 표시된다.
+- 100자로 제한한다. 손님 카드 한 장에 들어가야 한다.
+- 스태프가 자유 입력한 텍스트가 제3자(손님) 화면에 표시되므로 렌더링 시 이스케이프한다.
+  HTML/마크다운을 해석하지 않는다.
+- 주방·서빙 응답에는 싣지 않는다. 아래 노출 규칙을 따른다.
+
 ### 부담 스태프 이름 노출 규칙
 
 같은 SERVICE 주문이라도 응답 대상에 따라 부담 스태프를 **싣는 곳과 싣지 않는 곳이 다르다.**
 표시 취향이 아니라 계약이다.
 
-| 응답 | `chargedStaffName` | 이유 |
-|---|---|---|
-| 고객 `orders/list` (S08) | 포함 | 손님이 이 항목이 왜 0원인지, 누가 낸 것인지 알아야 한다 |
-| 테이블 청구서 `staff/tables/bill` | 포함 | 0원 항목의 근거를 청구 화면에서 설명해야 한다 |
-| 스테이션 계열 `staff/orders/queue` (주방/서빙) | **제외** | 조리·서빙 판단에 부담자는 무관하다. 주방 티켓에 개인 이름이 흐르면 사회적 압력이 생긴다 |
-| `staff/settlements/*` | 포함 | 정산의 주체 그 자체다 |
+| 응답 | `chargedStaffName` | `serviceMessage` | 이유 |
+|---|---|---|---|
+| 고객 `orders/list` (S08) | 포함 | 포함 | 손님이 이 항목이 왜 0원인지, 누가 낸 것인지 알아야 한다. 메시지는 애초에 손님에게 쓴 문장이다 |
+| 테이블 청구서 `staff/tables/bill` | 포함 | 포함 | 0원 항목의 근거를 청구 화면에서 설명해야 한다 |
+| 스테이션 계열 `staff/orders/queue` (주방/서빙) | **제외** | **제외** | 조리·서빙 판단에 둘 다 무관하다. 주방 티켓에 개인 이름이 흐르면 사회적 압력이 생기고, 손님용 인사말은 조리 지시와 섞이면 노이즈다 |
+| `staff/settlements/*` | 포함 | 포함 | 정산의 주체이고, 무엇을 왜 지급했는지 확인할 근거다 |
 
 - 스테이션 계열 응답은 `orderKind`는 싣되 `chargedStaffId`/`chargedStaffName`/
-  `staffChargeAmount`를 **필드 자체로 내려보내지 않는다.** `null`로 채우지 않는다 — 응답에
+  `staffChargeAmount`/`serviceMessage`를 **필드 자체로 내려보내지 않는다.** `null`로 채우지 않는다 — 응답에
   없어야 프론트가 실수로 렌더링할 수 없다.
 - 이 규칙은 `staff/orders/queue`, `staff/tables/list`, `staff/orders/status` 응답 전부에
   적용된다.
@@ -731,7 +743,7 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - `order_kind`가 `GUEST`/`SERVICE` 중 하나이거나 비어 있는가 (빈 값은 `GUEST`)
 - `SERVICE` 주문에 `charged_staff_id`가 있고 StaffMembers에 존재하는가
 - `SERVICE` 주문의 `staff_charge_amount`가 `gross - floor(gross * STAFF_DISCOUNT_RATE / 100)`인가 (`gross` = ACTIVE `line_total` 합)
-- `GUEST` 주문의 `charged_staff_id`/`staff_charge_amount`/`service_reason`이 모두 비어 있는가
+- `GUEST` 주문의 `charged_staff_id`/`staff_charge_amount`/`service_message`가 모두 비어 있는가
 - StaffMembers `staff_id`가 비어 있지 않고 중복되지 않는가
 - `settlement_status=SETTLED`인 스태프에 `settled_amount`와 `settled_at`이 모두 있는가
 - `SETTLED` 스태프의 `settled_amount`가 그 스태프의 비취소 SERVICE 주문 `staff_charge_amount` 합과 일치하는가

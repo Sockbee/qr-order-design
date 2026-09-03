@@ -63,7 +63,7 @@ export function SettlementDialog({
           <div className="settlement-dialog__head" aria-hidden="true">
             <span>주문</span>
             <span>테이블</span>
-            <span>사유</span>
+            <span>메시지</span>
             <span>정가</span>
             <span>부담액</span>
           </div>
@@ -77,8 +77,8 @@ export function SettlementDialog({
                   </span>
                 </span>
                 <span>{order.tableId}</span>
-                <span className="settlement-dialog__reason">
-                  {order.serviceReason ?? '—'}
+                <span className="settlement-dialog__message">
+                  {order.serviceMessage ?? '—'}
                 </span>
                 <span className="settlement-dialog__amount">
                   {formatStaffAmount(order.grossAmount)}

@@ -212,7 +212,8 @@ export interface StaffSettlementOrder {
   orderId: string
   displayCode: string
   tableId: string
-  serviceReason: string | null
+  /** Written to the diner and shown on their device — not an internal note. */
+  serviceMessage: string | null
   grossAmount: number
   chargeAmount: number
   createdAt: string

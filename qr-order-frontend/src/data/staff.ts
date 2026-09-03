@@ -269,22 +269,26 @@ function charge(gross: number): number {
   return gross - Math.floor((gross * 20) / 100)
 }
 
+/*
+ * `message` is what the diner reads, so these read like something you would
+ * actually say to a table — not like internal reason codes.
+ */
 const GRANT_SEEDS: Array<{
   staff: number
   code: string
   table: string
-  reason: string | null
+  message: string | null
   gross: number
   at: string
 }> = [
-  { staff: 1, code: 'A-1071', table: 'T12', reason: '대기 사과', gross: 9_000, at: '2026-09-03T10:02:00.000Z' },
-  { staff: 1, code: 'A-1078', table: 'T03', reason: '메뉴 지연', gross: 16_000, at: '2026-09-03T10:41:00.000Z' },
-  { staff: 1, code: 'A-1090', table: 'T07', reason: null, gross: 5_000, at: '2026-09-03T11:12:00.000Z' },
-  { staff: 2, code: 'A-1074', table: 'T05', reason: '단체 손님 응대', gross: 24_000, at: '2026-09-03T10:18:00.000Z' },
-  { staff: 3, code: 'A-1082', table: 'T09', reason: '주문 누락', gross: 11_000, at: '2026-09-03T10:55:00.000Z' },
-  { staff: 3, code: 'A-1088', table: 'T02', reason: null, gross: 8_000, at: '2026-09-03T11:04:00.000Z' },
-  { staff: 4, code: 'A-1069', table: 'T14', reason: '동아리 협찬', gross: 32_000, at: '2026-09-03T09:47:00.000Z' },
-  { staff: 7, code: 'A-1085', table: 'T01', reason: '대기 사과', gross: 6_000, at: '2026-09-03T10:59:00.000Z' },
+  { staff: 1, code: 'A-1071', table: 'T12', message: '오래 기다리셨습니다. 맛있게 드세요!', gross: 9_000, at: '2026-09-03T10:02:00.000Z' },
+  { staff: 1, code: 'A-1078', table: 'T03', message: '주문이 늦어져 죄송합니다. 서비스로 준비했어요', gross: 16_000, at: '2026-09-03T10:41:00.000Z' },
+  { staff: 1, code: 'A-1090', table: 'T07', message: null, gross: 5_000, at: '2026-09-03T11:12:00.000Z' },
+  { staff: 2, code: 'A-1074', table: 'T05', message: '많이 와주셔서 감사합니다. 즐거운 시간 되세요', gross: 24_000, at: '2026-09-03T10:18:00.000Z' },
+  { staff: 3, code: 'A-1082', table: 'T09', message: '빠진 메뉴가 있어 서비스로 함께 드립니다', gross: 11_000, at: '2026-09-03T10:55:00.000Z' },
+  { staff: 3, code: 'A-1088', table: 'T02', message: null, gross: 8_000, at: '2026-09-03T11:04:00.000Z' },
+  { staff: 4, code: 'A-1069', table: 'T14', message: '동아리 응원합니다. 맛있게 드세요!', gross: 32_000, at: '2026-09-03T09:47:00.000Z' },
+  { staff: 7, code: 'A-1085', table: 'T01', message: '기다려주셔서 감사합니다', gross: 6_000, at: '2026-09-03T10:59:00.000Z' },
 ]
 
 export function staffSettlements(): StaffSettlement[] {
@@ -295,7 +299,7 @@ export function staffSettlements(): StaffSettlement[] {
       orderId: `svc-${grant.code}`,
       displayCode: grant.code,
       tableId: grant.table,
-      serviceReason: grant.reason,
+      serviceMessage: grant.message,
       grossAmount: grant.gross,
       chargeAmount: charge(grant.gross),
       createdAt: grant.at,

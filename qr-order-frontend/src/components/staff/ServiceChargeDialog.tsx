@@ -6,7 +6,7 @@ import type { StaffServiceCharge } from '../../types/staff'
 interface ServiceChargeDialogProps {
   tableId: string
   staffName: string
-  serviceReason: string | null
+  serviceMessage: string | null
   charge: StaffServiceCharge
   lineCount: number
   submitting: boolean
@@ -26,7 +26,7 @@ interface ServiceChargeDialogProps {
 export function ServiceChargeDialog({
   tableId,
   staffName,
-  serviceReason,
+  serviceMessage,
   charge,
   lineCount,
   submitting,
@@ -64,8 +64,25 @@ export function ServiceChargeDialog({
         {'더해집니다. 수금은 행사가 끝난 뒤 총무가 개인별로 한 번에 진행합니다. '}
         {'지급 후에는 수량과 항목을 수정할 수 없고, 정정하려면 주문을 취소하고 다시 '}
         {'지급해야 합니다.'}
-        {serviceReason ? ` 사유: ${serviceReason}` : ''}
       </ImpactNote>
+
+      {/*
+        Shown back verbatim before it is sent. The operator should read the
+        sentence the way the diner will see it, not trust what they typed.
+      */}
+      {serviceMessage ? (
+        <div className="operation-dialog__message">
+          <p className="operation-dialog__message-label">
+            손님에게 표시될 메시지
+          </p>
+          <p className="operation-dialog__message-body">{serviceMessage}</p>
+        </div>
+      ) : (
+        <p className="staff-dialog__body">
+          손님에게 보낼 메시지는 비어 있습니다. 주문 내역에는 서비스 표시와 0원만
+          보입니다.
+        </p>
+      )}
     </StaffDialog>
   )
 }

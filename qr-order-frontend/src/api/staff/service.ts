@@ -77,25 +77,32 @@ export interface StaffServiceOrderResponse {
   staffDiscountRate: number
   staffChargeAmount: number
   chargedStaff: { staffId: string; name: string }
-  serviceReason: string | null
+  serviceMessage: string | null
 }
+
+/** §4.20 caps the customer-facing message at 100 characters. */
+export const SERVICE_MESSAGE_MAX_LENGTH = 100
 
 /**
  * §4.20. `totalAmount` always comes back 0 — the guest is not billed, and no
  * amount may be sent up (the §4.4 forbidden-field rule applies unchanged).
  * The approver is deliberately absent: grants only happen on the treasurer's
  * iPad, so it is a constant and constants are not stored.
+ *
+ * `serviceMessage` is written *to the diner* and rendered on their device —
+ * it is not an internal reason note. The field is named for its audience so
+ * nobody later treats it as a staff memo and leaks it into a kitchen ticket.
  */
 export function createServiceOrder(
   tableId: string,
   chargedStaffId: string,
-  serviceReason: string | null,
+  serviceMessage: string | null,
   lines: StaffServiceOrderLine[],
   signal?: AbortSignal,
 ): Promise<StaffServiceOrderResponse> {
   return callStaffApi<StaffServiceOrderResponse>(
     'orders/service',
-    { tableId, chargedStaffId, serviceReason, items: lines },
+    { tableId, chargedStaffId, serviceMessage, items: lines },
     signal,
   )
 }
@@ -116,7 +123,7 @@ export interface StaffSettlementListResponse {
       orderId: string
       displayCode: string
       tableId: string
-      serviceReason: string | null
+      serviceMessage: string | null
       grossAmount: number
       chargeAmount: number
       createdAt: string

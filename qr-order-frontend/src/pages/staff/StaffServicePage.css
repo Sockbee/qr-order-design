@@ -193,7 +193,7 @@
   border-top: 1px solid var(--color-border-default);
 }
 
-.service-order__reason-label {
+.service-order__message-label {
   font: var(--type-caption-strong);
   color: var(--color-text-strong);
 }
@@ -203,7 +203,7 @@
   color: var(--color-text-body);
 }
 
-.service-order__reason {
+.service-order__message {
   width: 100%;
   height: var(--layout-staff-control-height);
   padding: 0 var(--space-4);
@@ -214,10 +214,20 @@
   color: var(--color-text-strong);
 }
 
-.service-order__reason:focus {
+.service-order__message:focus {
   outline: none;
   border: 2px solid var(--color-border-selected);
   padding: 0 15px;
+}
+
+/*
+ * Body, not muted: this line is the only thing standing between an internal
+ * note and the diner's screen, so it must not fail contrast.
+ */
+.service-order__message-help {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
 }
 
 .service-order__total {

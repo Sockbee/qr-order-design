@@ -173,6 +173,35 @@
   font: var(--type-title-screen);
 }
 
+/*
+ * The message echoed back before a service grant is sent. Quoted rather than
+ * plain so the operator reads it as the diner's line, not as another form
+ * field they can still edit here.
+ */
+.operation-dialog__message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 14px var(--space-4);
+  border-left: 3px solid var(--color-border-selected);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-surface);
+}
+
+.operation-dialog__message-label {
+  margin: 0;
+  font: var(--type-caption-strong);
+  color: var(--color-text-body);
+}
+
+.operation-dialog__message-body {
+  margin: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+  overflow-wrap: anywhere;
+}
+
 /* The second merge slot before a table has been picked. */
 .operation-dialog__picked-card--empty {
   border: 1px dashed var(--color-border-default);

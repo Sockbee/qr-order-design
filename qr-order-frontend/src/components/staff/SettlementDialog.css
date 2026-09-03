@@ -57,7 +57,7 @@
   color: var(--color-text-body);
 }
 
-.settlement-dialog__reason {
+.settlement-dialog__message {
   min-width: 0;
   overflow-wrap: anywhere;
 }
