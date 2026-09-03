@@ -65,6 +65,7 @@
 
   --animate-spin-slow: button-spin 800ms linear infinite;
   --animate-sheet-rise: sheet-rise 160ms ease-out;
+  --animate-dialog-in: dialog-in 160ms ease-out;
 
   @keyframes button-spin {
     to {
@@ -79,6 +80,17 @@
     }
     to {
       transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes dialog-in {
+    from {
+      transform: scale(0.96);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
       opacity: 1;
     }
   }

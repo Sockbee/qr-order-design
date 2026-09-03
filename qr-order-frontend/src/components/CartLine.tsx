@@ -38,6 +38,7 @@ export function CartLine({
           <QuantitySelector
             value={quantity}
             onChange={onQuantityChange}
+            min={0}
             ariaLabel={`${name} 수량`}
           />
         </div>

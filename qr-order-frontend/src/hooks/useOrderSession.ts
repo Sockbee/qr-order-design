@@ -1,6 +1,6 @@
 import { usePersistentState } from './usePersistentState'
 import { initialCart } from '../data/menu'
-import { calculateCartTotal } from '../utils/cart'
+import { calculateCartTotal, isSameCartLine } from '../utils/cart'
 import { sessionScopedKey } from '../utils/storage'
 import type { CartLine } from '../types/menu'
 import type { PlacedOrder } from '../types/order'
@@ -19,6 +19,7 @@ export interface OrderSession {
   orders: PlacedOrder[]
   addToCart: (line: CartLine) => void
   changeQuantity: (index: number, next: number) => void
+  removeLine: (index: number) => void
   /**
    * Commits a server-created order, or creates the mock order when the API is
    * intentionally not configured.
@@ -41,7 +42,15 @@ export function useOrderSession(
   )
 
   const addToCart = (line: CartLine) => {
-    setCart((current) => [...current, line])
+    setCart((current) => {
+      const matchIndex = current.findIndex((existing) => isSameCartLine(existing, line))
+      if (matchIndex === -1) return [...current, line]
+      return current.map((existing, index) =>
+        index === matchIndex
+          ? { ...existing, quantity: existing.quantity + line.quantity }
+          : existing,
+      )
+    })
   }
 
   const changeQuantity = (index: number, next: number) => {
@@ -50,6 +59,10 @@ export function useOrderSession(
         lineIndex === index ? { ...line, quantity: next } : line,
       ),
     )
+  }
+
+  const removeLine = (index: number) => {
+    setCart((current) => current.filter((_, lineIndex) => lineIndex !== index))
   }
 
   const placeOrder = (remoteOrder?: PlacedOrder): PlacedOrder => {
@@ -69,5 +82,5 @@ export function useOrderSession(
     return placed
   }
 
-  return { cart, orders, addToCart, changeQuantity, placeOrder }
+  return { cart, orders, addToCart, changeQuantity, removeLine, placeOrder }
 }
