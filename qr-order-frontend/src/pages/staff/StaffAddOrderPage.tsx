@@ -5,6 +5,7 @@ import { QuantitySelector } from '../../components/QuantitySelector'
 import { OperationalButton } from '../../components/staff/OperationalButton'
 import { StaffEmptyState } from '../../components/staff/StaffEmptyState'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
+import { staffNavItems } from '../../components/staff/staffNavItems'
 import {
   AvailabilityCard,
   StaffMenuCard,
@@ -91,15 +92,7 @@ export function StaffAddOrderPage({
 
   return (
     <div className="add-order" data-staff-app>
-      <StaffNavigation
-        items={[
-          { label: '테이블', to: '/staff/tables', count: null },
-          { label: '주방', to: '/staff/kitchen', count: null },
-          { label: '서빙', to: '/staff/serving', count: null },
-          { label: '결제', to: '/staff/payment', count: null },
-          { label: '설정', to: '/staff/settings', count: null },
-        ]}
-      />
+      <StaffNavigation items={staffNavItems(null)} />
 
       <main className="add-order__main">
         <header className="add-order__header">

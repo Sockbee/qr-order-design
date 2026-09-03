@@ -16,6 +16,10 @@ import {
 } from './pages/staff/StaffOperationRoutes'
 import type { StaffOperation } from './pages/staff/StaffOperationRoutes'
 import {
+  StaffServiceRoute,
+  StaffSettlementRoute,
+} from './pages/staff/StaffServiceRoutes'
+import {
   StaffKitchenRoute,
   StaffPaymentRoute,
   StaffServingRoute,
@@ -96,6 +100,9 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onAcknowledgeCall={staff.acknowledge}
                 onStatusChange={detail.changeStatus}
                 onAddOrder={() => navigate(`/staff/tables/${tableId}/order`)}
+                onServiceOrder={() =>
+                  navigate(`/staff/tables/${tableId}/service`)
+                }
                 onConfirmPayment={() =>
                   navigate(`/staff/tables/${tableId}/payment`)
                 }
@@ -146,6 +153,14 @@ function StaffApp() {
             </RequireStaffAuth>
           )}
         />
+        <Route
+          path="/staff/tables/:tableId/service"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffServiceRoute />
+            </RequireStaffAuth>
+          )}
+        />
         {(['move', 'merge', 'split', 'discount', 'edit', 'cancel'] as StaffOperation[]).map(
           (operation) => (
             <Route
@@ -188,6 +203,14 @@ function StaffApp() {
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffPaymentRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/service"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffSettlementRoute />
             </RequireStaffAuth>
           )}
         />

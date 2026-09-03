@@ -66,6 +66,12 @@
  */
 .category-tabs--pill {
   position: static;
+  /*
+   * Both staff hosts are column flex containers whose content overflows, so
+   * without this the strip is the item that gets shrunk — to exactly 0px,
+   * silently. The pills are `height: auto`, which leaves nothing to resist.
+   */
+  flex-shrink: 0;
   gap: var(--space-3);
   padding: 0;
   border-bottom: none;

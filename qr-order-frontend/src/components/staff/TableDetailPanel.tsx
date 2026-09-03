@@ -14,6 +14,8 @@ export interface TableDetailActions {
   onAcknowledgeCall: (tableId: string) => void
   onStatusChange: (status: StaffOrderStatus) => void
   onAddOrder: () => void
+  /** A10 — grant a service order this table is not billed for. */
+  onServiceOrder: () => void
   onConfirmPayment: () => void
   onMove: () => void
   onMerge: () => void
@@ -66,6 +68,7 @@ export function TableDetailPanel({
   onAcknowledgeCall,
   onStatusChange,
   onAddOrder,
+  onServiceOrder,
   onConfirmPayment,
   onMove,
   onMerge,
@@ -207,6 +210,15 @@ export function TableDetailPanel({
           {bill.paid ? '결제 완료' : '결제 확인'}
         </OperationalButton>
         <div className="detail-panel__action-row">
+          {/*
+            Secondary, and grouped with the table operations rather than
+            beside 주문 추가: a grant is a rarer decision that costs a named
+            person money, and it should not sit one slip away from the
+            ordinary order button.
+          */}
+          <OperationalButton variant="secondary" onClick={onServiceOrder}>
+            서비스
+          </OperationalButton>
           <OperationalButton variant="secondary" onClick={onMove}>
             이동
           </OperationalButton>

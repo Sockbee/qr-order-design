@@ -5,6 +5,7 @@ import { CallRow } from '../../components/staff/CallRow'
 import { StaffEmptyState } from '../../components/staff/StaffEmptyState'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
+import { staffNavItems } from '../../components/staff/staffNavItems'
 import { TableCard } from '../../components/staff/TableCard'
 import { TableCardSkeleton } from '../../components/staff/TableCardSkeleton'
 import type { StaffTableHomeData } from '../../types/staff'
@@ -78,19 +79,15 @@ export function StaffTableHomePage({
       data-staff-app
     >
       <StaffNavigation
-        items={[
-          {
-            label: '테이블',
-            to: '/staff/tables',
-            // No data yet means no count — not a count of zero.
-            count: data ? attentionCount : null,
-            attention: true,
-          },
-          { label: '주방', to: '/staff/kitchen', count: data?.stationCounts.kitchen ?? null },
-          { label: '서빙', to: '/staff/serving', count: data?.stationCounts.serving ?? null },
-          { label: '결제', to: '/staff/payment', count: data?.stationCounts.payment ?? null },
-          { label: '설정', to: '/staff/settings', count: null },
-        ]}
+        items={staffNavItems(
+          data
+            ? {
+                // No data yet means no count — not a count of zero.
+                ...data.stationCounts,
+                tables: attentionCount,
+              }
+            : null,
+        )}
       />
 
       <main className="staff-home__main">

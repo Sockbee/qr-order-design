@@ -1,0 +1,256 @@
+/*
+ * A10 — Service Grant. Same three-column skeleton as A03 (92:817):
+ * 88px rail + fluid menu column + 420px panel.
+ */
+.service-order {
+  display: flex;
+  align-items: stretch;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--color-bg-surface);
+}
+
+.service-order__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.service-order__header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  height: var(--layout-staff-header-height);
+  flex-shrink: 0;
+  padding: 0 var(--layout-staff-gutter);
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+}
+
+.service-order__title {
+  margin: 0;
+  font: var(--type-title-screen);
+  color: var(--color-text-strong);
+}
+
+/*
+ * States the money rule in the header, where A03 has nothing. A grant looks
+ * exactly like an order until someone reads what it costs.
+ */
+.service-order__lead {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  padding: var(--layout-staff-gutter);
+  overflow-y: auto;
+}
+
+.service-order__search {
+  width: 100%;
+  height: var(--layout-staff-control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  font: var(--type-body-default);
+  color: var(--color-text-strong);
+}
+
+.service-order__search:focus {
+  outline: none;
+  border: 2px solid var(--color-border-selected);
+  padding: 0 15px;
+}
+
+.service-order__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-4);
+}
+
+.service-order__panel {
+  display: flex;
+  flex-direction: column;
+  width: var(--layout-staff-panel-width);
+  flex-shrink: 0;
+  min-height: 0;
+  border-left: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+}
+
+.service-order__panel-head {
+  flex-shrink: 0;
+  padding: 18px 20px var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.service-order__panel-title {
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+.service-order__panel-lead {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+/*
+ * The draft and the picker share the panel's spare height. The draft is
+ * capped so a long order cannot push the picker off-screen — choosing who
+ * pays is the step that must never become unreachable.
+ */
+.service-order__draft {
+  display: flex;
+  flex-direction: column;
+  /*
+   * The draft yields space, the picker does not. Both scroll, but a draft
+   * line the operator just tapped is easy to re-find and a roster row they
+   * have not chosen yet is not — so the floor goes to the picker below.
+   */
+  flex-shrink: 1;
+  min-height: 96px;
+  max-height: 24%;
+  padding: var(--space-3) 20px;
+  overflow-y: auto;
+}
+
+.service-order__draft-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.service-order__draft-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.service-order__draft-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.service-order__draft-name {
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__draft-price {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__draft-amount {
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__charge {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  /* Search field plus roughly four roster rows before scrolling starts. */
+  min-height: 272px;
+  padding: var(--space-4) 20px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.service-order__section-title {
+  margin: 0;
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__panel-foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  padding: var(--space-4) 20px 20px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.service-order__reason-label {
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__optional {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__reason {
+  width: 100%;
+  height: var(--layout-staff-control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  font: var(--type-body-default);
+  color: var(--color-text-strong);
+}
+
+.service-order__reason:focus {
+  outline: none;
+  border: 2px solid var(--color-border-selected);
+  padding: 0 15px;
+}
+
+.service-order__total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.service-order__total span {
+  flex: 1;
+  min-width: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__total strong {
+  font: var(--type-staff-metric);
+  color: var(--color-text-strong);
+}
+
+/*
+ * The guest total is the quieter of the two. It is always ₩0 and never the
+ * figure anyone acts on — the staff charge is.
+ */
+.service-order__total--guest span,
+.service-order__total--guest strong {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__hint {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
