@@ -15,6 +15,16 @@ VITE_API_BASE_URL=https://qr-order-staging-PROJECT_NUMBER.asia-northeast3.run.ap
 실제 배포 URL과 테이블 token은 Git에 커밋하지 않습니다. Netlify 환경 변수를 변경하면
 Vite bundle을 다시 만들도록 새 배포를 실행해야 합니다.
 
+Cloud Run이 운영 도메인만 CORS 허용하는 상태에서 로컬 프론트를 실제 API에 연결하려면
+`.env.development.local`에 다음처럼 설정합니다. 개발 서버가 요청을 Cloud Run으로
+프록시하므로 GCP의 CORS 설정을 변경할 필요가 없고, 이 값은 production build에
+포함되지 않습니다.
+
+```text
+VITE_API_BASE_URL=/__gcp_api__
+API_PROXY_TARGET=https://qr-order-staging-PROJECT_NUMBER.asia-northeast3.run.app
+```
+
 ## 실행
 
 ```bash
