@@ -8,7 +8,7 @@ import type { StaffStationCounts } from '../../types/staff'
  * items and stopped being so at six — a rail that disagrees with itself
  * between screens is worse than no rail.
  *
- * 서비스 sits fifth, before 설정: `StaffNavigation` documents 설정 as
+ * 서비스 and 품절 sit before 설정: `StaffNavigation` documents 설정 as
  * deliberately outside the main workflow, so it stays last.
  */
 export function staffNavItems(
@@ -31,6 +31,12 @@ export function staffNavItems(
      * the only figure that shrinks to zero at the end of the night.
      */
     { label: '서비스', to: '/staff/service', count: extra?.service ?? null },
+    /*
+     * No badge. A sold-out count would have to be known on every screen to
+     * avoid a number that appears only on its own page, and no other screen
+     * loads the catalog. The count lives in that screen's own header.
+     */
+    { label: '품절', to: '/staff/availability', count: null },
     { label: '설정', to: '/staff/settings', count: null },
   ]
 }

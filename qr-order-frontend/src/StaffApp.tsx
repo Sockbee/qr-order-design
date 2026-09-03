@@ -10,10 +10,7 @@ import {
 } from 'react-router-dom'
 import { TableDetailPanel } from './components/staff/TableDetailPanel'
 import { StaffLoginPage } from './pages/staff/StaffLoginPage'
-import {
-  StaffAddOrderRoute,
-  StaffTableOperationRoute,
-} from './pages/staff/StaffOperationRoutes'
+import { StaffTableOperationRoute } from './pages/staff/StaffOperationRoutes'
 import type { StaffOperation } from './pages/staff/StaffOperationRoutes'
 import {
   StaffServiceRoute,
@@ -24,6 +21,7 @@ import {
   StaffPaymentRoute,
   StaffServingRoute,
 } from './pages/staff/StaffStationRoutes'
+import { StaffAvailabilityRoute } from './pages/staff/StaffAvailabilityRoute'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { StaffSettingsPage } from './pages/staff/StaffSettingsPage'
 import { useStaffAuth } from './hooks/useStaffAuth'
@@ -145,14 +143,6 @@ function StaffApp() {
           )}
         />
         <Route
-          path="/staff/tables/:tableId/order"
-          element={(
-            <RequireStaffAuth auth={auth}>
-              <StaffAddOrderRoute />
-            </RequireStaffAuth>
-          )}
-        />
-        <Route
           path="/staff/tables/:tableId/service"
           element={(
             <RequireStaffAuth auth={auth}>
@@ -210,6 +200,14 @@ function StaffApp() {
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffSettlementRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/availability"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffAvailabilityRoute />
             </RequireStaffAuth>
           )}
         />

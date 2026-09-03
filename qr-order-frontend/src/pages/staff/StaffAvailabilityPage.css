@@ -1,0 +1,11 @@
+/*
+ * The card grid inside a station section. `.station-page__cards` is a
+ * flex-wrap row sized for 342px queue cards, so this takes the full row as a
+ * single child and lays its own grid out inside it.
+ */
+.availability-page__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+  width: 100%;
+}
