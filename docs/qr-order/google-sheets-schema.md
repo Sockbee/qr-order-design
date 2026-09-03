@@ -30,6 +30,7 @@
 | OrderItemOptions | 주문 당시 선택 옵션 snapshot | Apps Script 전용 |
 | Calls | 직원 호출 접수와 확인 | Apps Script; 확인만 운영진 |
 | Settings | 행사 단위 설정과 순번 counter | 운영진; counter는 Apps Script |
+| StaffMembers | 학생회 명단과 서비스 지급 부담금 정산 상태 | 운영진(명단); Apps Script(정산) |
 | AuditLogs | 상태 변경과 오류 기록 | Apps Script 전용 |
 
 Figma S04의 필수/복수 옵션 및 옵션별 품절을 표현하려면 MenuOptionGroups/MenuOptions가 필요하다. 과거 주문을 정확히 표시하려면 OrderItemOptions도 필요하다. Categories와 Settings는 운영진이 코드 수정 없이 탭/매장 정보를 관리하게 하는 최소 확장이다.
@@ -210,7 +211,7 @@ Sample:
 
 ## 9. Orders
 
-고정 열 순서는 운영 View 수식의 기준이 된다. 열은 항상 **끝에만 추가**한다. 중간 삽입은 기존 View 수식의 열 문자를 전부 깨뜨린다. `session_id`가 U에 붙은 이유가 이것이다.
+고정 열 순서는 운영 View 수식의 기준이 된다. 열은 항상 **끝에만 추가**한다. 중간 삽입은 기존 View 수식의 열 문자를 전부 깨뜨린다. `session_id`가 U에 붙은 이유가 이것이고, `order_kind` 이하 W:Z가 끝에 붙은 이유도 같다.
 
 `table_id`(G)는 **주문이 접수된 테이블**이며 테이블 이동 후에도 바뀌지 않는다. 현재 위치는 `session_id`를 통해 TableSessions에서 읽는다. G를 덮어쓰면 Decision A4의 snapshot 원칙이 깨진다.
 
@@ -238,6 +239,10 @@ Sample:
 | T | `cancel_reason` | string | N | `재료 소진` | N | N | 운영진 | CANCELLED이면 권장 필수 |
 | U | `session_id` | UUID string FK | Y | `9b71...` | N | Y | Apps Script | TableSessions 참조. 주문 접수 시점의 OPEN 세션 |
 | V | `note_audience` | enum | N | `KITCHEN` | N | N | Apps Script | `GENERAL/KITCHEN/SERVING`; 빈 legacy 값은 GENERAL |
+| W | `order_kind` | enum | Y | `GUEST` | N | Y | Apps Script | `GUEST`/`SERVICE`. 빈 legacy 값은 `GUEST`로 읽는다 |
+| X | `service_reason` | string <= 100 | N | `대기 사과` | N | N | Apps Script | `SERVICE`일 때만 채운다 |
+| Y | `charged_staff_id` | string FK | N | `S-014` | N | Y | Apps Script | StaffMembers 참조. `SERVICE`일 때 필수 |
+| Z | `staff_charge_amount` | integer >= 0 | N | `7200` | N | N | Apps Script | 지급 시점 동결 부담금. `GUEST`는 비운다 |
 
 enum:
 
@@ -246,6 +251,7 @@ enum:
 - `payment_status`: `UNPAID`, `PAID`, `WAIVED`, `REFUNDED`
 - `write_state`: `WRITING`, `COMMITTED`, `FAILED`
 - `note_audience`: `GENERAL`, `KITCHEN`, `SERVING`
+- `order_kind`: `GUEST`, `SERVICE`
 
 상태 mapping은 다음과 같이 고정한다.
 
@@ -261,7 +267,60 @@ Sample:
 
 | order_id | display_number | display_code | client_request_id | idempotency_key | request_fingerprint | table_id | status | public_status | payment_status | total_amount | note | write_payload_json | write_state | status_updated_at | created_at | updated_at | paid_at | cancelled_at | cancel_reason | session_id | note_audience |
 |---|---:|---|---|---|---|---|---|---|---|---:|---|---|---|---|---|---|---|---|---|---|---|
-| d08c… | 1042 | A-1042 | 8eaf… | T12:8eaf… | a18c… | T12 | RECEIVED | accepted | UNPAID | 23000 |  | `[{"lineNo":1,...}]` | COMMITTED | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 |  |  |  | 9b71… | GENERAL |
+| d08c… | 1042 | A-1042 | 8eaf… | T12:8eaf… | a18c… | T12 | RECEIVED | accepted | UNPAID | 23000 |  | `[{"lineNo":1,...}]` | COMMITTED | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 | 2026-08-25 19:24:00 |  |  |  | 9b71… | GENERAL | GUEST |  |  |  |
+
+Sample header에도 W:Z가 이어진다: `order_kind`, `service_reason`, `charged_staff_id`,
+`staff_charge_amount`.
+
+### 서비스 지급 주문
+
+`order_kind=SERVICE`는 스태프가 손님 테이블에 메뉴를 무상 제공한 주문이다. 손님 청구액은
+0원이고, 정가의 일부를 지급을 요청한 스태프가 부담한다.
+
+- `total_amount=0`으로 저장한다. OrderItems의 `unit_price_snapshot`/`line_total`은 **정가
+  그대로** 남긴다. 정가를 지우면 부담금 근거와 메뉴별 판매량 통계가 함께 사라진다.
+- `payment_status`는 생성 시 **`WAIVED`**로 고정한다. §15 결제 확정의 Orders mirror에서
+  제외되며, 그룹이 `PAID`가 되어도 `WAIVED`를 유지한다. 기존 `View_Payment`와 총매출
+  수식이 각각 `UNPAID`/`PAID`로 필터하므로 두 곳 모두에서 자동으로 빠진다.
+- 세션 소속, `display_number`, 상태 흐름은 GUEST 주문과 완전히 같다. 주방은 이 주문을
+  일반 주문과 동일하게 조리한다.
+- 부담금 계산:
+
+```text
+service_gross_amount  = 그 주문의 ACTIVE OrderItems line_total 합   (저장하지 않는 파생값)
+staff_discount_amount = floor(service_gross_amount * STAFF_DISCOUNT_RATE / 100)
+staff_charge_amount   = service_gross_amount - staff_discount_amount
+```
+
+- §15 `discount_amount`와 동일하게 **할인액을 floor한 뒤 차감**한다. 부담액을 직접
+  floor하면 §15와 1원 단위로 어긋난다(정가 1001원·할인율 20%에서 800 vs 801).
+- line별이 아니라 **주문 총액에 floor 1회**다. line마다 floor하면 합이 최대 line 수 - 1원만큼
+  어긋난다.
+- `staff_charge_amount`는 §15의 조회 시점 재계산과 달리 **지급 시점에 동결**한다. 테이블
+  할인율은 스태프 부담금에 영향을 주지 않으며, 두 할인율은 서로 독립이다.
+- 동결값을 지키기 위해 **SERVICE 주문은 §4.18 `orders/update`의 대상이 아니다.** 오지급은
+  주문 취소 후 재지급으로 정정한다.
+- 승인자는 기록하지 않는다. 지급은 총무 아이패드에서만 일어나 승인자가 항상 총무로
+  고정이며, 상수를 열로 저장하지 않는다(§1의 파생값 금지와 같은 원칙).
+
+### 부담 스태프 이름 노출 규칙
+
+같은 SERVICE 주문이라도 응답 대상에 따라 부담 스태프를 **싣는 곳과 싣지 않는 곳이 다르다.**
+표시 취향이 아니라 계약이다.
+
+| 응답 | `chargedStaffName` | 이유 |
+|---|---|---|
+| 고객 `orders/list` (S08) | 포함 | 손님이 이 항목이 왜 0원인지, 누가 낸 것인지 알아야 한다 |
+| 테이블 청구서 `staff/tables/bill` | 포함 | 0원 항목의 근거를 청구 화면에서 설명해야 한다 |
+| 스테이션 계열 `staff/orders/queue` (주방/서빙) | **제외** | 조리·서빙 판단에 부담자는 무관하다. 주방 티켓에 개인 이름이 흐르면 사회적 압력이 생긴다 |
+| `staff/settlements/*` | 포함 | 정산의 주체 그 자체다 |
+
+- 스테이션 계열 응답은 `orderKind`는 싣되 `chargedStaffId`/`chargedStaffName`/
+  `staffChargeAmount`를 **필드 자체로 내려보내지 않는다.** `null`로 채우지 않는다 — 응답에
+  없어야 프론트가 실수로 렌더링할 수 없다.
+- 이 규칙은 `staff/orders/queue`, `staff/tables/list`, `staff/orders/status` 응답 전부에
+  적용된다.
+- 부담 스태프 **실명이 고객 기기에 표시된다.** 명단 등록 시 이 사실을 고지한다.
 
 ## 10. OrderItems
 
@@ -325,6 +384,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `STATUS_POLL_SECONDS` | `15` | INTEGER | 개발자 | 프론트 기본 polling 주기 |
 | `CALL_MIN_INTERVAL_SECONDS` | `60` | INTEGER | 운영진 | 같은 테이블의 연속 직원 호출 최소 간격 |
 | `TABLE_DISCOUNT_RATE` | `20` | INTEGER | 운영진 | 지정 테이블 할인율(%). 할인 적용 시 세션에 복사된다 |
+| `STAFF_DISCOUNT_RATE` | `20` | INTEGER | 운영진 | 서비스 지급 시 스태프가 면제받는 비율(%). 부담률은 `100 - 값`. `TABLE_DISCOUNT_RATE`와 무관한 별개 키이며 서로 영향을 주지 않는다 |
 | `STAFF_TOKEN_EPOCH` | `1` | INTEGER | 운영진 | 올리면 발급된 운영 토큰이 전부 무효가 된다. passcode 유출 시 대응 스위치 |
 | `STAFF_SESSION_HOURS` | `14` | INTEGER | 개발자 | 운영 토큰 유효 시간. 행사 하루를 덮되 다음 날까지 살지 않게 한다 |
 
@@ -348,7 +408,7 @@ OrderItems에는 현재 Menu 이름/가격을 수식으로 참조하지 않는�
 | `request_id` | string | N | `8eaf...` | N | Y | Apps Script | clientRequestId/추적 ID |
 | `detail_json` | string JSON | N | `{"reason":"..."}` | N | N | Apps Script | 민감 토큰/stack trace는 저장 금지 |
 
-권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`, `SESSION_OPENED`, `SESSION_CLOSED`, `TABLE_MOVED`, `TABLES_MERGED`, `TABLES_SPLIT`, `DISCOUNT_APPLIED`, `DISCOUNT_CLEARED`, `SESSION_PAYMENT_CONFIRMED`, `STAFF_LOGIN`, `STAFF_LOGIN_FAILED`, `STAFF_TOKEN_EPOCH_BUMPED`.
+권장 `action`: `ORDER_CREATED`, `ORDER_REPLAYED`, `ORDER_WRITE_FAILED`, `ORDER_WRITE_RECOVERED`, `ORDER_STATUS_CHANGED`, `INVALID_STATUS_EDIT`, `PAYMENT_STATUS_CHANGED`, `TABLE_TOKEN_ROTATED`, `CATALOG_INVALID`, `CALL_CREATED`, `CALL_ACKNOWLEDGED`, `CALL_CANCELLED`, `CALL_THROTTLED`, `SESSION_OPENED`, `SESSION_CLOSED`, `TABLE_MOVED`, `TABLES_MERGED`, `TABLES_SPLIT`, `DISCOUNT_APPLIED`, `DISCOUNT_CLEARED`, `SESSION_PAYMENT_CONFIRMED`, `STAFF_LOGIN`, `STAFF_LOGIN_FAILED`, `STAFF_TOKEN_EPOCH_BUMPED`, `SERVICE_ORDER_CREATED`, `STAFF_SETTLEMENT_CONFIRMED`, `STAFF_SETTLEMENT_REVERTED`.
 
 호출 확인은 여러 행을 한 번에 바꾸므로 `CALL_ACKNOWLEDGED`는 그룹 단위로 1건만 기록하고, `entity_type=TABLE`, `entity_id=table_id`, `detail_json`에 `{"callIds":[...],"count":2}`를 담는다. 행마다 로그를 남기면 병합의 의미가 사라진다.
 
@@ -527,43 +587,46 @@ Google Sheets에는 index가 없다. 한 API 실행에서 필요한 범위를 �
 | 현재 세션 | TableSessions `status='OPEN'`을 `table_id`로 map; 이동 복구용으로 `origin_table_id` map도 함께 |
 | 청구 그룹 | TableSessions `merged_into_session_id`로 group; 비어 있는 세션이 대표 |
 | 세션 주문 | Orders `session_id` |
+| 부담자 명단 | StaffMembers `staff_id`; 선택 목록은 `active=TRUE`를 `sort_order` 오름차순 |
+| 스태프 정산 | Orders `order_kind='SERVICE'`를 `charged_staff_id`로 group |
+| 서비스 주문 정가 | OrderItems `order_id` (위 "주문 항목" map 재사용) |
 
 Orders가 수천 행을 넘기 시작하면 당일 Sheet만 활성 데이터로 두고 과거 행사는 별도 파일로 archive한다. 행마다 `getRange().getValue()`를 반복하지 않는다.
 
 ## 17. 운영 View와 통계
 
-View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:V를 기준으로 한다. 열 문자(H, J, N, P …)는 suffix 열을 추가한 뒤에도 그대로다.
+View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수식은 Orders 열 순서 A:Z를 기준으로 한다. 열 문자(H, J, N, P …)는 suffix 열을 추가한 뒤에도 그대로다 — W:Z를 붙이며 바꾼 것은 범위뿐이고 조건절은 한 글자도 바뀌지 않았다.
 
 ### 상태별 View
 
 `View_AllOrders!A1`
 
 ```gs
-=QUERY(Orders!A:V,"select * where N = 'COMMITTED' order by P desc",1)
+=QUERY(Orders!A:Z,"select * where N = 'COMMITTED' order by P desc",1)
 ```
 
 `View_Kitchen!A1`
 
 ```gs
-=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and (H = 'CONFIRMED' or H = 'PREPARING') order by P asc",1)
+=QUERY(Orders!A:Z,"select * where N = 'COMMITTED' and (H = 'CONFIRMED' or H = 'PREPARING') order by P asc",1)
 ```
 
 `View_Serving!A1`
 
 ```gs
-=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and H = 'SERVING' order by O asc",1)
+=QUERY(Orders!A:Z,"select * where N = 'COMMITTED' and H = 'SERVING' order by O asc",1)
 ```
 
 `View_Payment!A1`
 
 ```gs
-=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and J = 'UNPAID' and H <> 'CANCELLED' order by G asc, P asc",1)
+=QUERY(Orders!A:Z,"select * where N = 'COMMITTED' and J = 'UNPAID' and H <> 'CANCELLED' order by G asc, P asc",1)
 ```
 
 `View_Completed!A1`
 
 ```gs
-=QUERY(Orders!A:V,"select * where N = 'COMMITTED' and H = 'COMPLETED' order by Q desc",1)
+=QUERY(Orders!A:Z,"select * where N = 'COMMITTED' and H = 'COMPLETED' order by Q desc",1)
 ```
 
 `View_TableBills!A1` — TableSessions 열 순서 A:N 기준
@@ -577,7 +640,13 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 `View_WriteFailures!A1`
 
 ```gs
-=QUERY(Orders!A:V,"select * where N <> 'COMMITTED' order by P asc",1)
+=QUERY(Orders!A:Z,"select * where N <> 'COMMITTED' order by P asc",1)
+```
+
+`View_ServiceOrders!A1` — 서비스 지급 내역
+
+```gs
+=QUERY(Orders!A:Z,"select A, C, G, W, X, Y, Z where N = 'COMMITTED' and W = 'SERVICE' and H <> 'CANCELLED' order by P asc",1)
 ```
 
 `View_Calls!A1` — Calls 열 순서 A:J 기준
@@ -587,6 +656,9 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 ```
 
 이 View는 병합 전 원본 행이다. 같은 `table_id`가 여러 줄로 보이는 것이 정상이며, 묶어서 보여주는 것은 운영 화면의 책임이다. Sheet 수식으로 group 집계를 만들지 않는다.
+
+`select *` View의 spill 폭이 W:Z 추가로 22열에서 26열로 늘어난다. View Sheet는 A1 외에
+비워 둔다 — 옛 spill 범위 오른쪽에 값이 남아 있으면 `#REF!`가 난다.
 
 운영진이 View Sheet를 수정하면 안 된다. 상태 변경은 Orders 원본의 `status` dropdown 또는 Apps Script 커스텀 메뉴에서 수행한다. 호출 확인도 같은 이유로 Sheet 직접 편집이 아니라 커스텀 메뉴/운영 화면에서 수행한다 — 한 테이블의 `PENDING` 행을 전부 함께 바꿔야 하기 때문이다.
 
@@ -604,10 +676,21 @@ View Sheet는 선택 사항이며 canonical 데이터가 아니다. 다음 수�
 =QUERY(OrderItems!A:L,"select E, sum(H), sum(I) where E is not null and K = 'ACTIVE' group by E label sum(H) '판매수량', sum(I) '매출'",1)
 ```
 
+이 집계에는 주의가 필요하다. OrderItems에는 `order_kind`가 없어 서비스 지급분의 정가가
+`매출`에 그대로 섞인다. **판매수량은 정확하고 매출만 과대 계상된다.** QUERY는 Orders와
+join할 수 없으므로 수식만으로는 고칠 수 없다 — 순매출이 필요하면 helper View에
+`order_id → order_kind` lookup 열을 만들거나 Apps Script로 집계한다.
+
+스태프 부담금 총계는 Orders 쪽에서 바로 낸다.
+
+```gs
+=SUM(FILTER(Orders!Z2:Z, Orders!N2:N="COMMITTED", Orders!W2:W="SERVICE", Orders!H2:H<>"CANCELLED"))
+```
+
 테이블별 주문 금액:
 
 ```gs
-=QUERY(Orders!A:V,"select G, sum(K) where N = 'COMMITTED' and H <> 'CANCELLED' group by G label sum(K) '주문금액'",1)
+=QUERY(Orders!A:Z,"select G, sum(K) where N = 'COMMITTED' and H <> 'CANCELLED' group by G label sum(K) '주문금액'",1)
 ```
 
 시간대별 주문량은 helper View에서 `=HOUR(Orders!P2)`를 만든 뒤 QUERY로 집계하거나 Pivot Table을 권장한다. 취소 주문은 `status=CANCELLED`, `write_state=COMMITTED` Filter View로 확인한다.
@@ -624,7 +707,8 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - SINGLE 그룹의 min/max가 유효한가
 - default option 수가 max를 넘지 않는가
 - `NEXT_DISPLAY_NUMBER`가 기존 최대 display number보다 큰가
-- Orders의 `total_amount`가 ACTIVE OrderItems `line_total` 합과 일치하는가
+- `order_kind='GUEST'`인 Orders의 `total_amount`가 ACTIVE OrderItems `line_total` 합과 일치하는가
+- `order_kind='SERVICE'`인 Orders의 `total_amount`가 0인가
 - OrderItems `line_total = unit_price_snapshot * quantity`인가
 - OrderItems의 base + option delta 합이 unit snapshot과 일치하는가
 - terminal status의 timestamp와 cancel reason 정책이 충족되는가
@@ -643,4 +727,48 @@ setup 또는 행사 전 진단 함수는 다음을 모두 검사하고 오류가
 - Settings에 `STAFF_TOKEN_EPOCH`가 1 이상 정수로 존재하는가
 - Script Properties에 `STAFF_PASSCODE_HASH`와 `STAFF_TOKEN_SECRET`이 설정되어 있는가 (값은 검사하지 않고 존재 여부만 확인한다)
 - 청구 그룹의 종속 세션이 대표와 동일한 `payment_status`를 갖는가
-- 세션이 `PAID`인 그룹의 모든 Orders `payment_status`가 `PAID`로 mirror되어 있는가
+- 세션이 `PAID`인 그룹의 모든 `GUEST` Orders `payment_status`가 `PAID`로 mirror되어 있고, `SERVICE` Orders는 `WAIVED`인가
+- `order_kind`가 `GUEST`/`SERVICE` 중 하나이거나 비어 있는가 (빈 값은 `GUEST`)
+- `SERVICE` 주문에 `charged_staff_id`가 있고 StaffMembers에 존재하는가
+- `SERVICE` 주문의 `staff_charge_amount`가 `gross - floor(gross * STAFF_DISCOUNT_RATE / 100)`인가 (`gross` = ACTIVE `line_total` 합)
+- `GUEST` 주문의 `charged_staff_id`/`staff_charge_amount`/`service_reason`이 모두 비어 있는가
+- StaffMembers `staff_id`가 비어 있지 않고 중복되지 않는가
+- `settlement_status=SETTLED`인 스태프에 `settled_amount`와 `settled_at`이 모두 있는가
+- `SETTLED` 스태프의 `settled_amount`가 그 스태프의 비취소 SERVICE 주문 `staff_charge_amount` 합과 일치하는가
+- Settings에 `STAFF_DISCOUNT_RATE`가 0 이상 100 이하 정수로 존재하는가
+
+## 19. StaffMembers
+
+사전 등록된 학생회 명단이다. 서비스 지급의 부담자는 이 명단에서만 고른다. 명단 외 인원은
+없으므로 자유 입력 필드를 두지 않는다.
+
+| column | type | 필수 | 예시 | unique | index | 변경 주체 | 설명 |
+|---|---|---:|---|---:|---:|---|---|
+| `staff_id` | string | Y | `S-014` | Y | Y | 개발자/운영진 | 불변 ID. 이름이 바뀌어도 유지 |
+| `name` | string | Y | `김하늘` | N | N | 운영진 | 표시명 |
+| `affiliation` | string | N | `기획국` | N | N | 운영진 | 동명이인 구분과 정산 목록 정렬용 |
+| `active` | boolean | Y | `TRUE` | N | Y | 운영진 | FALSE면 신규 지급의 부담자로 선택 불가. 기존 주문과 정산은 유지 |
+| `sort_order` | integer | Y | `10` | N | Y | 운영진 | 선택 목록 정렬 |
+| `settlement_status` | enum | Y | `UNSETTLED` | N | Y | Apps Script | `UNSETTLED`, `SETTLED` |
+| `settled_amount` | integer >= 0 | N | `18400` | N | N | Apps Script | 정산 확정 시 snapshot |
+| `settled_at` | datetime | N | `2026-08-25 22:40:00` | N | N | Apps Script | 수금 완료 시각 |
+| `created_at` | datetime | Y | `2026-08-25 15:00:00` | N | N | Apps Script | 등록 시각 |
+| `updated_at` | datetime | Y | `2026-08-25 22:40:00` | N | N | Apps Script | 마지막 변경 |
+
+인덱스 map: `byStaffId`, `byActive`.
+
+- 미정산 금액은 **열로 저장하지 않는다.** 조회 시점에 그 스태프의 비취소 SERVICE 주문
+  `staff_charge_amount` 합으로 계산한다. §15 청구액과 같은 원칙이며, §1의 "canonical Sheet에
+  파생값을 넣지 않는다"를 따른다.
+- `settled_amount`는 파생값이 아니라 **수금 확정 snapshot**이다. TableSessions의
+  `final_amount`와 성격이 같다. 확정 후 주문이 정정되어도 수금액은 바뀌지 않는다.
+- 정산은 **행사 종료 후 스태프 1인당 1회**다. 부분 수금은 지원하지 않는다.
+- 스태프 행을 삭제하지 않는다. 더는 활동하지 않으면 `active=FALSE`로 둔다.
+- 이름은 §9의 노출 규칙에 따라 **고객 기기에도 표시**되는 값이다.
+
+Sample:
+
+| staff_id | name | affiliation | active | sort_order | settlement_status | settled_amount | settled_at |
+|---|---|---|---|---:|---|---:|---|
+| S-014 | 김하늘 | 기획국 | TRUE | 10 | SETTLED | 18400 | 2026-08-25 22:40:00 |
+| S-021 | 이도윤 | 홍보국 | TRUE | 20 | UNSETTLED |  |  |
