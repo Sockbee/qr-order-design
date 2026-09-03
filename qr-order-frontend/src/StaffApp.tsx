@@ -10,16 +10,18 @@ import {
 } from 'react-router-dom'
 import { TableDetailPanel } from './components/staff/TableDetailPanel'
 import { StaffLoginPage } from './pages/staff/StaffLoginPage'
-import {
-  StaffAddOrderRoute,
-  StaffTableOperationRoute,
-} from './pages/staff/StaffOperationRoutes'
+import { StaffTableOperationRoute } from './pages/staff/StaffOperationRoutes'
 import type { StaffOperation } from './pages/staff/StaffOperationRoutes'
+import {
+  StaffServiceRoute,
+  StaffSettlementRoute,
+} from './pages/staff/StaffServiceRoutes'
 import {
   StaffKitchenRoute,
   StaffPaymentRoute,
   StaffServingRoute,
 } from './pages/staff/StaffStationRoutes'
+import { StaffAvailabilityRoute } from './pages/staff/StaffAvailabilityRoute'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { StaffSettingsPage } from './pages/staff/StaffSettingsPage'
 import { useStaffAuth } from './hooks/useStaffAuth'
@@ -95,7 +97,9 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onClose={() => navigate('/staff/tables')}
                 onAcknowledgeCall={staff.acknowledge}
                 onStatusChange={detail.changeStatus}
-                onAddOrder={() => navigate(`/staff/tables/${tableId}/order`)}
+                onServiceOrder={() =>
+                  navigate(`/staff/tables/${tableId}/service`)
+                }
                 onConfirmPayment={() =>
                   navigate(`/staff/tables/${tableId}/payment`)
                 }
@@ -139,10 +143,10 @@ function StaffApp() {
           )}
         />
         <Route
-          path="/staff/tables/:tableId/order"
+          path="/staff/tables/:tableId/service"
           element={(
             <RequireStaffAuth auth={auth}>
-              <StaffAddOrderRoute />
+              <StaffServiceRoute />
             </RequireStaffAuth>
           )}
         />
@@ -188,6 +192,22 @@ function StaffApp() {
           element={(
             <RequireStaffAuth auth={auth}>
               <StaffPaymentRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/service"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffSettlementRoute />
+            </RequireStaffAuth>
+          )}
+        />
+        <Route
+          path="/staff/availability"
+          element={(
+            <RequireStaffAuth auth={auth}>
+              <StaffAvailabilityRoute />
             </RequireStaffAuth>
           )}
         />

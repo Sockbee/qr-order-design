@@ -1,5 +1,8 @@
-/* A03 — Add Order (92:817). Rail + menu column + 420px draft panel. */
-.add-order {
+/*
+ * A10 — Service Grant. Same three-column skeleton as A03 (92:817):
+ * 88px rail + fluid menu column + 420px panel.
+ */
+.service-order {
   display: flex;
   align-items: stretch;
   height: 100dvh;
@@ -7,7 +10,7 @@
   background: var(--color-bg-surface);
 }
 
-.add-order__main {
+.service-order__main {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -15,10 +18,10 @@
   min-height: 0;
 }
 
-.add-order__header {
+.service-order__header {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  align-items: baseline;
+  gap: var(--space-4);
   height: var(--layout-staff-header-height);
   flex-shrink: 0;
   padding: 0 var(--layout-staff-gutter);
@@ -26,15 +29,25 @@
   background: var(--color-bg-canvas);
 }
 
-.add-order__title {
-  flex: 1;
-  min-width: 0;
+.service-order__title {
   margin: 0;
   font: var(--type-title-screen);
   color: var(--color-text-strong);
 }
 
-.add-order__body {
+/*
+ * States the money rule in the header, where A03 has nothing. A grant looks
+ * exactly like an order until someone reads what it costs.
+ */
+.service-order__lead {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__body {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -44,13 +57,7 @@
   overflow-y: auto;
 }
 
-.add-order__manage-lead {
-  margin: 0;
-  font: var(--type-caption-default);
-  color: var(--color-text-muted);
-}
-
-.add-order__search {
+.service-order__search {
   width: 100%;
   height: var(--layout-staff-control-height);
   padding: 0 var(--space-4);
@@ -61,23 +68,19 @@
   color: var(--color-text-strong);
 }
 
-.add-order__search:focus {
+.service-order__search:focus {
   outline: none;
   border: 2px solid var(--color-border-selected);
   padding: 0 15px;
 }
 
-/*
- * Three columns at the design width, dropping to two when the pane narrows.
- * `auto-fill` rather than a fixed count so nothing overflows at 1024.
- */
-.add-order__grid {
+.service-order__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
   gap: var(--space-4);
 }
 
-.add-order__panel {
+.service-order__panel {
   display: flex;
   flex-direction: column;
   width: var(--layout-staff-panel-width);
@@ -87,40 +90,51 @@
   background: var(--color-bg-canvas);
 }
 
-.add-order__panel-head {
+.service-order__panel-head {
   flex-shrink: 0;
   padding: 18px 20px var(--space-4);
   border-bottom: 1px solid var(--color-border-default);
 }
 
-.add-order__panel-title {
+.service-order__panel-title {
   margin: 0;
   font: var(--type-title-section);
   color: var(--color-text-strong);
 }
 
-.add-order__panel-lead {
+.service-order__panel-lead {
   margin: 0;
   font: var(--type-caption-default);
-  color: var(--color-text-muted);
+  color: var(--color-text-body);
 }
 
-.add-order__draft {
+/*
+ * The draft and the picker share the panel's spare height. The draft is
+ * capped so a long order cannot push the picker off-screen — choosing who
+ * pays is the step that must never become unreachable.
+ */
+.service-order__draft {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  min-height: 0;
+  /*
+   * The draft yields space, the picker does not. Both scroll, but a draft
+   * line the operator just tapped is easy to re-find and a roster row they
+   * have not chosen yet is not — so the floor goes to the picker below.
+   */
+  flex-shrink: 1;
+  min-height: 96px;
+  max-height: 24%;
   padding: var(--space-3) 20px;
   overflow-y: auto;
 }
 
-.add-order__draft-list {
+.service-order__draft-list {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.add-order__draft-line {
+.service-order__draft-line {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -128,7 +142,7 @@
   border-bottom: 1px solid var(--color-border-default);
 }
 
-.add-order__draft-info {
+.service-order__draft-info {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -136,23 +150,41 @@
   min-width: 0;
 }
 
-.add-order__draft-name {
+.service-order__draft-name {
   font: var(--type-body-strong);
   color: var(--color-text-strong);
 }
 
-.add-order__draft-option {
+.service-order__draft-price {
   font: var(--type-caption-default);
-  color: var(--color-text-muted);
+  color: var(--color-text-body);
 }
 
-.add-order__draft-amount {
+.service-order__draft-amount {
   flex-shrink: 0;
   font: var(--type-body-strong);
   color: var(--color-text-strong);
 }
 
-.add-order__panel-foot {
+.service-order__charge {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  /* Search field plus roughly four roster rows before scrolling starts. */
+  min-height: 272px;
+  padding: var(--space-4) 20px;
+  border-top: 1px solid var(--color-border-default);
+}
+
+.service-order__section-title {
+  margin: 0;
+  flex-shrink: 0;
+  font: var(--type-body-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__panel-foot {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -161,7 +193,17 @@
   border-top: 1px solid var(--color-border-default);
 }
 
-.add-order__note {
+.service-order__message-label {
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+
+.service-order__optional {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__message {
   width: 100%;
   height: var(--layout-staff-control-height);
   padding: 0 var(--space-4);
@@ -172,27 +214,53 @@
   color: var(--color-text-strong);
 }
 
-.add-order__note:focus {
+.service-order__message:focus {
   outline: none;
   border: 2px solid var(--color-border-selected);
   padding: 0 15px;
 }
 
-.add-order__total {
+/*
+ * Body, not muted: this line is the only thing standing between an internal
+ * note and the diner's screen, so it must not fail contrast.
+ */
+.service-order__message-help {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__total {
   display: flex;
   align-items: baseline;
   gap: var(--space-3);
   margin: 0;
 }
 
-.add-order__total span {
+.service-order__total span {
   flex: 1;
   min-width: 0;
   font: var(--type-body-strong);
   color: var(--color-text-strong);
 }
 
-.add-order__total strong {
+.service-order__total strong {
   font: var(--type-staff-metric);
   color: var(--color-text-strong);
+}
+
+/*
+ * The guest total is the quieter of the two. It is always ₩0 and never the
+ * figure anyone acts on — the staff charge is.
+ */
+.service-order__total--guest span,
+.service-order__total--guest strong {
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.service-order__hint {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
 }

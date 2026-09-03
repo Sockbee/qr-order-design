@@ -1,0 +1,93 @@
+/* Same 342px station-card geometry as PaymentOrderCard (B03). */
+.settlement-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  width: var(--layout-staff-station-card-width);
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+}
+
+.settlement-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.settlement-card__who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/*
+ * Title/Section rather than the 32px table number: a name is longer than
+ * "T12" and has to survive four Korean characters without wrapping.
+ */
+.settlement-card__name {
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+.settlement-card__affiliation {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.settlement-card__money {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.settlement-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-body);
+}
+
+.settlement-card__row span,
+.settlement-card__final span {
+  flex: 1;
+  min-width: 0;
+}
+
+.settlement-card__row strong {
+  font: var(--type-caption-strong);
+}
+
+.settlement-card__final {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--color-text-strong);
+}
+
+.settlement-card__final span {
+  font: var(--type-body-strong);
+}
+
+/* The figure the treasurer actually collects. */
+.settlement-card__final strong {
+  font: var(--type-staff-metric);
+}
+
+.settlement-card__drift {
+  margin: 0;
+  padding: var(--space-3) 12px;
+  border-radius: var(--radius-btn-sm);
+  background: var(--color-status-attention-bg);
+  font: var(--type-caption-default);
+  color: var(--color-status-attention-fg);
+}

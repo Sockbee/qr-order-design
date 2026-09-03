@@ -1,6 +1,6 @@
 import { callAppsScript } from './client'
 import type { CartLine } from '../types/menu'
-import type { OrderStatus, PlacedOrder } from '../types/order'
+import type { OrderKind, OrderStatus, PlacedOrder } from '../types/order'
 import type { TableCredentials } from '../types/session'
 
 export interface CreateOrderResponse {
@@ -82,6 +82,10 @@ export interface OrderListItem {
   status: string
   publicStatus: OrderStatus
   totalAmount: number
+  /** Absent on rows written before the column existed — read as GUEST. */
+  orderKind?: OrderKind
+  serviceMessage?: string | null
+  chargedStaffName?: string | null
   createdAt: string
   items: Array<{
     name: string
@@ -133,5 +137,15 @@ export function mapRemoteOrders(
       total: order.totalAmount,
       placedAt: order.createdAt,
       status: order.publicStatus,
+      kind: order.orderKind ?? 'GUEST',
+      /*
+       * Only carried for comped rounds. A GUEST order has no message and no
+       * sponsor, and copying empty strings through would make the S08 card
+       * render an empty note block.
+       */
+      serviceMessage:
+        order.orderKind === 'SERVICE' ? (order.serviceMessage ?? null) : null,
+      chargedStaffName:
+        order.orderKind === 'SERVICE' ? (order.chargedStaffName ?? null) : null,
     }))
 }

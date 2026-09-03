@@ -1,12 +1,13 @@
 /**
  * Fallback content for API-free staff UI development, mirroring the sample
- * floor drawn on A01 — Table Home (90:2). Only `useStaffTableHome` reads it,
- * and only while `VITE_API_BASE_URL` is absent. Pages must never
- * import it directly.
+ * floor drawn on A01 — Table Home (90:2). Only hooks read it, and only
+ * while `VITE_API_BASE_URL` is absent. Pages must never import it directly.
  */
 
 import type {
   StaffCallGroup,
+  StaffMember,
+  StaffSettlement,
   StaffPaymentOrder,
   StaffStationOrder,
   StaffTableDetail,
@@ -229,6 +230,94 @@ export function staffPaymentQueue(): StaffPaymentOrder[] {
       },
       minutesSinceServed: 12,
       confirming: false,
+    }
+  })
+}
+
+/**
+ * The 학생회 roster and its settlement position, for API-free development of
+ * the service screens. Same rule as everything else here: only hooks read it,
+ * and only while `VITE_API_BASE_URL` is absent.
+ */
+const MEMBER_SEEDS: Array<{
+  id: number
+  name: string
+  affiliation: string
+  active?: boolean
+}> = [
+  { id: 1, name: '김하늘', affiliation: '기획국' },
+  { id: 2, name: '이도윤', affiliation: '홍보국' },
+  { id: 3, name: '박서준', affiliation: '기획국' },
+  { id: 4, name: '최민지', affiliation: '총무국' },
+  { id: 5, name: '정우성', affiliation: '홍보국' },
+  { id: 6, name: '한지우', affiliation: '대외협력국' },
+  { id: 7, name: '오세훈', affiliation: '총무국' },
+  { id: 8, name: '윤아름', affiliation: '기획국' },
+  { id: 9, name: '강태윤', affiliation: '대외협력국' },
+  { id: 10, name: '문가영', affiliation: '홍보국', active: false },
+]
+
+export const staffMembers: StaffMember[] = MEMBER_SEEDS.map((seed) => ({
+  staffId: `S-${String(seed.id).padStart(3, '0')}`,
+  name: seed.name,
+  affiliation: seed.affiliation,
+  active: seed.active ?? true,
+}))
+
+/** Charge is `gross - floor(gross * 20 / 100)`, matching schema §9. */
+function charge(gross: number): number {
+  return gross - Math.floor((gross * 20) / 100)
+}
+
+/*
+ * `message` is what the diner reads, so these read like something you would
+ * actually say to a table — not like internal reason codes.
+ */
+const GRANT_SEEDS: Array<{
+  staff: number
+  code: string
+  table: string
+  message: string | null
+  gross: number
+  at: string
+}> = [
+  { staff: 1, code: 'A-1071', table: 'T12', message: '오래 기다리셨습니다. 맛있게 드세요!', gross: 9_000, at: '2026-09-03T10:02:00.000Z' },
+  { staff: 1, code: 'A-1078', table: 'T03', message: '주문이 늦어져 죄송합니다. 서비스로 준비했어요', gross: 16_000, at: '2026-09-03T10:41:00.000Z' },
+  { staff: 1, code: 'A-1090', table: 'T07', message: null, gross: 5_000, at: '2026-09-03T11:12:00.000Z' },
+  { staff: 2, code: 'A-1074', table: 'T05', message: '많이 와주셔서 감사합니다. 즐거운 시간 되세요', gross: 24_000, at: '2026-09-03T10:18:00.000Z' },
+  { staff: 3, code: 'A-1082', table: 'T09', message: '빠진 메뉴가 있어 서비스로 함께 드립니다', gross: 11_000, at: '2026-09-03T10:55:00.000Z' },
+  { staff: 3, code: 'A-1088', table: 'T02', message: null, gross: 8_000, at: '2026-09-03T11:04:00.000Z' },
+  { staff: 4, code: 'A-1069', table: 'T14', message: '동아리 응원합니다. 맛있게 드세요!', gross: 32_000, at: '2026-09-03T09:47:00.000Z' },
+  { staff: 7, code: 'A-1085', table: 'T01', message: '기다려주셔서 감사합니다', gross: 6_000, at: '2026-09-03T10:59:00.000Z' },
+]
+
+export function staffSettlements(): StaffSettlement[] {
+  return staffMembers.map((member, index) => {
+    const grants = GRANT_SEEDS.filter(
+      (grant) => grant.staff === index + 1,
+    ).map((grant) => ({
+      orderId: `svc-${grant.code}`,
+      displayCode: grant.code,
+      tableId: grant.table,
+      serviceMessage: grant.message,
+      grossAmount: grant.gross,
+      chargeAmount: charge(grant.gross),
+      createdAt: grant.at,
+    }))
+    const chargeAmount = grants.reduce((sum, g) => sum + g.chargeAmount, 0)
+    // S-004 has already paid up, so the screen shows both sections populated.
+    const settled = member.staffId === 'S-004'
+    return {
+      staffId: member.staffId,
+      name: member.name,
+      affiliation: member.affiliation,
+      serviceOrderCount: grants.length,
+      grossAmount: grants.reduce((sum, g) => sum + g.grossAmount, 0),
+      chargeAmount,
+      settled,
+      settledAmount: settled ? chargeAmount : null,
+      settledAt: settled ? '2026-09-03T13:40:00.000Z' : null,
+      orders: grants,
     }
   })
 }

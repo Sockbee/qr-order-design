@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
+import { staffNavItems } from '../../components/staff/staffNavItems'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import {
   createAdminTable,
@@ -93,15 +94,7 @@ export function StaffSettingsPage() {
 
   return (
     <div className="staff-settings" data-staff-app>
-      <StaffNavigation
-        items={[
-          { label: '테이블', to: '/staff/tables', count: null },
-          { label: '주방', to: '/staff/kitchen', count: null },
-          { label: '서빙', to: '/staff/serving', count: null },
-          { label: '결제', to: '/staff/payment', count: null },
-          { label: '설정', to: '/staff/settings', count: null },
-        ]}
-      />
+      <StaffNavigation items={staffNavItems(null)} />
       <main className="staff-settings__main">
         <header className="staff-settings__header">
           <div>

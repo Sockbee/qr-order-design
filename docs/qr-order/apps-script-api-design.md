@@ -54,6 +54,9 @@ POST {STAFF_WEB_APP_URL}/exec/staff/menu/availability
 POST {STAFF_WEB_APP_URL}/exec/staff/orders/create
 POST {STAFF_WEB_APP_URL}/exec/staff/orders/update
 POST {STAFF_WEB_APP_URL}/exec/staff/orders/cancel
+POST {STAFF_WEB_APP_URL}/exec/staff/orders/service
+POST {STAFF_WEB_APP_URL}/exec/staff/settlements/list
+POST {STAFF_WEB_APP_URL}/exec/staff/settlements/confirm
 ```
 
 `staffToken`은 **request body**에 담는다. `Authorization` header를 쓰지 않는 이유는 위와 같다 — Apps Script event object가 임의 request header를 다루지 못하고, custom header는 CORS preflight를 유발한다.
@@ -358,9 +361,24 @@ Response `data`:
       "status": "PREPARING",
       "publicStatus": "preparing",
       "totalAmount": 23000,
+      "orderKind": "GUEST",
       "createdAt": "2026-08-25T10:24:00.000Z",
       "items": [
         { "name": "김치찌개", "quantity": 1, "lineTotal": 10000, "selectedOptions": ["보통", "공기밥 추가"] }
+      ]
+    },
+    {
+      "orderId": "f21b...",
+      "displayCode": "A-1071",
+      "status": "RECEIVED",
+      "publicStatus": "accepted",
+      "totalAmount": 0,
+      "orderKind": "SERVICE",
+      "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
+      "chargedStaffName": "김하늘",
+      "createdAt": "2026-08-25T11:02:00.000Z",
+      "items": [
+        { "name": "감자튀김", "quantity": 1, "lineTotal": 6000, "selectedOptions": [] }
       ]
     }
   ],
@@ -371,6 +389,14 @@ Response `data`:
 
 - `orders`는 최신 주문 먼저다.
 - `sessionTotalAmount`는 `COMMITTED`이며 `CANCELLED`가 아닌 주문 합계다. 후불 여부와 무관하다.
+- `orderKind`는 항상 있다. `SERVICE`인 주문은 `totalAmount: 0`이며 `serviceMessage`와
+  `chargedStaffName`이 함께 실린다. 손님이 이 항목이 왜 0원이고 누가 낸 것인지 알아야 하기
+  때문이다. `chargedStaffId`는 **고객 응답에 넣지 않는다** — 이름만 표시 목적으로 내려간다.
+- `serviceMessage`는 스태프가 지급 시점에 **손님에게 쓴 문장**이며 S08에 그대로 표시된다.
+  비어 있을 수 있고, 그때는 배지와 0원만 보인다.
+- SERVICE 주문의 `items[].lineTotal`은 **정가**다. 청구액이 아니라 무엇을 얼마짜리로
+  받았는지를 보여주는 값이며, 손님 화면은 이 줄에 취소선을 긋고 0원을 함께 보여준다.
+- `sessionTotalAmount`는 SERVICE 주문이 0을 더하므로 계산이 바뀌지 않는다.
 - 고객 status tracker는 가장 최근 비취소 주문의 `publicStatus`를 사용한다.
 - polling은 기본 15초, 탭이 hidden이면 중단, 실패 시 마지막 성공 값을 유지하고 exponential backoff+jitter를 적용한다.
 
@@ -546,10 +572,24 @@ Response `data`:
   "discountAmount": 29000,
   "finalAmount": 116000,
   "paymentStatus": "UNPAID",
-  "orderCount": 5
+  "orderCount": 5,
+  "serviceOrderCount": 2,
+  "serviceGrossAmount": 23000,
+  "serviceLines": [
+    {
+      "displayCode": "A-1071",
+      "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
+      "grossAmount": 9000,
+      "chargedStaffName": "김하늘"
+    }
+  ]
 }
 ```
 
+- `subtotalAmount`에는 SERVICE 주문이 **0으로 포함**되어 있다. 별도로 빼지 않는다.
+- `serviceGrossAmount`와 `serviceLines`는 표시용이며 청구액에 영향을 주지 않는다.
+  청구서에서 "9,000원 → 0원 (서비스 · 김하늘)"으로 보여주기 위한 값이다.
+- `orderCount`에는 SERVICE 주문도 포함된다.
 - 금액은 **조회 시점에 계산한다.** 결제 확정 전까지 Sheet에 저장하지 않으므로 주문이 추가/취소되면 즉시 반영된다.
 - 합석된 테이블을 조회하면 대표 세션의 청구를 반환하고 `mergedTableIds`로 관계를 알린다.
 - `discountAmount = floor(subtotalAmount * discountRate / 100)`. 버림이다.
@@ -623,6 +663,9 @@ Request:
 - 메모는 billing group의 가장 최근 `COMMITTED` 비취소 주문에 귀속한다. A08 화면이
   주문 하나가 아니라 테이블 단위로 열리기 때문에 선택 대상을 결정적으로 만드는 규칙이다.
 - `audience`는 `general/kitchen/serving`이며 Sheet에는 대문자 enum으로 저장한다.
+- `order_kind='SERVICE'`인 주문은 `SERVICE_ORDER_NOT_EDITABLE`로 거절한다.
+  `staff_charge_amount`가 지급 시점 동결값이므로 수량이 바뀌면 무결성 검사식이 깨진다.
+  오지급은 §4.19 취소 후 재지급으로 정정한다.
 - 결제 완료 세션은 `SESSION_ALREADY_PAID`로 거절한다.
 
 ### 4.19 `POST /orders/cancel` — 테이블 전체 주문 취소 (운영 A08)
@@ -632,7 +675,158 @@ Request: `{ "apiVersion": "v1", "tableId": "T08" }`
 - 현재 billing group의 미결제 `COMMITTED` 비취소 주문과 모든 항목을 취소한다.
 - 가격·옵션 snapshot 행은 삭제하지 않는다. 활성 합계는 0으로 다시 쓰고 취소 전 금액은
   audit detail에 남긴다.
+- SERVICE 주문을 취소해도 `staff_charge_amount` 열은 **지우지 않고 남긴다.** 취소 주문은
+  §4.21 정산 합계에서 제외되므로 값이 남아도 이중 청구되지 않으며, 무엇을 얼마에
+  지급했다가 물렀는지가 감사에 필요하다.
 - 결제 완료 세션은 `SESSION_ALREADY_PAID`로 거절한다.
+
+### 4.20 `POST /staff/orders/service` — 서비스 지급 (총무 아이패드)
+
+스태프가 손님 테이블에 메뉴를 무상 제공한다. 손님 청구액은 0원이고 정가의 일부를 지급을
+요청한 스태프가 부담한다. 지급은 총무 아이패드에서만 일어난다.
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "staffToken": "...",
+  "tableId": "T12",
+  "chargedStaffId": "S-014",
+  "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
+  "items": [
+    { "menuId": "kimchi-jjigae", "quantity": 1, "selectedOptionIds": ["kimchi-normal"] }
+  ]
+}
+```
+
+Response `data`:
+
+```json
+{
+  "orderId": "f21b...",
+  "displayCode": "A-1071",
+  "orderKind": "SERVICE",
+  "table": { "tableId": "T12", "displayName": "테이블 12" },
+  "status": "RECEIVED",
+  "publicStatus": "accepted",
+  "paymentStatus": "WAIVED",
+  "totalAmount": 0,
+  "serviceGrossAmount": 9000,
+  "staffDiscountRate": 20,
+  "staffChargeAmount": 7200,
+  "chargedStaff": { "staffId": "S-014", "name": "김하늘" },
+  "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
+  "createdAt": "2026-08-25T11:02:00.000Z",
+  "items": []
+}
+```
+
+- 항목 검증, 옵션 규칙, 품절 검증은 `orders/create`(§4.4)와 **완전히 동일**하다. 다른 것은
+  총액과 부담자뿐이다. `items`의 shape도 §4.4와 같고 정가 snapshot을 유지한다.
+- `totalAmount`는 항상 `0`이다. 요청에 금액을 넣을 수 없다(§4.4와 같은 금지 field 규칙).
+- `chargedStaffId`는 **필수**이며 StaffMembers에 존재하고 `active=TRUE`여야 한다. 없으면
+  `STAFF_MEMBER_NOT_FOUND`, 비활성이면 `STAFF_MEMBER_INACTIVE`다.
+- `serviceMessage`는 **손님 화면에 그대로 표시되는 문구**다. 내부 사유 메모가 아니다.
+  선택이며 100자로 제한한다. 비어 있으면 손님에게는 `서비스` 배지와 0원만 보인다.
+  스태프가 입력한 자유 텍스트가 손님 기기에 렌더링되므로 이스케이프해서 출력하고
+  HTML/마크다운을 해석하지 않는다.
+- 승인자는 요청·응답·Sheet 어디에도 없다. 지급이 총무 아이패드에서만 일어나 승인자가 항상
+  총무이며, 상수를 저장하지 않는다.
+- `staffChargeAmount`는 지급 시점에 계산해 `Orders.Z`에 **동결 저장**한다. 이후
+  `STAFF_DISCOUNT_RATE`를 바꿔도 기존 주문의 부담금은 바뀌지 않는다.
+- 이미 `PAID`인 세션에는 지급할 수 없다(`SESSION_ALREADY_PAID`).
+- §9대로 운영 주문 생성 계약에는 client request ID가 없다. 서버가 내부 ID를 발급하며
+  client-side idempotent replay는 제공하지 않는다.
+- AuditLog `SERVICE_ORDER_CREATED`, `detail_json`에
+  `{"chargedStaffId":"S-014","gross":9000,"charge":7200}`.
+
+### 4.21 `POST /staff/settlements/list` — 스태프별 정산 조회
+
+Request: `{ "apiVersion": "v1", "staffToken": "...", "includeSettled": false }`
+
+Response `data`:
+
+```json
+{
+  "staffDiscountRate": 20,
+  "members": [
+    {
+      "staffId": "S-014",
+      "name": "김하늘",
+      "affiliation": "기획국",
+      "serviceOrderCount": 3,
+      "grossAmount": 23000,
+      "chargeAmount": 18400,
+      "settlementStatus": "UNSETTLED",
+      "settledAmount": null,
+      "settledAt": null,
+      "orders": [
+        {
+          "orderId": "f21b...",
+          "displayCode": "A-1071",
+          "tableId": "T12",
+          "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
+          "grossAmount": 9000,
+          "chargeAmount": 7200,
+          "createdAt": "2026-08-25T11:02:00.000Z"
+        }
+      ]
+    }
+  ],
+  "totalChargeAmount": 41200,
+  "unsettledStaffCount": 4
+}
+```
+
+- `chargeAmount`는 그 스태프의 **비취소** SERVICE 주문 `staff_charge_amount` 합이다. §15
+  청구액과 같이 **조회 시점 계산**이며 Sheet에 저장하지 않는다.
+- 취소된 SERVICE 주문(`status='CANCELLED'`)은 합계와 `orders`에서 제외한다. 오지급 정정
+  경로가 곧 취소이기 때문이다.
+- `includeSettled=false`(기본)면 `settlement_status='SETTLED'` 스태프를 제외한다. `true`면
+  전원 반환하고, `SETTLED` 스태프의 `chargeAmount`는 재계산값, `settledAmount`는 확정
+  snapshot이다. **두 값이 다르면 확정 이후 주문이 정정된 것이므로 운영 화면이 경고를
+  띄운다.**
+- `orders`는 `createdAt` 오름차순이다.
+- 지급 이력이 0건인 스태프도 `chargeAmount: 0`으로 포함한다. 명단 전체가 정산 대상
+  목록이기 때문이다.
+
+### 4.22 `POST /staff/settlements/confirm` — 정산 완료 처리
+
+Request:
+
+```json
+{
+  "apiVersion": "v1",
+  "staffToken": "...",
+  "staffId": "S-014",
+  "expectedChargeAmount": 18400
+}
+```
+
+Response `data`:
+
+```json
+{
+  "staffId": "S-014",
+  "name": "김하늘",
+  "settlementStatus": "SETTLED",
+  "settledAmount": 18400,
+  "settledAt": "2026-08-25T13:40:00.000Z"
+}
+```
+
+- `expectedChargeAmount`는 **필수**다. 서버 재계산값과 다르면 `SETTLEMENT_AMOUNT_CHANGED`로
+  거절한다. §4.17 `expectedFinalAmount`와 같은 이유다 — 운영진이 본 적 없는 금액을
+  확정하는 일을 막는다.
+- 이미 `SETTLED`면 `SETTLEMENT_ALREADY_SETTLED`로 거절한다. 두 번 수금하지 않기 위해 멱등
+  성공으로 처리하지 않고 **명시적으로 거절**한다.
+- 확정 시 `settlement_status=SETTLED`, `settled_amount`, `settled_at`을 기록한다. **주문
+  행은 건드리지 않는다.** 스태프 부담금 트랙은 `Orders.payment_status`(테이블 청구)와
+  완전히 독립이다.
+- 정정이 필요하면 `settlement_status`를 `UNSETTLED`로 되돌리고 다시 확정한다(§15 결제 정정과
+  같은 방식). 되돌림은 AuditLog `STAFF_SETTLEMENT_REVERTED`로 남긴다.
+- 앱은 수금을 처리하지 않는다. 총무가 받았다는 사실만 기록한다.
 
 ## 5. 오류 코드
 
@@ -672,6 +866,11 @@ Request: `{ "apiVersion": "v1", "tableId": "T08" }`
 | `MERGE_CHAIN_NOT_ALLOWED` | 이미 합석된 테이블은 다시 합칠 수 없습니다. | N | 운영 화면 | Y |
 | `INVALID_DISCOUNT_RATE` | 허용되지 않은 할인율입니다. | N | 운영 화면 | Y |
 | `BILL_AMOUNT_CHANGED` | 금액이 변경되었습니다. 다시 확인해 주세요. | Y | 운영 화면 | Y |
+| `STAFF_MEMBER_NOT_FOUND` | 학생회 명단에서 찾을 수 없습니다. | N | 운영 화면 | Y |
+| `STAFF_MEMBER_INACTIVE` | 현재 선택할 수 없는 인원입니다. | N | 운영 화면 | Y |
+| `SERVICE_ORDER_NOT_EDITABLE` | 서비스 주문은 수정할 수 없습니다. 취소 후 다시 지급해 주세요. | N | 운영 화면 | Y |
+| `SETTLEMENT_ALREADY_SETTLED` | 이미 정산 완료된 인원입니다. | N | 운영 화면 | Y |
+| `SETTLEMENT_AMOUNT_CHANGED` | 정산 금액이 변경되었습니다. 다시 확인해 주세요. | Y | 운영 화면 | Y |
 | `INTERNAL_ERROR` | 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
 | `ORDER_WRITE_IN_PROGRESS` | 주문 처리 결과를 확인하고 있습니다. | Y | Y | Y |
 | `LOCK_TIMEOUT` | 주문이 몰리고 있습니다. 잠시 후 다시 시도해 주세요. | Y | Y | Y |
@@ -1528,6 +1727,33 @@ async function submitOrder(tableId: string, tableToken: string, items: unknown[]
   활성 항목만 합산하되 취소 항목의 가격·옵션 snapshot은 감사와 상세 표시를 위해 남긴다.
 - A08 메모는 테이블의 가장 최근 활성 주문에 귀속한다. 별도 TableNotes Sheet를 만들지
   않아 기존 조회 구조를 유지하고, 노출 대상만 `note_audience`로 구분한다.
+
+2026-09-03 서비스 지급 확정:
+
+- 서비스 지급은 Orders에 `order_kind`로 표현한다. 별도 Sheet를 만들지 않아 세션·주방·상태
+  파이프라인을 그대로 재사용한다.
+- SERVICE 주문의 손님 청구액은 `total_amount=0`이며 스키마 §15 subtotal 식은 **변경하지
+  않는다.** 0이 그대로 합산되기 때문이다. 대신 §18의 `total_amount = line_total 합` 검사에
+  `order_kind` 조건을 붙인다.
+- OrderItems의 정가 snapshot은 SERVICE 주문에서도 유지한다. 부담금 근거와 메뉴별 판매량
+  통계가 여기에 의존한다. 그 대가로 §17 메뉴별 **매출** 집계에는 서비스분이 섞이므로 주의
+  문구를 남긴다.
+- `staff_charge_amount`는 line별이 아니라 주문 총액에 floor 1회로 계산하며, §15와 동일하게
+  **할인액을 floor한 뒤 차감**한다. 부담액을 직접 floor하면 §15와 1원 단위로 어긋난다.
+- SERVICE 주문의 `payment_status`는 `WAIVED`로 고정한다. 기존 `View_Payment`와 총매출
+  수식에서 자동으로 빠지며, §15 결제 mirror의 유일한 예외다.
+- 승인자 열을 두지 않는다. 지급이 총무 아이패드에서만 일어나 승인자가 상수이며, 상수를
+  열로 저장하지 않는다.
+- 부담 스태프 이름은 고객 응답과 청구서에 싣고 스테이션(주방/서빙) 응답에서는 **필드째
+  제외**한다. `null`로 채우지 않는다.
+- Orders W:Z 추가에 맞춰 스키마 §17의 Orders 참조 View 범위를 `A:V` → `A:Z`로 확장한다.
+  조건절 열 문자는 끝 추가라 무변경이다. bootstrap은 §9의 suffix migration 규칙대로
+  canonical prefix 뒤 빈 열에만 자동 추가한다.
+- 정산은 스태프 1인당 행사 후 1회다. 부분 수금과 분할 정산은 지원하지 않는다.
+- 서비스 지급의 자유 입력 필드는 내부 사유가 아니라 **손님에게 보내는 메시지**다. 열 이름을
+  `service_reason`이 아니라 `service_message`로 두는 이유가 이것이다 — "사유"로 읽히면
+  운영진이 내부 표현을 적고 그 문장이 손님 기기에 그대로 뜬다. 주방·서빙 응답에서는 부담자
+  이름과 함께 필드째 제외한다.
 
 ## 10. 구현 시 남은 결정
 

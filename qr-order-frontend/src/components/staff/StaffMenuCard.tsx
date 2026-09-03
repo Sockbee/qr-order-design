@@ -8,9 +8,9 @@ interface StaffMenuCardProps {
 }
 
 /**
- * A03 menu tile (92:840). Tapping adds it straight to the draft — there is no
- * confirm step, because the draft panel on the right *is* the confirmation
- * and every line there is still editable.
+ * The staff menu tile (92:840), now used by A10 — Service Grant. Tapping adds
+ * it straight to the draft: the draft panel on the right is where a line is
+ * still editable, and A10's own confirm dialog is the commit step.
  */
 export function StaffMenuCard({ item, onAdd }: StaffMenuCardProps) {
   return (
@@ -36,9 +36,10 @@ interface AvailabilityCardProps {
 }
 
 /**
- * 품절 관리 (102:1579). Not an inventory product — it does one thing: stop a
- * dish that has run out from being ordered. One tap switches it, with no
- * confirm step, because it can be switched straight back.
+ * 품절 관리 (102:1579), the card behind `StaffAvailabilityPage`. Not an
+ * inventory product — it does one thing: stop a dish that has run out from
+ * being ordered. One tap switches it, with no confirm step, because it can be
+ * switched straight back.
  */
 export function AvailabilityCard({
   item,

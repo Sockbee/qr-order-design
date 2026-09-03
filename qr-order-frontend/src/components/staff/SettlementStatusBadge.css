@@ -1,0 +1,29 @@
+/* Geometry matches .table-status-badge; only the two states differ. */
+.settlement-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 10px;
+  border-radius: var(--radius-md);
+  font: var(--type-caption-strong);
+  white-space: nowrap;
+}
+
+.settlement-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* Same tokens as the unpaid/paid bill badges — a debt is a debt. */
+.settlement-badge--unsettled {
+  background: var(--color-staff-status-unpaid-bg);
+  color: var(--color-staff-status-unpaid-fg);
+}
+
+.settlement-badge--settled {
+  background: var(--color-staff-status-paid-bg);
+  color: var(--color-staff-status-paid-fg);
+}

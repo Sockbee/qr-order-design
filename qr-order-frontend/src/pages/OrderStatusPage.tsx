@@ -84,6 +84,9 @@ export function OrderStatusPage({
             round={round}
             placedAt={order.placedAt}
             status={order.status}
+            service={order.kind === 'SERVICE'}
+            serviceMessage={order.serviceMessage}
+            chargedStaffName={order.chargedStaffName}
           >
             {order.lines.map((line, index) => {
               const currentMenuItem = menuItems.find(
@@ -98,6 +101,7 @@ export function OrderStatusPage({
                   name={name}
                   quantity={line.quantity}
                   amount={line.unitPrice * line.quantity}
+                  comped={order.kind === 'SERVICE'}
                 />
               )
             })}

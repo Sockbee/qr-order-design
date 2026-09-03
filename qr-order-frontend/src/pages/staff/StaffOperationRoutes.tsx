@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { StaffTableHomePage } from './StaffTableHomePage'
-import { StaffAddOrderPage } from './StaffAddOrderPage'
-import type { OrderDraftLine } from './StaffAddOrderPage'
 import { DiscountDialog } from '../../components/staff/DiscountDialog'
 import { EditOrderPanel } from '../../components/staff/EditOrderPanel'
 import { MergeTablesDialog } from '../../components/staff/MergeTablesDialog'
@@ -10,12 +8,9 @@ import { MoveTableDialog } from '../../components/staff/MoveTableDialog'
 import { SplitTablesDialog } from '../../components/staff/SplitTablesDialog'
 import { ConfirmDialog } from '../../components/staff/StaffDialog'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
-import { useStaffMenu } from '../../hooks/useStaffMenu'
 import { useStaffOperations } from '../../hooks/useStaffOperations'
 import { useStaffTableDetail } from '../../hooks/useStaffTableDetail'
 import { useStaffTableHome } from '../../hooks/useStaffTableHome'
-import { createStaffOrder } from '../../api/staff/menu'
-import { hasStaffApi } from '../../api/staff/client'
 import { formatStaffAmount } from '../../utils/price'
 import type { StaffNoteAudience } from '../../types/staff'
 
@@ -214,85 +209,5 @@ export function StaffTableOperationRoute({
         />
       )}
     </>
-  )
-}
-
-/** A03 — Add Order. A full screen of its own, not a dialog. */
-export function StaffAddOrderRoute() {
-  const { tableId = '' } = useParams()
-  const navigate = useNavigate()
-  const menu = useStaffMenu()
-  const [draft, setDraft] = useState<OrderDraftLine[]>([])
-  const [note, setNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-
-  const close = () => navigate(`/staff/tables/${tableId}`)
-
-  const add = (itemId: string) => {
-    const item = menu.items.find((candidate) => candidate.id === itemId)
-    if (!item) return
-    setDraft((current) => {
-      const existing = current.find((line) => line.itemId === itemId)
-      if (existing) {
-        return current.map((line) =>
-          line.itemId === itemId
-            ? { ...line, quantity: line.quantity + 1 }
-            : line,
-        )
-      }
-      return [
-        ...current,
-        {
-          itemId,
-          name: item.name,
-          optionSummary: '기본',
-          unitPrice: item.price,
-          quantity: 1,
-        },
-      ]
-    })
-  }
-
-  const changeQuantity = (itemId: string, quantity: number) => {
-    setDraft((current) =>
-      quantity <= 0
-        ? current.filter((line) => line.itemId !== itemId)
-        : current.map((line) =>
-            line.itemId === itemId ? { ...line, quantity } : line,
-          ),
-    )
-  }
-
-  const submit = () => {
-    if (!hasStaffApi()) {
-      close()
-      return
-    }
-    setSubmitting(true)
-    void createStaffOrder(
-      tableId,
-      draft.map((line) => ({ itemId: line.itemId, quantity: line.quantity })),
-      note.trim() || null,
-    )
-      .then(close)
-      .finally(() => setSubmitting(false))
-  }
-
-  return (
-    <StaffAddOrderPage
-      tableId={tableId}
-      categories={menu.categories}
-      items={menu.items}
-      draft={draft}
-      note={note}
-      submitting={submitting}
-      togglingItemId={menu.toggling}
-      onAdd={add}
-      onQuantityChange={changeQuantity}
-      onNoteChange={setNote}
-      onSetSoldOut={menu.setSoldOut}
-      onSubmit={submit}
-      onClose={close}
-    />
   )
 }

@@ -13,7 +13,8 @@ export interface TableDetailActions {
   onClose: () => void
   onAcknowledgeCall: (tableId: string) => void
   onStatusChange: (status: StaffOrderStatus) => void
-  onAddOrder: () => void
+  /** A10 — grant a service order this table is not billed for. */
+  onServiceOrder: () => void
   onConfirmPayment: () => void
   onMove: () => void
   onMerge: () => void
@@ -65,7 +66,7 @@ export function TableDetailPanel({
   onClose,
   onAcknowledgeCall,
   onStatusChange,
-  onAddOrder,
+  onServiceOrder,
   onConfirmPayment,
   onMove,
   onMerge,
@@ -195,8 +196,16 @@ export function TableDetailPanel({
       </div>
 
       <footer className="detail-panel__actions">
-        <OperationalButton block onClick={onAddOrder}>
-          주문 추가
+        {/*
+          A02 no longer places orders on the diner's behalf — guests order
+          from their own phones, so the panel's lead action is the one thing
+          staff can only do from here: comp a round.
+          Reaching A10 costs nothing by itself; the grant is not written until
+          a staff member is picked and the confirm dialog is read, so landing
+          here by muscle memory is recoverable.
+        */}
+        <OperationalButton block onClick={onServiceOrder}>
+          서비스 제공
         </OperationalButton>
         <OperationalButton
           block

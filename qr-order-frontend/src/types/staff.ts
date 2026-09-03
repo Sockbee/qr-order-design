@@ -172,3 +172,68 @@ export interface StaffStationCounts {
   serving: number
   payment: number
 }
+
+/**
+ * A02/A03 gained a second kind of order (schema §9 "서비스 지급 주문"). The
+ * guest pays 0 and a named staff member carries a share of the list price.
+ * `GUEST` is the default for every order that predates the column.
+ */
+export type StaffOrderKind = 'GUEST' | 'SERVICE'
+
+/**
+ * One row of the pre-registered 학생회 명단 (schema §19). Nobody outside the
+ * roster can be charged, so this list is the entire input domain of the
+ * 부담 스태프 picker — there is no free-text fallback.
+ */
+export interface StaffMember {
+  staffId: string
+  name: string
+  /** Disambiguates 동명이인; also the settlement list's grouping caption. */
+  affiliation: string | null
+  active: boolean
+}
+
+/**
+ * What one service order costs its sponsor. Frozen at the moment of the
+ * grant (§4.20) — the table's own discount rate never touches it, and the
+ * two rates are independent settings.
+ */
+export interface StaffServiceCharge {
+  /** Sum of the ACTIVE line totals, at list price. */
+  grossAmount: number
+  /** `STAFF_DISCOUNT_RATE`, the share the staff member is let off. */
+  discountRate: number
+  /** `gross - floor(gross * rate / 100)` — §15's formula, not its inverse. */
+  chargeAmount: number
+}
+
+/** One granted service order, as the settlement screen lists it. */
+export interface StaffSettlementOrder {
+  orderId: string
+  displayCode: string
+  tableId: string
+  /** Written to the diner and shown on their device — not an internal note. */
+  serviceMessage: string | null
+  grossAmount: number
+  chargeAmount: number
+  createdAt: string
+}
+
+/**
+ * One staff member's settlement position (§4.21). `chargeAmount` is computed
+ * at read time from the un-cancelled service orders; `settledAmount` is the
+ * snapshot taken when the money actually changed hands. They differ only
+ * when an order was corrected after settlement — which the card calls out.
+ */
+export interface StaffSettlement {
+  staffId: string
+  name: string
+  affiliation: string | null
+  serviceOrderCount: number
+  grossAmount: number
+  chargeAmount: number
+  settled: boolean
+  settledAmount: number | null
+  settledAt: string | null
+  orders: StaffSettlementOrder[]
+}

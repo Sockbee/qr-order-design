@@ -4,6 +4,7 @@ import './StaffStationPage.css'
 import { StaffEmptyState } from '../../components/staff/StaffEmptyState'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
+import { staffNavItems } from '../../components/staff/staffNavItems'
 import type { StaffStationCounts } from '../../types/staff'
 
 export interface StationSection {
@@ -18,6 +19,8 @@ interface StaffStationPageProps {
   title: string
   summary: string | null
   counts: StaffStationCounts | null
+  /** Unsettled staff, for the 서비스 rail badge. Null where unknown. */
+  serviceCount?: number | null
   sections: StationSection[]
   loading: boolean
   errorMessage?: string
@@ -46,6 +49,7 @@ export function StaffStationPage({
   title,
   summary,
   counts,
+  serviceCount = null,
   sections,
   loading,
   errorMessage,
@@ -55,20 +59,7 @@ export function StaffStationPage({
 
   return (
     <div className="station-page" data-staff-app>
-      <StaffNavigation
-        items={[
-          {
-            label: '테이블',
-            to: '/staff/tables',
-            count: counts?.tables ?? null,
-            attention: true,
-          },
-          { label: '주방', to: '/staff/kitchen', count: counts?.kitchen ?? null },
-          { label: '서빙', to: '/staff/serving', count: counts?.serving ?? null },
-          { label: '결제', to: '/staff/payment', count: counts?.payment ?? null },
-          { label: '설정', to: '/staff/settings', count: null },
-        ]}
-      />
+      <StaffNavigation items={staffNavItems(counts, { service: serviceCount })} />
 
       <main className="station-page__main">
         <header className="station-page__header">
