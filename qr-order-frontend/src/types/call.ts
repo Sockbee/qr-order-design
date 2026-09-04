@@ -20,21 +20,30 @@ export interface CallReasonOption {
 }
 
 /**
+ * Every reason's label, including ones no longer offered in the picker
+ * (`ORDER_INQUIRY`, `PAYMENT_REQUEST`) — staff still need to read those on
+ * calls raised before the picker was trimmed down.
+ */
+const CALL_REASON_LABELS: Record<CallReason, string> = {
+  WATER_UTENSIL: '물 · 수저',
+  SIDE_PLATE: '앞접시',
+  ORDER_INQUIRY: '주문 문의',
+  PAYMENT_REQUEST: '결제 요청',
+  OTHER: '기타',
+}
+
+/**
  * Picking a reason is optional — it only helps staff decide who walks over.
- * Calling with nothing selected sends `OTHER`.
+ * Calling with nothing selected sends `OTHER`, same as explicitly picking 기타.
  */
 export const CALL_REASON_OPTIONS: CallReasonOption[] = [
-  { reason: 'WATER_UTENSIL', label: '물 · 수저' },
-  { reason: 'SIDE_PLATE', label: '앞접시' },
-  { reason: 'ORDER_INQUIRY', label: '주문 문의' },
-  { reason: 'PAYMENT_REQUEST', label: '결제 요청' },
+  { reason: 'WATER_UTENSIL', label: CALL_REASON_LABELS.WATER_UTENSIL },
+  { reason: 'SIDE_PLATE', label: CALL_REASON_LABELS.SIDE_PLATE },
+  { reason: 'OTHER', label: CALL_REASON_LABELS.OTHER },
 ]
 
 export function callReasonLabel(reason: CallReason): string {
-  return (
-    CALL_REASON_OPTIONS.find((option) => option.reason === reason)?.label ??
-    '직원 호출'
-  )
+  return CALL_REASON_LABELS[reason] ?? '직원 호출'
 }
 
 /** A call this device raised and staff has not resolved yet. */
