@@ -8,6 +8,7 @@ import { MoveTableDialog } from '../../components/staff/MoveTableDialog'
 import { SplitTablesDialog } from '../../components/staff/SplitTablesDialog'
 import { ConfirmDialog } from '../../components/staff/StaffDialog'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
+import { TableMemoPanel } from '../../components/staff/TableMemoPanel'
 import { useStaffOperations } from '../../hooks/useStaffOperations'
 import { useStaffTableDetail } from '../../hooks/useStaffTableDetail'
 import { useStaffTableHome } from '../../hooks/useStaffTableHome'
@@ -25,6 +26,7 @@ export type StaffOperation =
   | 'split'
   | 'discount'
   | 'edit'
+  | 'note'
   | 'cancel'
 
 /** §4.13 allows one configured rate; 20 is the seeded value. */
@@ -87,23 +89,10 @@ export function StaffTableOperationRoute({
             <EditOrderPanel
               tableId={tableId}
               items={detail.detail?.items ?? []}
-              note={currentNote}
-              noteAudience={currentNoteAudience}
-              savingNote={operations.submitting}
               onQuantityChange={(itemId, quantity) =>
                 operations.quantity(itemId, quantity, detail.reload)
               }
               onCancelItem={setCancelItemId}
-              onNoteChange={setNote}
-              onAudienceChange={setNoteAudience}
-              onSaveNote={() =>
-                operations.saveNote(
-                  tableId,
-                  currentNote,
-                  currentNoteAudience,
-                  close,
-                )
-              }
               onClose={close}
             />
           ),
@@ -127,6 +116,25 @@ export function StaffTableOperationRoute({
         )}
       </>
     )
+  }
+
+  if (operation === 'note') {
+    return home({
+      panel: (
+        <TableMemoPanel
+          tableId={tableId}
+          note={currentNote}
+          noteAudience={currentNoteAudience}
+          saving={operations.submitting}
+          onNoteChange={setNote}
+          onAudienceChange={setNoteAudience}
+          onSave={() =>
+            operations.saveNote(tableId, currentNote, currentNoteAudience, close)
+          }
+          onClose={close}
+        />
+      ),
+    })
   }
 
   return (

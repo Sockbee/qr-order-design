@@ -1,0 +1,109 @@
+/* 테이블 메모. Split out of A08 — Edit Order / Note (97:1407). */
+.memo-panel {
+  display: flex;
+  flex-direction: column;
+  width: var(--layout-staff-panel-width);
+  flex-shrink: 0;
+  min-height: 0;
+  border-left: 1px solid var(--color-border-default);
+  background: var(--color-bg-canvas);
+}
+
+.memo-panel__head {
+  flex-shrink: 0;
+  padding: 18px 20px var(--space-4);
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.memo-panel__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.memo-panel__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font: var(--type-title-section);
+  color: var(--color-text-strong);
+}
+
+.memo-panel__close {
+  flex-shrink: 0;
+  width: var(--layout-min-touch-target);
+  height: var(--layout-min-touch-target);
+  border: none;
+  background: none;
+  color: var(--color-text-muted);
+  font: var(--type-title-section);
+  cursor: pointer;
+}
+
+.memo-panel__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4) 20px 20px;
+}
+
+.memo-panel__input {
+  width: 100%;
+  padding: 12px var(--space-4);
+  border: 2px solid var(--color-border-selected);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+  resize: none;
+}
+
+.memo-panel__input:focus {
+  outline: none;
+}
+
+.memo-panel__audiences {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/*
+ * The tag says which team the memo is addressed to. Colour reinforces it but
+ * the label carries it — the chips read correctly in greyscale.
+ */
+.memo-panel__audience {
+  padding: var(--space-2) 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font: var(--type-micro-badge);
+  cursor: pointer;
+}
+
+.memo-panel__audience--kitchen {
+  background: var(--color-staff-status-cooking-bg);
+  color: var(--color-staff-status-cooking-fg);
+}
+
+.memo-panel__audience--serving {
+  background: var(--color-staff-status-ready-bg);
+  color: var(--color-staff-status-ready-fg);
+}
+
+.memo-panel__audience--general {
+  background: var(--color-bg-surface);
+  color: var(--color-text-body);
+}
+
+.memo-panel__audience--selected {
+  border-color: currentColor;
+}
+
+.memo-panel__actions {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.memo-panel__actions .op-button {
+  flex: 1;
+  min-width: 0;
+}

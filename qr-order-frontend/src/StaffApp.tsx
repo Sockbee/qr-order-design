@@ -150,7 +150,7 @@ function StaffApp() {
             </RequireStaffAuth>
           )}
         />
-        {(['move', 'merge', 'split', 'discount', 'edit', 'cancel'] as StaffOperation[]).map(
+        {(['move', 'merge', 'split', 'discount', 'edit', 'note', 'cancel'] as StaffOperation[]).map(
           (operation) => (
             <Route
               key={operation}
@@ -163,14 +163,6 @@ function StaffApp() {
             />
           ),
         )}
-        <Route
-          path="/staff/tables/:tableId/note"
-          element={(
-            <RequireStaffAuth auth={auth}>
-              <StaffTableOperationRoute operation="edit" />
-            </RequireStaffAuth>
-          )}
-        />
         <Route
           path="/staff/kitchen"
           element={(
