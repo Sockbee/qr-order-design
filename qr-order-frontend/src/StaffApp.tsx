@@ -100,9 +100,6 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onServiceOrder={() =>
                   navigate(`/staff/tables/${tableId}/service`)
                 }
-                onConfirmPayment={() =>
-                  navigate(`/staff/tables/${tableId}/payment`)
-                }
                 onMove={() => navigate(`/staff/tables/${tableId}/move`)}
                 onMerge={() => navigate(`/staff/tables/${tableId}/merge`)}
                 onSplit={() => navigate(`/staff/tables/${tableId}/split`)}

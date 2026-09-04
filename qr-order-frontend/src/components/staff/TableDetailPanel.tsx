@@ -15,7 +15,6 @@ export interface TableDetailActions {
   onStatusChange: (status: StaffOrderStatus) => void
   /** A10 — grant a service order this table is not billed for. */
   onServiceOrder: () => void
-  onConfirmPayment: () => void
   onMove: () => void
   onMerge: () => void
   onSplit: () => void
@@ -46,10 +45,12 @@ function elapsedLabel(minutes: number | null): string | null {
  * staff/TableDetailPanel (89:8). A 420px inspector, not a full page: the
  * table grid has to stay in view so the next table is one tap away.
  *
- * The action hierarchy follows how often each is actually used — 주문 추가
- * (constant, primary) → 결제 확인 (once per table) → 이동/합석/분리/할인 (rare)
- * → 메모/수정/취소. Only 주문 취소 is danger, as an outline, and it is the one
- * action behind a confirm dialog.
+ * The action hierarchy follows how often each is actually used — 서비스 제공
+ * (constant, primary) → 이동/합석/분리/할인 (rare) → 메모/수정/취소. Only 주문
+ * 취소 is danger, as an outline, and it is the one action behind a confirm
+ * dialog. Payment confirmation happens on the 결제 station queue
+ * (`/staff/payment`), not from this panel — the table-scoped 결제 확인 button
+ * used to deep-link to a route that never existed and was removed.
  *
  * When a call is pending the banner pins to the very top of the header, above
  * the status control: what to carry over matters before what the order state
@@ -67,7 +68,6 @@ export function TableDetailPanel({
   onAcknowledgeCall,
   onStatusChange,
   onServiceOrder,
-  onConfirmPayment,
   onMove,
   onMerge,
   onSplit,
@@ -206,14 +206,6 @@ export function TableDetailPanel({
         */}
         <OperationalButton block onClick={onServiceOrder}>
           서비스 제공
-        </OperationalButton>
-        <OperationalButton
-          block
-          variant="secondary"
-          disabled={bill.paid}
-          onClick={onConfirmPayment}
-        >
-          {bill.paid ? '결제 완료' : '결제 확인'}
         </OperationalButton>
         <div className="detail-panel__action-row">
           <OperationalButton variant="secondary" onClick={onMove}>
