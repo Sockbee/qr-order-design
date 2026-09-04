@@ -6,9 +6,10 @@
  * Decision A6; the staff side merges a table's pending calls into one row.
  */
 
-/** Matches the Calls sheet `reason` enum (google-sheets-schema.md §14). */
+/** Matches the `calls.reason` CHECK constraint (V1__initial_schema.sql, extended by V2). */
 export type CallReason =
   | 'WATER_UTENSIL'
+  | 'UTENSIL'
   | 'SIDE_PLATE'
   | 'ORDER_INQUIRY'
   | 'PAYMENT_REQUEST'
@@ -25,7 +26,8 @@ export interface CallReasonOption {
  * calls raised before the picker was trimmed down.
  */
 const CALL_REASON_LABELS: Record<CallReason, string> = {
-  WATER_UTENSIL: '물 · 수저',
+  WATER_UTENSIL: '물',
+  UTENSIL: '수저',
   SIDE_PLATE: '앞접시',
   ORDER_INQUIRY: '주문 문의',
   PAYMENT_REQUEST: '결제 요청',
@@ -38,6 +40,7 @@ const CALL_REASON_LABELS: Record<CallReason, string> = {
  */
 export const CALL_REASON_OPTIONS: CallReasonOption[] = [
   { reason: 'WATER_UTENSIL', label: CALL_REASON_LABELS.WATER_UTENSIL },
+  { reason: 'UTENSIL', label: CALL_REASON_LABELS.UTENSIL },
   { reason: 'SIDE_PLATE', label: CALL_REASON_LABELS.SIDE_PLATE },
   { reason: 'OTHER', label: CALL_REASON_LABELS.OTHER },
 ]

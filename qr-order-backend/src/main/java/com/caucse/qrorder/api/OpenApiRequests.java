@@ -45,7 +45,7 @@ public final class OpenApiRequests {
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
             @Schema(example = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                     requiredMode = Schema.RequiredMode.REQUIRED) String tableToken,
-            @Schema(allowableValues = {"WATER_UTENSIL", "SIDE_PLATE", "ORDER_INQUIRY", "PAYMENT_REQUEST", "OTHER"},
+            @Schema(allowableValues = {"WATER_UTENSIL", "UTENSIL", "SIDE_PLATE", "ORDER_INQUIRY", "PAYMENT_REQUEST", "OTHER"},
                     example = "WATER_UTENSIL", requiredMode = Schema.RequiredMode.REQUIRED) String reason,
             @Schema(format = "uuid", example = "f6741f72-b95e-40ca-b71a-7074c0872980",
                     requiredMode = Schema.RequiredMode.REQUIRED) String clientRequestId) {}
