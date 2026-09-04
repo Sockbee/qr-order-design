@@ -33,7 +33,6 @@ export interface StaffTableDetailResponse {
     quantity: number
     lineTotal: number
     status: string
-    note: string | null
   }>
   notes: Array<{
     noteId: string
@@ -107,7 +106,6 @@ export function mapStaffTableDetail(
       quantity: item.quantity,
       amount: item.lineTotal,
       cancelled: item.status === 'CANCELLED',
-      note: item.note,
     })),
     notes: response.notes,
     call: response.call

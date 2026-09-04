@@ -8,8 +8,7 @@ import type { StaffOrderItem as OrderItem } from '../../types/staff'
  * A cancelled line is struck through and chipped, never deleted — an
  * operational record that disappears cannot settle a dispute later.
  *
- * The memo sits directly under its line because it changes how the item is
- * cooked, so it must not be a step away.
+ * Memos are table-level only (`TableMemoPanel`) — there is no per-item memo.
  */
 export function StaffOrderItem({ item }: { item: OrderItem }) {
   return (
@@ -29,12 +28,6 @@ export function StaffOrderItem({ item }: { item: OrderItem }) {
           {formatStaffAmount(item.amount)}
         </span>
       </div>
-      {item.note && (
-        <p className="order-item__note">
-          <span className="order-item__note-tag">메모</span>
-          {item.note}
-        </p>
-      )}
     </li>
   )
 }

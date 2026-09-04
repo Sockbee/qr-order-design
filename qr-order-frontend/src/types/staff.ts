@@ -99,8 +99,6 @@ export interface StaffOrderItem {
   amount: number
   /** Cancelled lines stay in the list, struck through — see the component. */
   cancelled: boolean
-  /** Item-level memo, shown directly under the line. */
-  note: string | null
 }
 
 /**

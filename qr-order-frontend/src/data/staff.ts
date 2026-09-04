@@ -115,7 +115,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 2,
         amount: 18_000,
         cancelled: false,
-        note: '고수 빼주세요',
       },
       {
         itemId: `${tableId}-2`,
@@ -124,7 +123,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 1,
         amount: 9_000,
         cancelled: false,
-        note: null,
       },
       {
         itemId: `${tableId}-3`,
@@ -133,7 +131,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 3,
         amount: 15_000,
         cancelled: false,
-        note: null,
       },
       {
         itemId: `${tableId}-4`,
@@ -142,7 +139,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 1,
         amount: 15_000,
         cancelled: true,
-        note: null,
       },
     ],
     notes: [

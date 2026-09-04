@@ -62,42 +62,6 @@
   outline: none;
 }
 
-.memo-panel__audiences {
-  display: flex;
-  gap: var(--space-3);
-}
-
-/*
- * The tag says which team the memo is addressed to. Colour reinforces it but
- * the label carries it — the chips read correctly in greyscale.
- */
-.memo-panel__audience {
-  padding: var(--space-2) 12px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  font: var(--type-micro-badge);
-  cursor: pointer;
-}
-
-.memo-panel__audience--kitchen {
-  background: var(--color-staff-status-cooking-bg);
-  color: var(--color-staff-status-cooking-fg);
-}
-
-.memo-panel__audience--serving {
-  background: var(--color-staff-status-ready-bg);
-  color: var(--color-staff-status-ready-fg);
-}
-
-.memo-panel__audience--general {
-  background: var(--color-bg-surface);
-  color: var(--color-text-body);
-}
-
-.memo-panel__audience--selected {
-  border-color: currentColor;
-}
-
 .memo-panel__actions {
   display: flex;
   gap: var(--space-3);

@@ -13,7 +13,6 @@ import { useStaffOperations } from '../../hooks/useStaffOperations'
 import { useStaffTableDetail } from '../../hooks/useStaffTableDetail'
 import { useStaffTableHome } from '../../hooks/useStaffTableHome'
 import { formatStaffAmount } from '../../utils/price'
-import type { StaffNoteAudience } from '../../types/staff'
 
 /**
  * A03–A08 all act on one table, and all of them keep the table grid on
@@ -42,14 +41,11 @@ export function StaffTableOperationRoute({
   const staff = useStaffTableHome()
   const detail = useStaffTableDetail(tableId)
   const operations = useStaffOperations()
-  const [noteAudience, setNoteAudience] =
-    useState<StaffNoteAudience | null>(null)
   const [note, setNote] = useState<string | null>(null)
   const [cancelItemId, setCancelItemId] = useState<string | null>(null)
 
   const latestNote = detail.detail?.notes.at(-1)
   const currentNote = note ?? latestNote?.text ?? ''
-  const currentNoteAudience = noteAudience ?? latestNote?.audience ?? 'general'
 
   const close = () => navigate(`/staff/tables/${tableId}`)
   const table = staff.data?.tables.find(
@@ -124,13 +120,9 @@ export function StaffTableOperationRoute({
         <TableMemoPanel
           tableId={tableId}
           note={currentNote}
-          noteAudience={currentNoteAudience}
           saving={operations.submitting}
           onNoteChange={setNote}
-          onAudienceChange={setNoteAudience}
-          onSave={() =>
-            operations.saveNote(tableId, currentNote, currentNoteAudience, close)
-          }
+          onSave={() => operations.saveNote(tableId, currentNote, 'general', close)}
           onClose={close}
         />
       ),

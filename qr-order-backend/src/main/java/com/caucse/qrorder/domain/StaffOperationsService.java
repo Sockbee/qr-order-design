@@ -84,8 +84,7 @@ public class StaffOperationsService {
                     "paymentStatus", null, "items", List.of(), "notes", List.of(), "call", pendingCall(tableId));
         }
         List<Map<String, Object>> items = jdbc.query("""
-                SELECT i.order_item_id,i.menu_name_snapshot,i.quantity,i.line_total,i.status,
-                       o.note,o.note_audience,o.created_at
+                SELECT i.order_item_id,i.menu_name_snapshot,i.quantity,i.line_total,i.status
                 FROM order_items i JOIN orders o ON o.order_id=i.order_id
                 WHERE o.session_id = ANY(?::uuid[]) ORDER BY o.created_at,i.line_no
                 """, (rs, index) -> ApiEnvelope.map(
@@ -93,7 +92,7 @@ public class StaffOperationsService {
                 "selectedOptions", jdbc.queryForList("SELECT option_name_snapshot FROM order_item_options WHERE order_item_id=? ORDER BY sort_order",
                         String.class, rs.getObject("order_item_id", UUID.class)),
                 "quantity", rs.getInt("quantity"), "lineTotal", rs.getInt("line_total"),
-                "status", rs.getString("status"), "note", rs.getString("note")), (Object) uuidArray(bill.sessionIds()));
+                "status", rs.getString("status")), (Object) uuidArray(bill.sessionIds()));
         List<Map<String, Object>> notes = jdbc.query("""
                 SELECT order_id,note,note_audience FROM orders
                 WHERE session_id = ANY(?::uuid[]) AND note IS NOT NULL AND note<>'' ORDER BY created_at
