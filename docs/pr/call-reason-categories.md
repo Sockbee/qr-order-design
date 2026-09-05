@@ -11,7 +11,7 @@
 
 ### 사유 값 분리 (백엔드)
 
-- `qr-order-backend/src/main/resources/db/migration/V2__add_utensil_call_reason.sql`
+- `qr-order-backend/src/main/resources/db/migration/V3__add_utensil_call_reason.sql`
   — 신규 마이그레이션. `calls.reason` CHECK 제약조건을 드롭 후 `UTENSIL`을 추가해
   재생성. 기존 값(`WATER_UTENSIL`, `SIDE_PLATE`, `ORDER_INQUIRY`, `PAYMENT_REQUEST`,
   `OTHER`)은 그대로 유지되므로 기존 데이터에는 영향이 없습니다.
