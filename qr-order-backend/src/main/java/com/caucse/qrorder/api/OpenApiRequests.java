@@ -110,6 +110,29 @@ public final class OpenApiRequests {
             @Schema(example = "현장 추가") String note,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<StaffOrderItem> items) {}
 
+    @Schema(name = "StaffServiceOrderItemRequest")
+    public record StaffServiceOrderItem(
+            @Schema(example = "cola", requiredMode = Schema.RequiredMode.REQUIRED) String menuId,
+            @Schema(example = "1", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity,
+            @Schema(example = "[]") List<String> selectedOptionIds) {}
+
+    @Schema(name = "StaffServiceOrderCreateRequest")
+    public record StaffServiceOrderCreate(
+            @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
+            @Schema(example = "S-014", requiredMode = Schema.RequiredMode.REQUIRED) String chargedStaffId,
+            @Schema(example = "오래 기다리셨습니다. 맛있게 드세요!", maxLength = 100) String serviceMessage,
+            @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<StaffServiceOrderItem> items) {}
+
+    @Schema(name = "StaffSettlementListRequest")
+    public record StaffSettlementList(
+            @Schema(example = "false", defaultValue = "false") boolean includeSettled) {}
+
+    @Schema(name = "StaffSettlementConfirmRequest")
+    public record StaffSettlementConfirm(
+            @Schema(example = "S-014", requiredMode = Schema.RequiredMode.REQUIRED) String staffId,
+            @Schema(example = "18400", minimum = "0", requiredMode = Schema.RequiredMode.REQUIRED)
+            int expectedChargeAmount) {}
+
     @Schema(name = "StaffOrderUpdateRequest",
             description = "operation별 필드: quantity는 itemId/quantity, cancel-item은 itemId, note는 tableId/note/audience가 필요합니다.")
     public record StaffOrderUpdate(
@@ -186,5 +209,10 @@ public final class OpenApiRequests {
     @Schema(name = "TablesCsvImportRequest")
     public record TablesCsvImport(
             @Schema(example = "table_id,display_name,token_hash,token_version,active,sort_order\\nT01,테이블 1,aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,1,true,1",
+                    requiredMode = Schema.RequiredMode.REQUIRED) String csv) {}
+
+    @Schema(name = "StaffMembersCsvImportRequest")
+    public record StaffMembersCsvImport(
+            @Schema(example = "staff_id,name,affiliation,active,sort_order\\nS-001,예시 회장,회장단,true,10",
                     requiredMode = Schema.RequiredMode.REQUIRED) String csv) {}
 }

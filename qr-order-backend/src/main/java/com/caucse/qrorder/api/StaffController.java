@@ -4,6 +4,7 @@ import com.caucse.qrorder.auth.StaffAuthFilter;
 import com.caucse.qrorder.auth.StaffPrincipal;
 import com.caucse.qrorder.config.OpenApiConfig;
 import com.caucse.qrorder.domain.StaffOperationsService;
+import com.caucse.qrorder.domain.StaffServiceService;
 import com.caucse.qrorder.sse.SseHub;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,12 +30,18 @@ import java.util.Map;
 @SecurityRequirement(name = OpenApiConfig.STAFF_BEARER)
 public class StaffController {
     private final StaffOperationsService service;
+    private final StaffServiceService staffService;
     private final SseHub sse;
 
-    public StaffController(StaffOperationsService service, SseHub sse) {
+    public StaffController(StaffOperationsService service, StaffServiceService staffService, SseHub sse) {
         this.service = service;
+        this.staffService = staffService;
         this.sse = sse;
     }
+
+    @PostMapping("/members/list")
+    @Operation(summary = "서비스 부담 스태프 명단 조회")
+    ApiEnvelope<Map<String, Object>> members() { return ApiEnvelope.ok(staffService.listMembers()); }
 
     @PostMapping("/calls/list")
     @Operation(summary = "대기 중인 직원 호출 조회")
@@ -101,6 +108,11 @@ public class StaffController {
     @PostMapping("/orders/create") ApiEnvelope<Map<String, Object>> create(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.createOrder(body, staff));
     }
+    @Operation(summary = "손님 테이블에 서비스 주문 지급", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffServiceOrderCreate.class))))
+    @PostMapping("/orders/service") ApiEnvelope<Map<String, Object>> createService(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        return ApiEnvelope.ok(staffService.createServiceOrder(body, staff));
+    }
     @Operation(summary = "주문 항목 수정", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffOrderUpdate.class))))
     @PostMapping("/orders/update") ApiEnvelope<Void> update(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
@@ -119,6 +131,19 @@ public class StaffController {
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.MenuAvailability.class))))
     @PostMapping("/menu/availability") ApiEnvelope<Void> availability(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.availability(required(body, "itemId"), bool(body, "soldOut"), staff));
+    }
+    @Operation(summary = "스태프별 서비스 부담금 정산 조회", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffSettlementList.class))))
+    @PostMapping("/settlements/list") ApiEnvelope<Map<String, Object>> settlements(@RequestBody Map<String, Object> body) {
+        Object value = body.get("includeSettled");
+        if (value != null && !(value instanceof Boolean)) throw ApiException.invalid("includeSettled 값을 확인해 주세요.");
+        return ApiEnvelope.ok(staffService.listSettlements(Boolean.TRUE.equals(value)));
+    }
+    @Operation(summary = "스태프 서비스 부담금 정산 확정", description = "expectedChargeAmount가 서버 재계산 금액과 일치할 때만 확정합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+                    content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffSettlementConfirm.class))))
+    @PostMapping("/settlements/confirm") ApiEnvelope<Map<String, Object>> confirmSettlement(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        return ApiEnvelope.ok(staffService.confirmSettlement(required(body, "staffId"), number(body, "expectedChargeAmount"), staff));
     }
     @PostMapping(value = "/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "운영 실시간 이벤트 연결", description = "Bearer 인증이 필요한 fetch 기반 POST SSE입니다. 20초 heartbeat와 Last-Event-ID 재개를 지원합니다.")

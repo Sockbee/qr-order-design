@@ -59,4 +59,9 @@ public class AdminController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
                     content = @Content(schema = @Schema(implementation = OpenApiRequests.TablesCsvImport.class))))
     @PostMapping("/tables/import") ApiEnvelope<Map<String,Object>> importTables(@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff){return ApiEnvelope.ok(admin.importTables(String.valueOf(body.getOrDefault("csv","")),staff));}
+
+    @Operation(summary = "스태프 명단 CSV import", description = "실명 CSV를 Git에 저장하지 않고 운영 DB에 가져옵니다. 기존 정산 상태는 유지됩니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+                    content = @Content(schema = @Schema(implementation = OpenApiRequests.StaffMembersCsvImport.class))))
+    @PostMapping("/staff-members/import") ApiEnvelope<Map<String,Object>> importStaffMembers(@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff){return ApiEnvelope.ok(admin.importStaffMembers(String.valueOf(body.getOrDefault("csv","")),staff));}
 }

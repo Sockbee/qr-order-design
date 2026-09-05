@@ -1,0 +1,4 @@
+staff_id,name,affiliation,active,sort_order
+S-001,예시 회장,회장단,true,10
+S-002,예시 팀장,팀장,true,20
+S-003,예시 부원,기획부,true,30
