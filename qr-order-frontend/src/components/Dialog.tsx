@@ -28,16 +28,25 @@ export function Dialog({
 }: DialogProps) {
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
+  // Ref, not a dependency: an inline `onCancel` would refocus the panel on every parent render.
+  const onCancelRef = useRef(onCancel)
+  useEffect(() => {
+    onCancelRef.current = onCancel
+  })
 
   useEffect(() => {
-    if (closing) return
+    if (closing) {
+      const active = document.activeElement
+      if (active instanceof HTMLElement && panelRef.current?.contains(active)) active.blur()
+      return
+    }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onCancel()
+      if (event.key === 'Escape') onCancelRef.current()
     }
     document.addEventListener('keydown', onKeyDown)
     panelRef.current?.focus()
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onCancel, closing])
+  }, [closing])
 
   return (
     <div

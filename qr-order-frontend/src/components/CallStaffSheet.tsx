@@ -55,17 +55,26 @@ export function CallStaffSheet({
   const titleId = useId()
   const sheetRef = useRef<HTMLDivElement>(null)
   const [selectedReason, setSelectedReason] = useState<CallReason | null>(null)
+  // Ref, not a dependency: an inline `onClose` would refocus the sheet on every parent render.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
-    if (closing) return
+    if (closing) {
+      const active = document.activeElement
+      if (active instanceof HTMLElement && sheetRef.current?.contains(active)) active.blur()
+      return
+    }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKeyDown)
     // Move focus into the sheet so keyboard and screen-reader users land here.
     sheetRef.current?.focus()
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, closing])
+  }, [closing])
 
   const called = activeCall !== null
 

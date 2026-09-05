@@ -28,8 +28,9 @@
   --color-text-strong: #27201b;
   --color-text-body: #4e4238;
   --color-text-muted: #8a7a6c;
-  --color-text-weak: #b4502e;
-  --color-text-on-primary: #f4ecdf;
+  /* Text-only 황토, one step deeper than bg-primary for 4.5:1 on tinted rows. */
+  --color-text-weak: #9a4022;
+  --color-text-on-primary: #fbf5ea;
   --color-text-on-brand: rgb(244 236 223 / 0.78);
 
   --color-border-default: rgb(39 32 27 / 0.18);
@@ -37,7 +38,7 @@
   --color-border-control: rgb(39 32 27 / 0.35);
   --color-border-selected: #b4502e;
 
-  --color-badge-bg: #f4ecdf;
+  --color-badge-bg: #fbf5ea;
   --color-badge-fg: #b4502e;
   --color-accent-jade: #4e7f63;
   --color-scrim: rgb(39 32 27 / 0.55);
@@ -46,15 +47,15 @@
   --color-status-accepted-bg: rgb(39 32 27 / 0.06);
   --color-status-accepted-fg: #4e4238;
   --color-status-preparing-bg: rgb(180 80 46 / 0.12);
-  --color-status-preparing-fg: #b4502e;
+  --color-status-preparing-fg: #8c3a1f;
   --color-status-served-bg: rgb(78 127 99 / 0.14);
-  --color-status-served-fg: #4e7f63;
+  --color-status-served-fg: #365d46;
   --color-status-closed-bg: rgb(39 32 27 / 0.06);
   --color-status-closed-fg: #4e4238;
   --color-status-cancelled-bg: rgb(39 32 27 / 0.06);
   --color-status-cancelled-fg: #8a7a6c;
   --color-status-attention-bg: rgb(228 41 57 / 0.1);
-  --color-status-attention-fg: #c8202f;
+  --color-status-attention-fg: #b51b28;
 
   --layout-app-bar-height: 64px;
 }

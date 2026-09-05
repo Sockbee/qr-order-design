@@ -9,7 +9,7 @@ const SIZE_CLASSES = {
 const TONE_CLASSES = {
   neutral: 'bg-surface text-body',
   weak: 'bg-primary text-on-primary',
-  outline: 'border border-border-default bg-transparent text-muted',
+  outline: 'border border-border-default bg-transparent text-body',
 } as const
 
 interface BadgeProps {

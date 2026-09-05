@@ -71,10 +71,7 @@ export function Button({
         className={`flex flex-1 min-w-0 items-center gap-[inherit] ${loading ? 'invisible' : ''}`}
       >
         {showCount && (
-          <span
-            className="flex-none inline-flex items-center justify-center size-6 rounded-full bg-badge text-badge-fg text-[13px] leading-none font-bold animate-pop-in motion-reduce:animate-none"
-            aria-label={`${count}개`}
-          >
+          <span className="flex-none inline-flex items-center justify-center size-6 rounded-full bg-badge text-badge-fg text-[13px] leading-none font-bold animate-pop-in motion-reduce:animate-none">
             {count}
           </span>
         )}
