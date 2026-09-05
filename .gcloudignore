@@ -1,0 +1,12 @@
+.gcloudignore
+.git
+.git/**
+
+#!include:.gitignore
+
+# Nested frontend dependencies are covered by its own .gitignore, but Cloud
+# Build only expands the root include above.
+**/node_modules/
+**/node_modules/**
+**/.idea/
+**/.idea/**

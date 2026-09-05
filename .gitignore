@@ -35,6 +35,15 @@ pnpm-debug.log*
 # 마이그레이션용 로컬 데이터(token hash 등 민감 정보 포함)
 .local-data/
 
+# Firebase CLI 로컬 캐시 및 사용하지 않는 기본 Hosting 산출물
+.firebase/
+/public/
+
+# Firebase CLI가 설치한 로컬 에이전트 스킬
+.agents/
+.claude/skills/
+skills-lock.json
+
 # Google Apps Script 로컬 연결 및 인증 정보
 **/.clasp.json
 **/.clasprc.json
