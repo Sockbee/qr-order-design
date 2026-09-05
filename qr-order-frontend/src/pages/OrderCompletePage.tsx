@@ -15,27 +15,37 @@ export function OrderCompletePage({
 }: OrderCompletePageProps) {
   return (
     <div className="flex flex-col min-h-dvh bg-canvas">
-      <main className="flex flex-1 flex-col items-center gap-4 pt-30 px-4 pb-0">
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 px-6 pt-[var(--layout-safe-area-top)] pb-10">
         <p
-          className="flex items-center justify-center w-16 h-16 rounded-full bg-weak text-link font-display font-normal text-2xl leading-9"
+          className="flex items-center justify-center size-16 rounded-full bg-primary text-on-primary animate-pop-in-slow motion-reduce:animate-none"
           aria-hidden="true"
         >
-          ✓
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </p>
 
-        <h1 className="font-display font-normal text-[22px] leading-[33px] text-strong text-center">
+        <h1 className="font-display font-normal text-[22px] leading-[30px] text-strong text-center animate-rise [animation-delay:60ms] motion-reduce:animate-none">
           <span className="block">테이블 {order.tableNumber} 주문이</span>
           <span className="block">접수되었어요</span>
         </h1>
 
-        <p className="font-display font-normal text-4xl leading-[54px] text-strong">
+        <p className="font-display font-normal text-[44px] leading-[52px] text-strong animate-rise [animation-delay:120ms] motion-reduce:animate-none">
           {formatPrice(order.total)}
         </p>
 
-        <p className="text-sm leading-[21px] font-normal text-body">주문번호 {order.number}</p>
+        <p className="text-[13px] leading-[19px] font-normal text-body animate-rise [animation-delay:160ms] motion-reduce:animate-none">
+          주문번호 {order.number}
+        </p>
       </main>
 
-      <div className="flex flex-col gap-2 p-4 bg-canvas ">
+      <div className="flex flex-col gap-2 px-4 pt-3 pb-[var(--layout-safe-area)] bg-canvas">
         <Button
           block
           size="xlarge"
@@ -51,7 +61,6 @@ export function OrderCompletePage({
           onClick={onOrderMore}
         />
       </div>
-      <div className="h-[var(--layout-safe-area)] bg-canvas" />
     </div>
   )
 }

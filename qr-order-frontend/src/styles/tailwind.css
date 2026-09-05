@@ -10,24 +10,96 @@
 @import 'tailwindcss';
 
 /*
- * Customer-only palette override (warm/hanok redesign, Figma verified
- * 2026-09-02). Redeclares the same custom-property NAMES tokens.css defines,
- * with new values — same specificity, later in cascade order than tokens.css's
- * :root (index.css is imported before this file in main.tsx), so it wins only
- * on the customer page. staff-main.tsx never imports this file, so the staff
- * app keeps the original tokens.css values untouched.
+ * Customer-only palette override. Light = A 황토, dark = C 숯가마.
+ * Same property names as tokens.css, later in the cascade (index.css is
+ * imported first in main.tsx); staff-main.tsx never imports this file.
  */
 :root {
-  --color-bg-canvas: #fbedd9;
-  --color-bg-surface: #f7f1e8;
-  --color-bg-weak: #f9e3c5;
-  --color-bg-primary: #bd5204;
-  --color-bg-primary-pressed: #9c4403;
-  --color-text-strong: #4d2205;
-  --color-text-body: #4e4645;
-  --color-text-weak: #a62c2d;
-  --color-border-default: #a69182;
-  --color-border-selected: #a62c2d;
+  color-scheme: light dark;
+
+  --color-bg-canvas: #f4ecdf;
+  --color-bg-surface: #e9ddc9;
+  --color-bg-weak: #dfd0b8;
+  --color-bg-primary: #b4502e;
+  --color-bg-primary-pressed: #8c3a1f;
+  --color-bg-selected: rgb(180 80 46 / 0.08);
+  --color-bg-brand: #b4502e;
+
+  --color-text-strong: #27201b;
+  --color-text-body: #4e4238;
+  --color-text-muted: #8a7a6c;
+  /* Text-only 황토, one step deeper than bg-primary for 4.5:1 on tinted rows. */
+  --color-text-weak: #9a4022;
+  --color-text-on-primary: #fbf5ea;
+  --color-text-on-brand: rgb(244 236 223 / 0.78);
+
+  --color-border-default: rgb(39 32 27 / 0.18);
+  --color-border-strong: rgb(39 32 27 / 0.28);
+  --color-border-control: rgb(39 32 27 / 0.35);
+  --color-border-selected: #b4502e;
+
+  --color-badge-bg: #fbf5ea;
+  --color-badge-fg: #b4502e;
+  --color-accent-jade: #4e7f63;
+  --color-scrim: rgb(39 32 27 / 0.55);
+
+  /* 취소됨 is the only status on --color-text-muted. */
+  --color-status-accepted-bg: rgb(39 32 27 / 0.06);
+  --color-status-accepted-fg: #4e4238;
+  --color-status-preparing-bg: rgb(180 80 46 / 0.12);
+  --color-status-preparing-fg: #8c3a1f;
+  --color-status-served-bg: rgb(78 127 99 / 0.14);
+  --color-status-served-fg: #365d46;
+  --color-status-closed-bg: rgb(39 32 27 / 0.06);
+  --color-status-closed-fg: #4e4238;
+  --color-status-cancelled-bg: rgb(39 32 27 / 0.06);
+  --color-status-cancelled-fg: #8a7a6c;
+  --color-status-attention-bg: rgb(228 41 57 / 0.1);
+  --color-status-attention-fg: #b51b28;
+
+  --layout-app-bar-height: 64px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-canvas: #17120f;
+    --color-bg-surface: #241d19;
+    --color-bg-weak: #2d2420;
+    --color-bg-primary: #f0642e;
+    --color-bg-primary-pressed: #c94e20;
+    --color-bg-selected: rgb(240 100 46 / 0.14);
+    --color-bg-brand: #b4502e;
+
+    --color-text-strong: #f1e6d8;
+    --color-text-body: #c4b4a3;
+    --color-text-muted: #8c7c6d;
+    --color-text-weak: #f0642e;
+    --color-text-on-primary: #1a100c;
+    --color-text-on-brand: rgb(241 230 216 / 0.78);
+
+    --color-border-default: rgb(241 230 216 / 0.2);
+    --color-border-strong: rgb(241 230 216 / 0.3);
+    --color-border-control: rgb(241 230 216 / 0.38);
+    --color-border-selected: #f0642e;
+
+    --color-badge-bg: #1a100c;
+    --color-badge-fg: #f7953f;
+    --color-accent-jade: #7dbe9b;
+    --color-scrim: rgb(0 0 0 / 0.6);
+
+    --color-status-accepted-bg: rgb(241 230 216 / 0.08);
+    --color-status-accepted-fg: #c4b4a3;
+    --color-status-preparing-bg: rgb(240 100 46 / 0.16);
+    --color-status-preparing-fg: #f7953f;
+    --color-status-served-bg: rgb(125 190 155 / 0.16);
+    --color-status-served-fg: #7dbe9b;
+    --color-status-closed-bg: rgb(241 230 216 / 0.08);
+    --color-status-closed-fg: #c4b4a3;
+    --color-status-cancelled-bg: rgb(241 230 216 / 0.08);
+    --color-status-cancelled-fg: #8c7c6d;
+    --color-status-attention-bg: rgb(228 41 57 / 0.18);
+    --color-status-attention-fg: #ff8a93;
+  }
 }
 
 /* BM을지로 — display/heading face. Single weight; always paired with font-normal. */
@@ -47,13 +119,22 @@
   --color-canvas: var(--color-bg-canvas);
   --color-surface: var(--color-bg-surface);
   --color-weak: var(--color-bg-weak);
+  --color-selected: var(--color-bg-selected);
+  --color-brand: var(--color-bg-brand);
   --color-strong: var(--color-text-strong);
   --color-body: var(--color-text-body);
   --color-muted: var(--color-text-muted);
   --color-on-primary: var(--color-text-on-primary);
+  --color-on-brand: var(--color-text-on-brand);
   --color-link: var(--color-text-weak);
   --color-border-default: var(--color-border-default);
+  --color-border-strong: var(--color-border-strong);
+  --color-border-control: var(--color-border-control);
   --color-border-selected: var(--color-border-selected);
+  --color-badge: var(--color-badge-bg);
+  --color-badge-fg: var(--color-badge-fg);
+  --color-jade: var(--color-accent-jade);
+  --color-scrim: var(--color-scrim);
 
   --font-sans: var(--font-sans);
 
@@ -63,9 +144,23 @@
   --radius-btn-xl: var(--radius-btn-xl);
   --radius-row: var(--radius-row);
 
+  /* Motion: 150 press/exit · 250 enter · 300 sheet. Pair every use with motion-reduce:*-none. */
+  --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+
   --animate-spin-slow: button-spin 800ms linear infinite;
-  --animate-sheet-rise: sheet-rise 160ms ease-out;
-  --animate-dialog-in: dialog-in 160ms ease-out;
+  --animate-fade-in: fade-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-fade-out: fade-out 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-sheet-rise: sheet-rise 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-sheet-drop: sheet-drop 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-dialog-in: dialog-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-dialog-out: dialog-out 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-panel-in: panel-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-rise: rise 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
+  --animate-pop-in: pop-in 250ms cubic-bezier(0.34, 1.36, 0.64, 1) both;
+  --animate-pop-in-slow: pop-in 400ms cubic-bezier(0.34, 1.36, 0.64, 1) both;
+  --animate-pulse-ring: pulse-ring 1600ms cubic-bezier(0.23, 1, 0.32, 1) infinite;
 
   @keyframes button-spin {
     to {
@@ -73,14 +168,39 @@
     }
   }
 
-  @keyframes sheet-rise {
+  @keyframes fade-in {
     from {
-      transform: translateY(16px);
       opacity: 0;
     }
     to {
-      transform: translateY(0);
       opacity: 1;
+    }
+  }
+
+  @keyframes fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes sheet-rise {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes sheet-drop {
+    from {
+      transform: translateY(0);
+    }
+    to {
+      transform: translateY(100%);
     }
   }
 
@@ -92,6 +212,63 @@
     to {
       transform: scale(1);
       opacity: 1;
+    }
+  }
+
+  @keyframes dialog-out {
+    from {
+      transform: scale(1);
+      opacity: 1;
+    }
+    to {
+      transform: scale(0.98);
+      opacity: 0;
+    }
+  }
+
+  @keyframes panel-in {
+    from {
+      transform: translateY(8px);
+      opacity: 0;
+      filter: blur(2px);
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+      filter: blur(0);
+    }
+  }
+
+  @keyframes rise {
+    from {
+      transform: translateY(12px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pop-in {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  @keyframes pulse-ring {
+    from {
+      transform: scale(1);
+      opacity: 0.5;
+    }
+    to {
+      transform: scale(2.2);
+      opacity: 0;
     }
   }
 }

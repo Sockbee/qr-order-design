@@ -17,6 +17,7 @@ import { OrderStatusPage } from './pages/OrderStatusPage'
 import { TableConfirmationPage } from './pages/TableConfirmationPage'
 import { CallStaffSheet } from './components/CallStaffSheet'
 import { useOrderSession } from './hooks/useOrderSession'
+import { usePresence } from './hooks/usePresence'
 import { useStaffCall } from './hooks/useStaffCall'
 import { useOrderPolling } from './hooks/useOrderPolling'
 import { useStorefront } from './hooks/useStorefront'
@@ -54,6 +55,7 @@ interface CatalogRouteProps {
   categories: typeof mockCategories
   menuItems: typeof mockMenuItems
   storefront: ReturnType<typeof useStorefront>
+  tableNumber: number
 }
 
 function parseCredentials(
@@ -118,6 +120,7 @@ function MenuRoute({
   categories,
   menuItems,
   storefront,
+  tableNumber,
   onCallStaff,
 }: RouteProps & CatalogRouteProps & { onCallStaff: () => void }) {
   const navigate = useNavigate()
@@ -127,6 +130,7 @@ function MenuRoute({
       categories={categories}
       menuItems={menuItems}
       cart={session.cart}
+      tableNumber={tableNumber}
       loading={storefront.loading}
       errorMessage={storefront.error?.message}
       retryable={storefront.retryable}
@@ -144,6 +148,7 @@ function MenuDetailRoute({
   categories,
   menuItems,
   storefront,
+  tableNumber,
   onCallStaff,
 }: RouteProps & CatalogRouteProps & { onCallStaff: () => void }) {
   const { itemId } = useParams()
@@ -155,6 +160,7 @@ function MenuDetailRoute({
         categories={categories}
         menuItems={menuItems}
         cart={session.cart}
+        tableNumber={tableNumber}
         loading={storefront.loading}
         errorMessage={storefront.error?.message}
         retryable={storefront.retryable}
@@ -354,6 +360,7 @@ function App() {
    */
   const staffCall = useStaffCall(credentials)
   const [callSheetOpen, setCallSheetOpen] = useState(false)
+  const callSheet = usePresence(callSheetOpen)
   const categories = storefront.data?.categories ??
     (storefront.configured ? [] : mockCategories)
   const menuItems = storefront.data?.menuItems ??
@@ -382,6 +389,7 @@ function App() {
               categories={categories}
               menuItems={menuItems}
               storefront={storefront}
+              tableNumber={tableNumber}
               onCallStaff={() => setCallSheetOpen(true)}
             />
           )}
@@ -394,6 +402,7 @@ function App() {
               categories={categories}
               menuItems={menuItems}
               storefront={storefront}
+              tableNumber={tableNumber}
               onCallStaff={() => setCallSheetOpen(true)}
             />
           )}
@@ -431,12 +440,13 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {callSheetOpen && (
+      {callSheet.mounted && (
         <CallStaffSheet
           tableNumber={tableNumber}
           phase={staffCall.phase}
           activeCall={staffCall.activeCall}
           error={staffCall.error}
+          closing={callSheet.closing}
           onCall={staffCall.call}
           onCancelCall={staffCall.cancel}
           onClose={() => {

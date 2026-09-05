@@ -44,7 +44,7 @@ export function CategoryTabs({
 
   return (
     <div
-      className="sticky top-[calc(var(--layout-app-bar-height)+var(--layout-safe-area-top))] z-[2] flex overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-canvas"
+      className="sticky top-[calc(var(--layout-app-bar-height)+var(--layout-safe-area-top))] z-[2] flex gap-1 px-2 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-canvas border-b border-border-default"
       role="tablist"
       aria-label="메뉴 카테고리"
       ref={listRef}
@@ -57,18 +57,18 @@ export function CategoryTabs({
             type="button"
             role="tab"
             id={`category-tab-${category.id}`}
-            className="group flex-none flex flex-col items-center gap-1.5 h-12 pt-3.5 px-4 pb-0 border-0 bg-canvas cursor-pointer focus-visible:[outline-offset:-2px]"
+            className="group flex-none flex flex-col items-center gap-2 h-12 min-w-14 pt-3 px-2.5 pb-0 border-0 bg-transparent cursor-pointer focus-visible:[outline-offset:-2px]"
             aria-selected={selected}
             aria-controls={panelId}
             tabIndex={selected ? 0 : -1}
             onClick={() => onSelect(category.id)}
             onKeyDown={(event) => handleKeyDown(event, index)}
           >
-            <span className="text-base leading-6 font-normal text-muted whitespace-nowrap group-aria-selected:font-bold group-aria-selected:text-strong">
+            <span className="text-base leading-[22px] font-normal text-muted whitespace-nowrap transition-colors duration-150 ease-out-soft motion-reduce:transition-none group-aria-selected:font-bold group-aria-selected:text-strong">
               {category.label}
             </span>
             <span
-              className="w-full h-0.5 bg-transparent group-aria-selected:bg-primary"
+              className="w-full h-[3px] rounded-[2px] bg-transparent transition-colors duration-150 ease-out-soft motion-reduce:transition-none group-aria-selected:bg-primary"
               aria-hidden="true"
             />
           </button>

@@ -1,5 +1,3 @@
-import radioSelected from '../assets/radio-selected.svg'
-import radioUnselected from '../assets/radio-unselected.svg'
 import { formatPriceDelta } from '../utils/price'
 
 interface OptionSelectorProps {
@@ -22,16 +20,16 @@ export function OptionSelector({
   name,
   onSelect,
 }: OptionSelectorProps) {
-  const textColor = disabled ? 'text-muted' : selected ? 'text-link' : 'text-strong'
+  const active = selected && !disabled
 
   return (
     <label
-      className={`flex items-center gap-3 w-full pt-3.5 px-4 pb-3.5 rounded-row cursor-pointer outline outline-1 outline-offset-[-1px] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary has-[:focus-visible]:outline-offset-2 ${
+      className={`flex items-center gap-3 w-full min-h-[52px] px-4 py-3 transition-colors duration-150 ease-out-soft motion-reduce:transition-none has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary has-[:focus-visible]:-outline-offset-2 ${
         disabled
-          ? 'bg-surface outline-border-default cursor-default'
-          : selected
-            ? 'bg-weak outline-border-selected'
-            : 'bg-canvas outline-border-default active:bg-surface'
+          ? 'cursor-default'
+          : active
+            ? 'bg-selected cursor-pointer'
+            : 'cursor-pointer active:bg-selected'
       }`}
     >
       <input
@@ -42,30 +40,45 @@ export function OptionSelector({
         disabled={disabled}
         onChange={onSelect}
       />
-      <span className="relative flex-none w-6 h-6" aria-hidden="true">
-        {type === 'radio' ? (
-          <img
-            className="w-full h-full"
-            src={selected ? radioSelected : radioUnselected}
-            alt=""
-          />
-        ) : (
-          <span
-            className={`absolute top-px left-px flex items-center justify-center w-[22px] h-[22px] border-[1.5px] rounded-[6px] text-sm leading-[21px] font-bold ${
-              selected
-                ? 'border-primary bg-primary text-on-primary'
-                : 'border-border-default'
-            }`}
-          >
-            {selected && '✓'}
-          </span>
-        )}
+      <span
+        className={`flex-none flex items-center justify-center size-[22px] transition-colors duration-150 ease-out-soft motion-reduce:transition-none ${
+          type === 'radio' ? 'rounded-full' : 'rounded-[6px]'
+        } ${
+          active
+            ? 'bg-primary text-canvas'
+            : `border-[1.5px] bg-transparent ${disabled ? 'border-border-default' : 'border-border-control'}`
+        }`}
+        aria-hidden="true"
+      >
+        {active &&
+          (type === 'radio' ? (
+            <span className="size-2 rounded-full bg-canvas" />
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                stroke="currentColor"
+                strokeWidth="3.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ))}
       </span>
-      <span className={`flex-1 min-w-0 text-base leading-6 font-normal ${textColor}`}>
+      <span
+        className={`flex-1 min-w-0 text-[15px] leading-[22px] ${
+          disabled ? 'font-normal text-muted' : active ? 'font-bold text-link' : 'font-normal text-strong'
+        }`}
+      >
         {label}
         {disabled && ' (품절)'}
       </span>
-      <span className={`flex-none text-sm leading-[21px] font-bold whitespace-nowrap ${textColor}`}>
+      {/* Price is never text-muted (CLAUDE.md §6). */}
+      <span
+        className={`flex-none text-sm leading-[21px] font-medium whitespace-nowrap ${
+          active ? 'text-link' : 'text-body'
+        }`}
+      >
         {formatPriceDelta(priceDelta)}
       </span>
     </label>

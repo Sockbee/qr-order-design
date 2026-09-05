@@ -27,7 +27,7 @@ export function OrderRound({
   children,
 }: OrderRoundProps) {
   return (
-    <section className="flex flex-col gap-2 w-full py-4 px-0 border-t border-b border-border-default">
+    <section className="flex flex-col gap-3 w-full p-4 rounded-btn-xl bg-surface">
       <div className="flex items-center gap-2">
         <p className="flex-1 min-w-0 font-bold text-sm leading-[21px] text-body">
           {round}차 주문 · {formatOrderTime(placedAt)}
@@ -37,8 +37,8 @@ export function OrderRound({
           it has to say so without relying on the tint (DESIGN.md §7).
         */}
         {service && (
-          <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-[6px] text-[12px] leading-[18px] whitespace-nowrap bg-[var(--color-status-served-bg)] text-[var(--color-status-served-fg)]">
-            <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
+          <span className="inline-flex items-center gap-1.5 h-[22px] px-2 rounded-[6px] text-[12px] leading-none font-bold whitespace-nowrap bg-[var(--color-status-served-bg)] text-[var(--color-status-served-fg)]">
+            <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
             서비스
           </span>
         )}
@@ -51,8 +51,8 @@ export function OrderRound({
         the whole reason the field exists.
       */}
       {service && serviceMessage && (
-        <div className="flex flex-col gap-1 w-full py-3 px-3.5 rounded-[10px] bg-weak border-l-[3px] border-l-[var(--color-bg-primary)]">
-          <p className="text-base leading-6 font-normal text-strong break-words">
+        <div className="flex flex-col gap-1 w-full py-3 px-3.5 rounded-[10px] bg-canvas border-l-[3px] border-l-primary">
+          <p className="text-[15px] leading-[22px] font-normal text-strong break-words">
             {serviceMessage}
           </p>
           {chargedStaffName && (
@@ -63,7 +63,7 @@ export function OrderRound({
         </div>
       )}
 
-      {children}
+      <div className="flex flex-col gap-2">{children}</div>
     </section>
   )
 }
