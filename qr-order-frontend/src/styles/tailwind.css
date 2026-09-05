@@ -10,26 +10,9 @@
 @import 'tailwindcss';
 
 /*
- * Customer-only palette override — 솥가마 redesign (2026-09-05).
- *
- * Light = A 황토: 한지 paper ground, 먹 ink text, 황토 red accent.
- * Dark  = C 숯가마 palette on the same layout: 숯 ground, 모래 text, 잔불 accent.
- *
- * Redeclares the same custom-property NAMES tokens.css defines, with new
- * values — same specificity, later in cascade order than tokens.css's :root
- * (index.css is imported before this file in main.tsx), so it wins only on
- * the customer page. staff-main.tsx never imports this file, so the staff app
- * keeps the original tokens.css values (and stays light-only).
- *
- * Customer-only additions (no tokens.css counterpart) are declared here too:
- *   --color-border-strong    outlined buttons / stepper frame
- *   --color-border-control   radio & checkbox ring
- *   --color-bg-selected      selected option row tint
- *   --color-bg-brand         S01 brand block (황토 in both modes)
- *   --color-text-on-brand    store name on the brand block
- *   --color-badge-bg/fg      count badge inside the primary button
- *   --color-accent-jade      served / done (쑥 green)
- *   --color-scrim            sheet & dialog backdrop
+ * Customer-only palette override. Light = A 황토, dark = C 숯가마.
+ * Same property names as tokens.css, later in the cascade (index.css is
+ * imported first in main.tsx); staff-main.tsx never imports this file.
  */
 :root {
   color-scheme: light dark;
@@ -59,11 +42,7 @@
   --color-accent-jade: #4e7f63;
   --color-scrim: rgb(39 32 27 / 0.55);
 
-  /*
-   * Order status on paper. Same rule as tokens.css: the label carries the
-   * state, colour only reinforces it. 취소됨 is the only status allowed on
-   * --color-text-muted (it is neither price, allergen nor availability).
-   */
+  /* 취소됨 is the only status on --color-text-muted. */
   --color-status-accepted-bg: rgb(39 32 27 / 0.06);
   --color-status-accepted-fg: #4e4238;
   --color-status-preparing-bg: rgb(180 80 46 / 0.12);
@@ -77,7 +56,6 @@
   --color-status-attention-bg: rgb(228 41 57 / 0.1);
   --color-status-attention-fg: #c8202f;
 
-  /* The redesigned app bar is 64px (26px display title + 38px action chips). */
   --layout-app-bar-height: 64px;
 }
 
@@ -165,12 +143,7 @@
   --radius-btn-xl: var(--radius-btn-xl);
   --radius-row: var(--radius-row);
 
-  /*
-   * Motion. Durations: 150 press/exit · 250 enter · 300 sheet; easing is
-   * ease-out for enter/exit, the iOS drawer curve for the sheet, one bounce
-   * reserved for the S07 success mark. Each animated element pairs its
-   * animate-* / transition-* class with motion-reduce:*-none.
-   */
+  /* Motion: 150 press/exit · 250 enter · 300 sheet. Pair every use with motion-reduce:*-none. */
   --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
@@ -252,7 +225,6 @@
     }
   }
 
-  /* Content swap (category change): a short rise with a 2px blur that settles to 0. */
   @keyframes panel-in {
     from {
       transform: translateY(8px);
