@@ -1,20 +1,21 @@
 import type { ReactNode } from 'react'
 
 const SIZE_CLASSES = {
-  xsmall: 'py-0.5 px-1.5 rounded-[4px]',
-  small: 'py-[3px] px-2 rounded-[4px]',
-  medium: 'py-1.5 px-3 rounded-btn-sm',
+  xsmall: 'h-5 px-1.5 rounded-[4px]',
+  small: 'h-[22px] px-2 rounded-[6px]',
+  medium: 'h-7 px-3 rounded-btn-sm',
 } as const
 
 const TONE_CLASSES = {
   neutral: 'bg-surface text-body',
-  weak: 'bg-weak text-link',
+  weak: 'bg-primary text-on-primary',
+  outline: 'border border-border-default bg-transparent text-muted',
 } as const
 
 interface BadgeProps {
   children: ReactNode
-  tone?: 'neutral' | 'weak'
-  size?: 'xsmall' | 'small' | 'medium'
+  tone?: keyof typeof TONE_CLASSES
+  size?: keyof typeof SIZE_CLASSES
 }
 
 export function Badge({
@@ -24,7 +25,7 @@ export function Badge({
 }: BadgeProps) {
   return (
     <span
-      className={`inline-flex items-center text-[12px] leading-[18px] font-normal whitespace-nowrap ${SIZE_CLASSES[size]} ${TONE_CLASSES[tone]}`}
+      className={`inline-flex flex-none items-center text-[12px] leading-none font-bold whitespace-nowrap ${SIZE_CLASSES[size]} ${TONE_CLASSES[tone]}`}
     >
       {children}
     </span>

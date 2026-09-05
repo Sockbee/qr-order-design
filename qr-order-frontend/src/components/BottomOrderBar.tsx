@@ -17,19 +17,20 @@ export function BottomOrderBar({
   const empty = itemCount === 0
 
   return (
-    <div className="sticky bottom-0 z-[2] bg-canvas ">
-      <div className="flex p-4">
+    <div className="sticky bottom-0 z-[2] bg-canvas border-t border-border-default">
+      <div className="flex px-4 pt-3 pb-[var(--layout-safe-area)]">
         <Button
           block
           size="xlarge"
           variant="fill"
           loading={updating}
           disabled={empty}
-          label={empty ? '주문하기' : `주문하기 · ${formatPrice(total)}`}
+          count={empty ? undefined : itemCount}
+          amount={empty ? undefined : formatPrice(total)}
+          label="주문하기"
           onClick={onOrder}
         />
       </div>
-      <div className="h-[var(--layout-safe-area)] bg-canvas" />
     </div>
   )
 }
