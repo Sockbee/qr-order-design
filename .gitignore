@@ -48,6 +48,9 @@ apps-script/service-account*.json
 **/.gradle/
 **/build/
 
+# VS Code Java 확장(언어 서버)의 백그라운드 컴파일 출력
+**/bin/
+
 # Terraform local state and plans
 **/.terraform/
 *.tfstate

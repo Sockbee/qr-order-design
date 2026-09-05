@@ -23,7 +23,7 @@ import java.util.UUID;
 @Service
 public class CustomerOrderService {
     private static final Set<String> CALL_REASONS = Set.of(
-            "WATER_UTENSIL", "SIDE_PLATE", "ORDER_INQUIRY", "PAYMENT_REQUEST", "OTHER");
+            "WATER_UTENSIL", "UTENSIL", "SIDE_PLATE", "ORDER_INQUIRY", "PAYMENT_REQUEST", "OTHER");
     private final JdbcTemplate jdbc;
     private final TableCatalogService catalog;
     private final DomainEventService events;
