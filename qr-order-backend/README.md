@@ -37,6 +37,25 @@ definition 선택에서 customer, staff, admin만 따로 확인할 수도 있습
 `tableId`와 원본 `tableToken`을 request body에 포함합니다. `/events`는 일반 GET
 EventSource가 아니라 body와 header를 보낼 수 있는 fetch 기반 POST SSE입니다.
 
+## Private staff roster import
+
+스태프 실명과 소속은 공개 Git 기록에 저장하지 않습니다. 양식은
+`docs/examples/staff-members.example.csv`를 복사해 이미 Git에서 제외된
+`.local-data/StaffMembers.csv`에 작성합니다. 배포 후 운영 로그인으로 받은
+token을 사용해 다음처럼 가져옵니다.
+
+```bash
+../scripts/import-staff-members.sh \
+  https://api.example.com \
+  "$STAFF_TOKEN" \
+  .local-data/StaffMembers.csv
+```
+
+CSV 열은 `staff_id,name,affiliation,active,sort_order`입니다. 동일 `staff_id`를 다시
+가져오면 이름·소속·활성·정렬 값만 갱신하고 기존 정산 상태와 금액은
+유지합니다. 명단을 가져온 사실만 AuditLogs에 남고 CSV 내용은 로그에
+저장하지 않습니다.
+
 Terraform은 staging에서만 문서 JSON과 UI를 켜고 production에서는 두 endpoint를
 모두 비활성화합니다. 로컬에서도 끄려면 두 환경 변수를 `false`로 지정합니다.
 
@@ -59,5 +78,5 @@ security declaration, common error envelope, and SSE media type.
 
 - `/api/v1/customer/**`: QR table authentication, catalog, orders, calls, SSE
 - `/api/v1/staff/**`: passcode login, station operations, dashboard, SSE
-- `/api/v1/admin/**`: catalog, settings, tables, token rotation and table import
+- `/api/v1/admin/**`: catalog, settings, tables, token rotation, table/staff roster import
 - `/actuator/health/liveness`, `/actuator/health/readiness`: Cloud Run probes
