@@ -8,6 +8,8 @@ interface DialogProps {
   cancelLabel: string
   onConfirm: () => void
   onCancel: () => void
+  /** From `usePresence`. */
+  closing?: boolean
 }
 
 /**
@@ -22,37 +24,51 @@ export function Dialog({
   cancelLabel,
   onConfirm,
   onCancel,
+  closing = false,
 }: DialogProps) {
   const titleId = useId()
   const panelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (closing) return
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onCancel()
     }
     document.addEventListener('keydown', onKeyDown)
     panelRef.current?.focus()
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onCancel])
+  }, [onCancel, closing])
 
   return (
-    <div className="fixed inset-0 z-10 flex items-center justify-center p-4">
+    <div
+      className={`fixed inset-0 z-10 flex items-center justify-center p-4 ${
+        closing ? 'pointer-events-none' : ''
+      }`}
+      aria-hidden={closing || undefined}
+    >
       <button
         type="button"
-        className="absolute inset-0 w-full h-full p-0 border-0 bg-[#000c1e] opacity-60 cursor-pointer"
+        className={`absolute inset-0 w-full h-full p-0 border-0 bg-scrim cursor-pointer motion-reduce:animate-none ${
+          closing ? 'animate-fade-out' : 'animate-fade-in'
+        }`}
         aria-label="닫기"
         onClick={onCancel}
       />
 
       <div
         ref={panelRef}
-        className="relative w-full max-w-[320px] flex flex-col gap-1 p-5 rounded-btn-xl bg-canvas animate-dialog-in motion-reduce:animate-none focus:outline-none"
+        className={`relative w-full max-w-[320px] flex flex-col gap-1.5 p-5 rounded-btn-xl bg-canvas focus:outline-none motion-reduce:animate-none ${
+          closing ? 'animate-dialog-out' : 'animate-dialog-in'
+        }`}
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
       >
-        <h2 className="m-0 text-base leading-6 font-bold text-strong" id={titleId}>
+        <h2
+          className="m-0 font-display font-normal text-xl leading-7 text-strong break-keep"
+          id={titleId}
+        >
           {title}
         </h2>
         {description && (
