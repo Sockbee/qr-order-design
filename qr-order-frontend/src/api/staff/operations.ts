@@ -1,5 +1,4 @@
 import { callStaffApi } from './client'
-import type { StaffNoteAudience } from '../../types/staff'
 
 /**
  * Table operations. Unlike `tables/list` and `tables/detail`, every action
@@ -105,16 +104,24 @@ export function cancelStaffOrderItem(
   )
 }
 
-/** §4.18. The table memo is attached to its latest active order. */
+/** A visit-scoped general memo. An empty string deletes it. */
 export function saveStaffTableNote(
   tableId: string,
   note: string,
-  audience: StaffNoteAudience,
+  signal?: AbortSignal,
+): Promise<void> {
+  return callStaffApi<void>('tables/note', { tableId, note }, signal)
+}
+
+/** Ends exactly the visit shown to the operator; stale retries are harmless. */
+export function resetStaffTable(
+  tableId: string,
+  expectedSessionId: string,
   signal?: AbortSignal,
 ): Promise<void> {
   return callStaffApi<void>(
-    'orders/update',
-    { operation: 'note', tableId, note, audience },
+    'tables/reset',
+    { tableId, expectedSessionId },
     signal,
   )
 }

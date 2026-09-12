@@ -100,9 +100,6 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onServiceOrder={() =>
                   navigate(`/staff/tables/${tableId}/service`)
                 }
-                onConfirmPayment={() =>
-                  navigate(`/staff/tables/${tableId}/payment`)
-                }
                 onMove={() => navigate(`/staff/tables/${tableId}/move`)}
                 onMerge={() => navigate(`/staff/tables/${tableId}/merge`)}
                 onSplit={() => navigate(`/staff/tables/${tableId}/split`)}
@@ -110,6 +107,7 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onNote={() => navigate(`/staff/tables/${tableId}/note`)}
                 onEditOrder={() => navigate(`/staff/tables/${tableId}/edit`)}
                 onCancelOrder={() => navigate(`/staff/tables/${tableId}/cancel`)}
+                onReset={() => navigate(`/staff/tables/${tableId}/reset`)}
               />
             )
           : undefined
@@ -150,7 +148,7 @@ function StaffApp() {
             </RequireStaffAuth>
           )}
         />
-        {(['move', 'merge', 'split', 'discount', 'edit', 'cancel'] as StaffOperation[]).map(
+        {(['move', 'merge', 'split', 'discount', 'edit', 'cancel', 'note', 'reset'] as StaffOperation[]).map(
           (operation) => (
             <Route
               key={operation}
@@ -163,14 +161,6 @@ function StaffApp() {
             />
           ),
         )}
-        <Route
-          path="/staff/tables/:tableId/note"
-          element={(
-            <RequireStaffAuth auth={auth}>
-              <StaffTableOperationRoute operation="edit" />
-            </RequireStaffAuth>
-          )}
-        />
         <Route
           path="/staff/kitchen"
           element={(

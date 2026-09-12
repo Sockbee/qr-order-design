@@ -99,6 +99,7 @@ export interface StaffOrderItem {
   amount: number
   /** Cancelled lines stay in the list, struck through — see the component. */
   cancelled: boolean
+  preparationStatus: 'pending' | 'ready' | 'served'
   /** Item-level memo, shown directly under the line. */
   note: string | null
 }
@@ -132,11 +133,14 @@ export interface StaffBill {
 
 /** Everything the 420px inspector panel renders for one table. */
 export interface StaffTableDetail {
+  /** The visit the operator inspected; reset uses it as an idempotency guard. */
+  sessionId: string | null
   tableId: string
   displayName: string
   status: StaffOrderStatus | null
   elapsedMinutes: number | null
   bill: StaffBill
+  orderCount: number
   items: StaffOrderItem[]
   notes: StaffNote[]
   /** Present while the table has unacknowledged calls. */
@@ -151,7 +155,14 @@ export interface StaffStationOrder {
   tableId: string
   status: StaffOrderStatus
   elapsedMinutes: number
-  items: Array<{ name: string; quantity: number }>
+  items: Array<{
+    itemId: string
+    name: string
+    quantity: number
+    preparationStatus: 'pending' | 'ready' | 'served'
+  }>
+  /** Ready cards can coexist with an unfinished kitchen ticket. */
+  remainingKitchenItemCount: number
   /** The memo addressed to this station, if any. */
   note: string | null
 }

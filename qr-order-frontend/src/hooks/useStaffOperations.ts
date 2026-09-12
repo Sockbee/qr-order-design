@@ -10,9 +10,9 @@ import {
   moveTable,
   splitTable,
   saveStaffTableNote,
+  resetStaffTable,
   updateStaffOrderItemQuantity,
 } from '../api/staff/operations'
-import type { StaffNoteAudience } from '../types/staff'
 
 interface StaffOperationsState {
   submitting: boolean
@@ -33,9 +33,9 @@ interface StaffOperationsState {
   saveNote: (
     tableId: string,
     note: string,
-    audience: StaffNoteAudience,
     onDone: () => void,
   ) => void
+  reset: (tableId: string, expectedSessionId: string, onDone: () => void) => void
   cancelOrders: (tableId: string, onDone: () => void) => void
 }
 
@@ -110,8 +110,13 @@ export function useStaffOperations(): StaffOperationsState {
       [run],
     ),
     saveNote: useCallback(
-      (tableId, note, audience, onDone) =>
-        run(() => saveStaffTableNote(tableId, note, audience), onDone),
+      (tableId, note, onDone) =>
+        run(() => saveStaffTableNote(tableId, note), onDone),
+      [run],
+    ),
+    reset: useCallback(
+      (tableId, expectedSessionId, onDone) =>
+        run(() => resetStaffTable(tableId, expectedSessionId), onDone),
       [run],
     ),
     cancelOrders: useCallback(

@@ -118,7 +118,7 @@ class QrOrderApiIntegrationTest {
                         path.getKey() + " request schema must declare named properties");
             }
         }
-        assertEquals(35, documentedRequestBodies);
+        assertEquals(38, documentedRequestBodies);
 
         mvc.perform(get("/v3/api-docs/customer"))
                 .andExpect(status().isOk())
@@ -294,6 +294,109 @@ class QrOrderApiIntegrationTest {
         staffOperations.confirmPayment("T03", 2_400, staff);
         assertEquals("CLOSED", jdbc.queryForObject(
                 "SELECT status FROM table_sessions WHERE origin_table_id='T01' ORDER BY opened_at DESC LIMIT 1", String.class));
+    }
+
+    @Test
+    void customerOrderListShowsOnlyTheCurrentOpenVisit() {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        Map<String, Object> first = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        staffOperations.confirmPayment("T01", 1500, staff);
+
+        Map<String, Object> afterPayment = orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN));
+        assertEquals(List.of(), afterPayment.get("orders"));
+        assertEquals(0, afterPayment.get("sessionTotalAmount"));
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM orders WHERE order_id=?::uuid",
+                Integer.class, first.get("orderId")));
+
+        Map<String, Object> second = orders.create(customerOrder("T01", TABLE_TOKEN, "cider"), false);
+        Map<String, Object> current = orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> visible = (List<Map<String, Object>>) current.get("orders");
+        assertEquals(1, visible.size());
+        assertEquals(second.get("orderId").toString(), visible.getFirst().get("orderId"));
+        assertEquals(1500, current.get("sessionTotalAmount"));
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+    }
+
+    @Test
+    void tableNoteAndResetAreVisitScopedIdempotentAndPreserveHistory() {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        Map<String, Object> guest = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        Map<String, Object> service = orders.createService(Map.of(
+                "tableId", "T01", "chargedStaffId", "S-001", "serviceMessage", "서비스",
+                "items", List.of(Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))),
+                "S-001", "김하늘", 20, "카운터");
+        UUID sessionId = UUID.fromString(String.valueOf(staffOperations.tableDetail("T01").get("sessionId")));
+        staffOperations.saveTableNote("T01", "유아 의자 사용 중", staff);
+        assertEquals("유아 의자 사용 중", ((List<?>) staffOperations.tableDetail("T01").get("notes")).stream()
+                .map(Map.class::cast).findFirst().orElseThrow().get("text"));
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cider"), false);
+        assertEquals("유아 의자 사용 중", ((List<?>) staffOperations.tableDetail("T01").get("notes")).stream()
+                .map(Map.class::cast).findFirst().orElseThrow().get("text"));
+        staffOperations.saveTableNote("T01", "", staff);
+        assertEquals(List.of(), staffOperations.tableDetail("T01").get("notes"));
+        staffOperations.saveTableNote("T01", "유아 의자 사용 중", staff);
+        jdbc.update("INSERT INTO calls(call_id,table_id,reason,status,client_request_id) VALUES(?,?,'OTHER','PENDING',?)",
+                UUID.randomUUID(), "T01", UUID.randomUUID());
+
+        staffOperations.resetTable("T01", sessionId.toString(), staff);
+        staffOperations.resetTable("T01", sessionId.toString(), staff);
+        assertEquals("CLOSED", jdbc.queryForObject(
+                "SELECT status FROM table_sessions WHERE session_id=?", String.class, sessionId));
+        assertEquals("STAFF_RESET", jdbc.queryForObject(
+                "SELECT close_reason FROM table_sessions WHERE session_id=?", String.class, sessionId));
+        assertEquals("CANCELLED", jdbc.queryForObject(
+                "SELECT status FROM orders WHERE order_id=?::uuid", String.class, guest.get("orderId")));
+        assertEquals("RECEIVED", jdbc.queryForObject(
+                "SELECT status FROM orders WHERE order_id=?::uuid", String.class, service.get("orderId")));
+        assertEquals("CANCELLED", jdbc.queryForObject(
+                "SELECT status FROM calls WHERE table_id='T01'", String.class));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM audit_logs WHERE action='TABLE_RESET'", Integer.class));
+
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cider"), false);
+        staffOperations.resetTable("T01", sessionId.toString(), staff);
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM table_sessions WHERE table_id='T01' AND status='OPEN'", Integer.class));
+        assertEquals(List.of(), staffOperations.tableDetail("T01").get("notes"));
+    }
+
+    @Test
+    void preparedItemsFlowIndependentlyFromKitchenToServing() {
+        StaffPrincipal staff = new StaffPrincipal("주방", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        Map<String, Object> order = orders.create(new HashMap<>(Map.of(
+                "tableId", "T01", "tableToken", TABLE_TOKEN,
+                "clientRequestId", UUID.randomUUID().toString(), "note", "",
+                "items", List.of(
+                        Map.of("menuId", "cola", "quantity", 2, "selectedOptionIds", List.of()),
+                        Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of())))), false);
+        UUID orderId = UUID.fromString(order.get("orderId").toString());
+        List<UUID> itemIds = jdbc.queryForList(
+                "SELECT order_item_id FROM order_items WHERE order_id=? ORDER BY line_no", UUID.class, orderId);
+
+        staffOperations.updateItemPreparation(itemIds.getFirst().toString(), true, staff);
+        Map<String, Object> partial = staffOperations.queues();
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> kitchen = (List<Map<String, Object>>) partial.get("kitchen");
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> serving = (List<Map<String, Object>>) partial.get("serving");
+        assertEquals(1, kitchen.size());
+        assertEquals(1, serving.size());
+        assertEquals(1, ((List<?>) serving.getFirst().get("items")).size());
+        assertEquals(1, serving.getFirst().get("remainingKitchenItemCount"));
+
+        staffOperations.updateItemPreparation(itemIds.get(1).toString(), true, staff);
+        Map<String, Object> ready = staffOperations.queues();
+        assertEquals(List.of(), ready.get("kitchen"));
+        assertEquals("SERVING", jdbc.queryForObject(
+                "SELECT status FROM orders WHERE order_id=?", String.class, orderId));
+
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertEquals("COMPLETED", jdbc.queryForObject(
+                "SELECT status FROM orders WHERE order_id=?", String.class, orderId));
+        ApiException undo = assertThrows(ApiException.class,
+                () -> staffOperations.updateItemPreparation(itemIds.getFirst().toString(), false, staff));
+        assertEquals("ORDER_ITEM_ALREADY_SERVED", undo.code());
     }
 
     @Test

@@ -6,6 +6,13 @@ import type {
   StaffStationOrder,
 } from '../../types/staff'
 
+interface QueueItemResponse {
+  itemId: string
+  name: string
+  quantity: number
+  preparationStatus: 'PENDING' | 'READY' | 'SERVED'
+}
+
 /**
  * B01–B03 queues. `orders/queue` is another action this frontend specifies
  * rather than finds in apps-script-api-design.md — see the PR document.
@@ -19,14 +26,15 @@ export interface StaffQueueResponse {
     tableId: string
     status: 'RECEIVED' | 'COOKING'
     createdAt: string
-    items: Array<{ name: string; quantity: number }>
+    items: QueueItemResponse[]
     kitchenNote: string | null
   }>
   serving: Array<{
     orderId: string
     tableId: string
     readyAt: string
-    items: Array<{ name: string; quantity: number }>
+    items: QueueItemResponse[]
+    remainingKitchenItemCount: number
     servingNote: string | null
   }>
   payment: Array<{
@@ -68,6 +76,30 @@ export function advanceStaffOrder(
   return callStaffApi<void>('orders/status', { orderId, status: remote }, signal)
 }
 
+export function setStaffOrderItemPrepared(
+  itemId: string,
+  ready: boolean,
+  signal?: AbortSignal,
+): Promise<void> {
+  return callStaffApi<void>(
+    'orders/items/preparation',
+    { itemId, ready },
+    signal,
+  )
+}
+
+function mapItems(items: QueueItemResponse[]) {
+  return items.map((item) => ({
+    itemId: item.itemId,
+    name: item.name,
+    quantity: item.quantity,
+    preparationStatus: item.preparationStatus.toLowerCase() as
+      | 'pending'
+      | 'ready'
+      | 'served',
+  }))
+}
+
 function minutesSince(iso: string | null, now: number): number | null {
   if (!iso) return null
   const parsed = Date.parse(iso)
@@ -84,7 +116,10 @@ export function mapKitchenQueue(
     tableId: order.tableId,
     status: order.status === 'COOKING' ? 'cooking' : 'new',
     elapsedMinutes: minutesSince(order.createdAt, now) ?? 0,
-    items: order.items,
+    items: mapItems(order.items),
+    remainingKitchenItemCount: order.items.filter(
+      (item) => item.preparationStatus === 'PENDING',
+    ).length,
     note: order.kitchenNote,
   }))
 }
@@ -98,7 +133,8 @@ export function mapServingQueue(
     tableId: order.tableId,
     status: 'ready',
     elapsedMinutes: minutesSince(order.readyAt, now) ?? 0,
-    items: order.items,
+    items: mapItems(order.items),
+    remainingKitchenItemCount: order.remainingKitchenItemCount,
     note: order.servingNote,
   }))
 }
