@@ -15,6 +15,8 @@ interface StatusTrackerProps {
 
 export function StatusTracker({ status }: StatusTrackerProps) {
   const currentIndex = STEPS.findIndex((step) => step.status === status)
+  // 완료 is terminal, so nothing pulses there.
+  const live = status !== 'closed'
 
   return (
     <ol className="grid grid-cols-4 w-full m-0 p-0 list-none" aria-label="주문 진행 상태">
@@ -38,20 +40,30 @@ export function StatusTracker({ status }: StatusTrackerProps) {
                 <div
                   aria-hidden="true"
                   className={`absolute top-1/2 right-1/2 w-full h-0.5 -translate-y-1/2 rounded-[1px] ${
-                    filled ? 'bg-border-selected' : 'bg-border-default'
+                    filled ? 'bg-primary' : 'bg-border-default'
                   }`}
+                />
+              )}
+              {phase === 'current' && live && (
+                <span
+                  aria-hidden="true"
+                  className="absolute size-3.5 rounded-full bg-primary animate-pulse-ring motion-reduce:animate-none motion-reduce:hidden"
                 />
               )}
               <span
                 aria-hidden="true"
-                className={`relative z-[1] rounded-full ${phase === 'current' ? 'size-3.5' : 'size-2.5'} ${
-                  filled ? 'bg-border-selected' : 'bg-border-default'
-                }`}
+                className={`relative z-[1] rounded-full ${
+                  phase === 'current' ? 'size-3.5' : 'size-2.5'
+                } ${filled ? 'bg-primary' : 'bg-border-default'}`}
               />
             </div>
             <span
-              className={`text-sm leading-[21px] whitespace-nowrap ${
-                phase === 'current' ? 'font-bold text-strong' : 'font-normal text-muted'
+              className={`text-[13px] leading-[19px] whitespace-nowrap ${
+                phase === 'current'
+                  ? 'font-bold text-strong'
+                  : phase === 'done'
+                    ? 'font-normal text-body'
+                    : 'font-normal text-muted'
               }`}
             >
               {step.label}
