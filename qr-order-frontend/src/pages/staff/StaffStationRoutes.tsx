@@ -64,10 +64,12 @@ export function StaffKitchenRoute() {
               key={order.orderId}
               order={order}
               actionLabel="조리 시작"
-              noteAudience="kitchen"
+              mode="kitchen"
               thresholds={KITCHEN_ELAPSED}
               busy={stations.busyId === order.orderId}
-              onAction={(id) => stations.advance(id, 'cooking')}
+              busyItemId={stations.busyItemId}
+              onToggleItem={stations.togglePreparation}
+              onAction={stations.startCooking}
             />
           )),
         },
@@ -83,12 +85,14 @@ export function StaffKitchenRoute() {
             <StationOrderCard
               key={order.orderId}
               order={order}
-              actionLabel="조리 완료"
+              actionLabel="전체 완료"
               actionVariant="secondary"
-              noteAudience="kitchen"
+              mode="kitchen"
               thresholds={KITCHEN_ELAPSED}
               busy={stations.busyId === order.orderId}
-              onAction={(id) => stations.advance(id, 'ready')}
+              busyItemId={stations.busyItemId}
+              onToggleItem={stations.togglePreparation}
+              onAction={stations.completeAll}
             />
           )),
         },
@@ -127,11 +131,11 @@ export function StaffServingRoute() {
               key={order.orderId}
               order={order}
               actionLabel="서빙 완료"
-              noteAudience="serving"
+              mode="serving"
               elapsedSuffix="대기"
               thresholds={SERVING_ELAPSED}
               busy={stations.busyId === order.orderId}
-              onAction={(id) => stations.advance(id, 'served')}
+              onAction={stations.serveReady}
             />
           )),
         },

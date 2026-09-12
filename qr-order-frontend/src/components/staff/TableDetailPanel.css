@@ -204,3 +204,9 @@
   /* Four buttons across 420px — the label must not force the row wider. */
   padding: 0 var(--space-3);
 }
+
+.detail-panel__reset-row {
+  width: 100%;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-border-default);
+}

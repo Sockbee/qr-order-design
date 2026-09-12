@@ -14,6 +14,7 @@ import type {
  * server returns that screen-shaped snapshot without exposing Sheet fields.
  */
 export interface StaffTableDetailResponse {
+  sessionId: string | null
   tableId: string
   displayName: string
   orderStatus: string | null
@@ -26,6 +27,7 @@ export interface StaffTableDetailResponse {
   discountAmount: number
   finalAmount: number
   paymentStatus: 'UNPAID' | 'PAID' | null
+  orderCount: number
   items: Array<{
     itemId: string
     name: string
@@ -33,6 +35,7 @@ export interface StaffTableDetailResponse {
     quantity: number
     lineTotal: number
     status: string
+    preparationStatus: 'PENDING' | 'READY' | 'SERVED'
     note: string | null
   }>
   notes: Array<{
@@ -91,6 +94,7 @@ export function mapStaffTableDetail(
 ): StaffTableDetail {
   const opened = response.openedAt ? Date.parse(response.openedAt) : NaN
   return {
+    sessionId: response.sessionId,
     tableId: response.tableId,
     displayName: response.displayName,
     status: mapStatus(response.orderStatus),
@@ -98,6 +102,7 @@ export function mapStaffTableDetail(
       ? null
       : Math.max(0, Math.floor((now - opened) / 60_000)),
     bill: mapBill(response),
+    orderCount: response.orderCount,
     items: response.items.map((item) => ({
       itemId: item.itemId,
       name: item.name,
@@ -107,6 +112,10 @@ export function mapStaffTableDetail(
       quantity: item.quantity,
       amount: item.lineTotal,
       cancelled: item.status === 'CANCELLED',
+      preparationStatus: item.preparationStatus.toLowerCase() as
+        | 'pending'
+        | 'ready'
+        | 'served',
       note: item.note,
     })),
     notes: response.notes,

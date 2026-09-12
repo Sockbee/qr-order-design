@@ -9,6 +9,7 @@ interface QuantitySelectorProps {
   labelledBy?: string
   /** Used instead of `labelledBy` when there is no label element to point at. */
   ariaLabel?: string
+  disabled?: boolean
 }
 
 export function QuantitySelector({
@@ -18,6 +19,7 @@ export function QuantitySelector({
   max = 99,
   labelledBy,
   ariaLabel,
+  disabled = false,
 }: QuantitySelectorProps) {
   return (
     <div
@@ -30,7 +32,7 @@ export function QuantitySelector({
         type="button"
         className="quantity-selector__button"
         onClick={() => onChange(value - 1)}
-        disabled={value <= min}
+        disabled={disabled || value <= min}
         aria-label="수량 줄이기"
       >
         −
@@ -42,7 +44,7 @@ export function QuantitySelector({
         type="button"
         className="quantity-selector__button"
         onClick={() => onChange(value + 1)}
-        disabled={value >= max}
+        disabled={disabled || value >= max}
         aria-label="수량 늘리기"
       >
         +
