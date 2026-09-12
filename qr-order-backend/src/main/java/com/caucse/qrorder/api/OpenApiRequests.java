@@ -83,6 +83,17 @@ public final class OpenApiRequests {
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String primaryTableId,
             @Schema(example = "T02", requiredMode = Schema.RequiredMode.REQUIRED) String secondaryTableId) {}
 
+    @Schema(name = "TableNoteRequest", description = "현재 방문 세션에만 적용되는 일반 메모")
+    public record TableNote(
+            @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
+            @Schema(example = "유아 의자 사용 중", maxLength = 200) String note) {}
+
+    @Schema(name = "TableResetRequest", description = "화면을 연 방문 세션과 현재 세션이 같을 때만 초기화합니다.")
+    public record TableReset(
+            @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
+            @Schema(format = "uuid", example = "2bc315f8-01f6-47d7-a7e8-e1882df6544c",
+                    requiredMode = Schema.RequiredMode.REQUIRED) String expectedSessionId) {}
+
     @Schema(name = "PaymentConfirmRequest")
     public record PaymentConfirm(
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
@@ -96,6 +107,12 @@ public final class OpenApiRequests {
             @Schema(format = "uuid", example = "2bc315f8-01f6-47d7-a7e8-e1882df6544c") String orderId,
             @Schema(allowableValues = {"RECEIVED", "COOKING", "READY", "SERVED"}, example = "COOKING",
                     requiredMode = Schema.RequiredMode.REQUIRED) String status) {}
+
+    @Schema(name = "OrderItemPreparationRequest")
+    public record OrderItemPreparation(
+            @Schema(format = "uuid", example = "560d10a2-44d3-43e0-bdcb-053692beef65",
+                    requiredMode = Schema.RequiredMode.REQUIRED) String itemId,
+            @Schema(example = "true", requiredMode = Schema.RequiredMode.REQUIRED) boolean ready) {}
 
     @Schema(name = "StaffOrderItemRequest")
     public record StaffOrderItem(
@@ -134,15 +151,12 @@ public final class OpenApiRequests {
             int expectedChargeAmount) {}
 
     @Schema(name = "StaffOrderUpdateRequest",
-            description = "operation별 필드: quantity는 itemId/quantity, cancel-item은 itemId, note는 tableId/note/audience가 필요합니다.")
+            description = "operation별 필드: quantity는 itemId/quantity, cancel-item은 itemId가 필요합니다.")
     public record StaffOrderUpdate(
-            @Schema(allowableValues = {"quantity", "cancel-item", "note"}, example = "quantity",
+            @Schema(allowableValues = {"quantity", "cancel-item"}, example = "quantity",
                     requiredMode = Schema.RequiredMode.REQUIRED) String operation,
             @Schema(format = "uuid", example = "560d10a2-44d3-43e0-bdcb-053692beef65") String itemId,
-            @Schema(example = "2", minimum = "1", maximum = "99") Integer quantity,
-            @Schema(example = "T01") String tableId,
-            @Schema(example = "주방에 전달할 메모", maxLength = 200) String note,
-            @Schema(allowableValues = {"general", "kitchen", "serving"}, example = "kitchen") String audience) {}
+            @Schema(example = "2", minimum = "1", maximum = "99") Integer quantity) {}
 
     @Schema(name = "MenuAvailabilityRequest")
     public record MenuAvailability(
