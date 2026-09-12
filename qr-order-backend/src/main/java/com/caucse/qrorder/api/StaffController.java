@@ -88,6 +88,18 @@ public class StaffController {
     @PostMapping("/tables/split") ApiEnvelope<Void> split(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.split(required(body, "tableId"), staff));
     }
+    @Operation(summary = "현재 방문 테이블 메모 저장", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.TableNote.class))))
+    @PostMapping("/tables/note") ApiEnvelope<Void> note(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        Object note = body.get("note");
+        return ApiEnvelope.ok(service.saveTableNote(required(body, "tableId"), note == null ? "" : String.valueOf(note), staff));
+    }
+    @Operation(summary = "현재 방문 테이블 초기화", description = "주문·결제 이력은 보존하고 미완료 손님 주문과 호출을 정리한 뒤 방문을 종료합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+                    content = @Content(schema = @Schema(implementation = OpenApiRequests.TableReset.class))))
+    @PostMapping("/tables/reset") ApiEnvelope<Void> reset(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        return ApiEnvelope.ok(service.resetTable(required(body, "tableId"), required(body, "expectedSessionId"), staff));
+    }
     @Operation(summary = "결제 확정", description = "expectedFinalAmount가 서버 계산 금액과 일치할 때만 확정합니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
                     content = @Content(schema = @Schema(implementation = OpenApiRequests.PaymentConfirm.class))))
@@ -98,6 +110,11 @@ public class StaffController {
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.OrderStatus.class))))
     @PostMapping("/orders/status") ApiEnvelope<Void> status(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.updateStatus(body, staff));
+    }
+    @Operation(summary = "주문 품목 조리 완료 상태 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.OrderItemPreparation.class))))
+    @PostMapping("/orders/items/preparation") ApiEnvelope<Void> preparation(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        return ApiEnvelope.ok(service.updateItemPreparation(required(body, "itemId"), bool(body, "ready"), staff));
     }
     @PostMapping("/orders/queue")
     @Operation(summary = "조리 주문 큐 조회")

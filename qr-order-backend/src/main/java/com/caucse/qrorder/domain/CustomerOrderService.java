@@ -206,12 +206,23 @@ public class CustomerOrderService {
     public Map<String, Object> list(Map<String, Object> request) {
         String tableId = string(request, "tableId");
         TableCatalogService.TableRow table = catalog.requireTable(tableId, string(request, "tableToken"), false);
+        UUID sessionId = jdbc.query("""
+                SELECT session_id FROM table_sessions
+                WHERE status='OPEN' AND (table_id=? OR origin_table_id=?)
+                ORDER BY CASE WHEN table_id=? THEN 0 ELSE 1 END, opened_at DESC
+                LIMIT 1
+                """, rs -> rs.next() ? rs.getObject(1, UUID.class) : null, tableId, tableId, tableId);
+        if (sessionId == null) {
+            return ApiEnvelope.map(
+                    "table", ApiEnvelope.map("tableId", table.tableId(), "displayName", table.displayName()),
+                    "orders", List.of(), "latestPublicStatus", null, "sessionTotalAmount", 0);
+        }
         List<Map<String, Object>> orders = jdbc.query("""
                 SELECT o.order_id, o.display_code, o.status, o.public_status, o.total_amount,
                        o.order_kind, o.service_message, sm.name AS charged_staff_name, o.created_at
                 FROM orders o
                 LEFT JOIN staff_members sm ON sm.staff_id=o.charged_staff_id
-                WHERE o.table_id=? ORDER BY o.created_at DESC
+                WHERE o.session_id=? ORDER BY o.created_at DESC
                 """, (rs, index) -> {
             UUID orderId = rs.getObject("order_id", UUID.class);
             Map<String, Object> row = ApiEnvelope.map(
@@ -225,13 +236,13 @@ public class CustomerOrderService {
                 row.put("chargedStaffName", rs.getString("charged_staff_name"));
             }
             return row;
-        }, tableId);
+        }, sessionId);
         String latest = orders.stream().filter(row -> !"cancelled".equals(row.get("publicStatus")))
                 .map(row -> String.valueOf(row.get("publicStatus"))).findFirst().orElse(null);
         Integer total = jdbc.queryForObject("""
                 SELECT COALESCE(sum(total_amount),0)::integer FROM orders
-                WHERE table_id=? AND status <> 'CANCELLED'
-                """, Integer.class, tableId);
+                WHERE session_id=? AND status <> 'CANCELLED'
+                """, Integer.class, sessionId);
         return ApiEnvelope.map(
                 "table", ApiEnvelope.map("tableId", table.tableId(), "displayName", table.displayName()),
                 "orders", orders, "latestPublicStatus", latest, "sessionTotalAmount", total == null ? 0 : total);

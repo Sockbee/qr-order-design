@@ -15,7 +15,6 @@ export interface TableDetailActions {
   onStatusChange: (status: StaffOrderStatus) => void
   /** A10 — grant a service order this table is not billed for. */
   onServiceOrder: () => void
-  onConfirmPayment: () => void
   onMove: () => void
   onMerge: () => void
   onSplit: () => void
@@ -23,6 +22,7 @@ export interface TableDetailActions {
   onNote: () => void
   onEditOrder: () => void
   onCancelOrder: () => void
+  onReset: () => void
 }
 
 interface TableDetailPanelProps extends TableDetailActions {
@@ -46,10 +46,9 @@ function elapsedLabel(minutes: number | null): string | null {
  * staff/TableDetailPanel (89:8). A 420px inspector, not a full page: the
  * table grid has to stay in view so the next table is one tap away.
  *
- * The action hierarchy follows how often each is actually used — 주문 추가
- * (constant, primary) → 결제 확인 (once per table) → 이동/합석/분리/할인 (rare)
- * → 메모/수정/취소. Only 주문 취소 is danger, as an outline, and it is the one
- * action behind a confirm dialog.
+ * Payment confirmation belongs only to the dedicated payment station. The
+ * inspector keeps table operations together and separates visit reset from
+ * order cancellation.
  *
  * When a call is pending the banner pins to the very top of the header, above
  * the status control: what to carry over matters before what the order state
@@ -67,7 +66,6 @@ export function TableDetailPanel({
   onAcknowledgeCall,
   onStatusChange,
   onServiceOrder,
-  onConfirmPayment,
   onMove,
   onMerge,
   onSplit,
@@ -75,6 +73,7 @@ export function TableDetailPanel({
   onNote,
   onEditOrder,
   onCancelOrder,
+  onReset,
 }: TableDetailPanelProps) {
   if (loading || !detail) {
     return (
@@ -207,14 +206,6 @@ export function TableDetailPanel({
         <OperationalButton block onClick={onServiceOrder}>
           서비스 제공
         </OperationalButton>
-        <OperationalButton
-          block
-          variant="secondary"
-          disabled={bill.paid}
-          onClick={onConfirmPayment}
-        >
-          {bill.paid ? '결제 완료' : '결제 확인'}
-        </OperationalButton>
         <div className="detail-panel__action-row">
           <OperationalButton variant="secondary" onClick={onMove}>
             이동
@@ -238,6 +229,16 @@ export function TableDetailPanel({
           </OperationalButton>
           <OperationalButton variant="danger" onClick={onCancelOrder}>
             주문 취소
+          </OperationalButton>
+        </div>
+        <div className="detail-panel__reset-row">
+          <OperationalButton
+            block
+            variant="danger"
+            disabled={!detail.sessionId}
+            onClick={onReset}
+          >
+            테이블 초기화
           </OperationalButton>
         </div>
       </footer>

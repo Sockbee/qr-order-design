@@ -37,3 +37,4 @@ coverage
 .env
 .env.*
 !.env.example
+/public/.well-known/acme-challenge/RoJ2_xvcltUJC2xTE7eJ9mDoJrglFUnaE1tCdVTux9SYViSb_QzO6hw-nYmO8Est

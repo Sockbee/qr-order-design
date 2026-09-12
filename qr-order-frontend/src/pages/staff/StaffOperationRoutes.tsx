@@ -6,13 +6,14 @@ import { EditOrderPanel } from '../../components/staff/EditOrderPanel'
 import { MergeTablesDialog } from '../../components/staff/MergeTablesDialog'
 import { MoveTableDialog } from '../../components/staff/MoveTableDialog'
 import { SplitTablesDialog } from '../../components/staff/SplitTablesDialog'
+import { TableNoteDialog } from '../../components/staff/TableNoteDialog'
+import { TableResetDialog } from '../../components/staff/TableResetDialog'
 import { ConfirmDialog } from '../../components/staff/StaffDialog'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import { useStaffOperations } from '../../hooks/useStaffOperations'
 import { useStaffTableDetail } from '../../hooks/useStaffTableDetail'
 import { useStaffTableHome } from '../../hooks/useStaffTableHome'
 import { formatStaffAmount } from '../../utils/price'
-import type { StaffNoteAudience } from '../../types/staff'
 
 /**
  * A03–A08 all act on one table, and all of them keep the table grid on
@@ -26,6 +27,8 @@ export type StaffOperation =
   | 'discount'
   | 'edit'
   | 'cancel'
+  | 'note'
+  | 'reset'
 
 /** §4.13 allows one configured rate; 20 is the seeded value. */
 const TABLE_DISCOUNT_RATE = 20
@@ -40,21 +43,17 @@ export function StaffTableOperationRoute({
   const staff = useStaffTableHome()
   const detail = useStaffTableDetail(tableId)
   const operations = useStaffOperations()
-  const [noteAudience, setNoteAudience] =
-    useState<StaffNoteAudience | null>(null)
-  const [note, setNote] = useState<string | null>(null)
   const [cancelItemId, setCancelItemId] = useState<string | null>(null)
 
   const latestNote = detail.detail?.notes.at(-1)
-  const currentNote = note ?? latestNote?.text ?? ''
-  const currentNoteAudience = noteAudience ?? latestNote?.audience ?? 'general'
 
   const close = () => navigate(`/staff/tables/${tableId}`)
   const table = staff.data?.tables.find(
     (candidate) => candidate.tableId === tableId,
   )
   const tables = staff.data?.tables ?? []
-  const orderCount = detail.detail?.items.length ?? 0
+  const orderCount = detail.detail?.orderCount ?? 0
+  const resetSessionId = detail.detail?.sessionId
 
   const home = (extra?: {
     panel?: React.ReactNode
@@ -87,23 +86,10 @@ export function StaffTableOperationRoute({
             <EditOrderPanel
               tableId={tableId}
               items={detail.detail?.items ?? []}
-              note={currentNote}
-              noteAudience={currentNoteAudience}
-              savingNote={operations.submitting}
               onQuantityChange={(itemId, quantity) =>
                 operations.quantity(itemId, quantity, detail.reload)
               }
               onCancelItem={setCancelItemId}
-              onNoteChange={setNote}
-              onAudienceChange={setNoteAudience}
-              onSaveNote={() =>
-                operations.saveNote(
-                  tableId,
-                  currentNote,
-                  currentNoteAudience,
-                  close,
-                )
-              }
               onClose={close}
             />
           ),
@@ -193,6 +179,27 @@ export function StaffTableOperationRoute({
           currentRate={detail.detail?.bill.discountRate ?? 0}
           submitting={operations.submitting}
           onConfirm={(rate) => operations.discount(tableId, rate, close)}
+          onCancel={close}
+        />
+      )}
+      {table && operation === 'note' && detail.detail && (
+        <TableNoteDialog
+          tableId={tableId}
+          initialNote={latestNote?.text ?? ''}
+          submitting={operations.submitting}
+          onConfirm={(note) => operations.saveNote(tableId, note, close)}
+          onCancel={close}
+        />
+      )}
+      {table && operation === 'reset' && detail.detail && resetSessionId && (
+        <TableResetDialog
+          tableLabel={detail.detail.mergeLabel?.replace(' 합석', '') ?? tableId}
+          orderCount={orderCount}
+          finalAmount={detail.detail.bill.finalAmount}
+          submitting={operations.submitting}
+          onConfirm={() => operations.reset(tableId, resetSessionId, () =>
+            navigate('/staff/tables'),
+          )}
           onCancel={close}
         />
       )}

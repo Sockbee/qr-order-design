@@ -7,6 +7,7 @@ import {
   mapKitchenQueue,
   mapPaymentQueue,
   mapServingQueue,
+  setStaffOrderItemPrepared,
 } from '../api/staff/stations'
 import { confirmTablePayment } from '../api/staff/operations'
 import {
@@ -16,7 +17,6 @@ import {
 } from '../data/staff'
 import { STAFF_POLL_INTERVAL_MS } from './useStaffTableHome'
 import type {
-  StaffOrderStatus,
   StaffPaymentOrder,
   StaffStationCounts,
   StaffStationOrder,
@@ -35,8 +35,12 @@ interface StaffStationsState {
   error: ApiClientError | null
   unauthorized: boolean
   busyId: string | null
+  busyItemId: string | null
   retry: () => void
-  advance: (orderId: string, status: StaffOrderStatus) => void
+  startCooking: (orderId: string) => void
+  completeAll: (orderId: string) => void
+  serveReady: (orderId: string) => void
+  togglePreparation: (orderId: string, itemId: string, ready: boolean) => void
   confirmPayment: (tableId: string, expectedFinalAmount: number) => void
 }
 
@@ -66,8 +70,11 @@ export function useStaffStations(): StaffStationsState {
   const [error, setError] = useState<ApiClientError | null>(null)
   const [attempt, setAttempt] = useState(0)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [busyItemId, setBusyItemId] = useState<string | null>(null)
   /** Orders resolved locally, so a card leaves immediately on tap. */
   const [resolved, setResolved] = useState<string[]>([])
+  const [itemOverrides, setItemOverrides] = useState<Record<string, boolean>>({})
+  const [cookingOverrides, setCookingOverrides] = useState<string[]>([])
 
   useEffect(() => {
     if (!configured) return
@@ -100,6 +107,8 @@ export function useStaffStations(): StaffStationsState {
           counts: response.counts,
         })
         setResolved([])
+        setItemOverrides({})
+        setCookingOverrides([])
         setError(null)
         schedule(eventsConnected ? SSE_RECONCILE_INTERVAL_MS : STAFF_POLL_INTERVAL_MS)
       } catch (caught) {
@@ -157,29 +166,55 @@ export function useStaffStations(): StaffStationsState {
   const base = data ?? (configured ? null : fallback)
 
   const advance = useCallback(
-    (orderId: string, status: StaffOrderStatus) => {
-      /*
-       * The card leaves the queue on tap. A station screen is worked with both
-       * hands full, so waiting for a round trip before the ticket disappears
-       * is how the same order gets started twice.
-       */
-      const resolve = () => setResolved((current) => [...current, orderId])
+    (
+      queue: 'kitchen' | 'serving',
+      orderId: string,
+      status: 'cooking' | 'ready' | 'served',
+      resolve: boolean,
+    ) => {
+      const done = () => {
+        if (resolve) {
+          setResolved((current) => [...current, `${queue}:${orderId}`])
+        } else {
+          setCookingOverrides((current) => [...current, orderId])
+        }
+        if (configured) setAttempt((value) => value + 1)
+      }
       if (!configured) {
-        resolve()
+        done()
         return
       }
       setBusyId(orderId)
       void advanceStaffOrder(orderId, status)
-        .then(resolve)
+        .then(done)
         .catch((caught: unknown) => setError(toApiError(caught)))
         .finally(() => setBusyId(null))
     },
     [configured],
   )
 
+  const togglePreparation = useCallback(
+    (_orderId: string, itemId: string, ready: boolean) => {
+      const done = () => {
+        setItemOverrides((current) => ({ ...current, [itemId]: ready }))
+        if (configured) setAttempt((value) => value + 1)
+      }
+      if (!configured) {
+        done()
+        return
+      }
+      setBusyItemId(itemId)
+      void setStaffOrderItemPrepared(itemId, ready)
+        .then(done)
+        .catch((caught: unknown) => setError(toApiError(caught)))
+        .finally(() => setBusyItemId(null))
+    },
+    [configured],
+  )
+
   const confirmPayment = useCallback(
     (tableId: string, expectedFinalAmount: number) => {
-      const resolve = () => setResolved((current) => [...current, tableId])
+      const resolve = () => setResolved((current) => [...current, `payment:${tableId}`])
       if (!configured) {
         resolve()
         return
@@ -195,14 +230,25 @@ export function useStaffStations(): StaffStationsState {
 
   const visible = useMemo(() => {
     if (!base) return null
-    const kitchen = base.kitchen.filter(
-      (order) => !resolved.includes(order.orderId),
-    )
+    const kitchen = base.kitchen
+      .map((order) => ({
+        ...order,
+        status: cookingOverrides.includes(order.orderId) ? 'cooking' as const : order.status,
+        items: order.items.map((item) =>
+          itemOverrides[item.itemId] === undefined
+            ? item
+            : { ...item, preparationStatus: itemOverrides[item.itemId] ? 'ready' as const : 'pending' as const },
+        ),
+      }))
+      .filter((order) =>
+        !resolved.includes(`kitchen:${order.orderId}`) &&
+        order.items.some((item) => item.preparationStatus === 'pending'),
+      )
     const serving = base.serving.filter(
-      (order) => !resolved.includes(order.orderId),
+      (order) => !resolved.includes(`serving:${order.orderId}`),
     )
     const payment = base.payment.map((row) =>
-      resolved.includes(row.tableId)
+      resolved.includes(`payment:${row.tableId}`)
         ? { ...row, bill: { ...row.bill, paid: true } }
         : row,
     )
@@ -222,7 +268,7 @@ export function useStaffStations(): StaffStationsState {
         payment: payment.filter((row) => !row.bill.paid).length,
       },
     }
-  }, [base, resolved])
+  }, [base, cookingOverrides, itemOverrides, resolved])
 
   return {
     kitchen: visible?.kitchen ?? [],
@@ -233,11 +279,24 @@ export function useStaffStations(): StaffStationsState {
     error,
     unauthorized: isStaffAuthError(error),
     busyId,
+    busyItemId,
     retry: useCallback(() => {
       setError(null)
       setAttempt((value) => value + 1)
     }, []),
-    advance,
+    startCooking: useCallback(
+      (orderId) => advance('kitchen', orderId, 'cooking', false),
+      [advance],
+    ),
+    completeAll: useCallback(
+      (orderId) => advance('kitchen', orderId, 'ready', true),
+      [advance],
+    ),
+    serveReady: useCallback(
+      (orderId) => advance('serving', orderId, 'served', true),
+      [advance],
+    ),
+    togglePreparation,
     confirmPayment,
   }
 }

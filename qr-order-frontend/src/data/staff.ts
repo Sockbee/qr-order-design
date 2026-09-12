@@ -96,6 +96,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
   )
 
   return {
+    sessionId: '00000000-0000-4000-8000-000000000001',
     tableId,
     displayName: table?.displayName ?? tableId,
     status: table?.status ?? null,
@@ -107,6 +108,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
       finalAmount: subtotal - discountAmount,
       paid: table?.paid ?? false,
     },
+    orderCount: 3,
     items: [
       {
         itemId: `${tableId}-1`,
@@ -115,6 +117,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 2,
         amount: 18_000,
         cancelled: false,
+        preparationStatus: 'pending',
         note: '고수 빼주세요',
       },
       {
@@ -124,6 +127,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 1,
         amount: 9_000,
         cancelled: false,
+        preparationStatus: 'pending',
         note: null,
       },
       {
@@ -133,6 +137,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 3,
         amount: 15_000,
         cancelled: false,
+        preparationStatus: 'pending',
         note: null,
       },
       {
@@ -142,6 +147,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
         quantity: 1,
         amount: 15_000,
         cancelled: true,
+        preparationStatus: 'pending',
         note: null,
       },
     ],
@@ -184,14 +190,14 @@ export const staffQueues = {
 }
 
 const KITCHEN_ITEMS = [
-  { name: '김치전', quantity: 2 },
-  { name: '떡볶이', quantity: 1 },
-  { name: '소주', quantity: 3 },
+  { itemId: 'ki-1', name: '김치전', quantity: 2, preparationStatus: 'ready' as const },
+  { itemId: 'ki-2', name: '떡볶이', quantity: 1, preparationStatus: 'pending' as const },
+  { itemId: 'ki-3', name: '소주', quantity: 3, preparationStatus: 'pending' as const },
 ]
 
 const SERVING_ITEMS = [
-  { name: '김치전', quantity: 2 },
-  { name: '떡볶이', quantity: 1 },
+  { itemId: 'si-1', name: '김치전', quantity: 2, preparationStatus: 'ready' as const },
+  { itemId: 'si-2', name: '떡볶이', quantity: 1, preparationStatus: 'ready' as const },
 ]
 
 export function staffKitchenQueue(): StaffStationOrder[] {
@@ -201,6 +207,7 @@ export function staffKitchenQueue(): StaffStationOrder[] {
     status: order.status,
     elapsedMinutes: order.elapsedMinutes,
     items: KITCHEN_ITEMS,
+    remainingKitchenItemCount: 2,
     note: '김치전 먼저',
   }))
 }
@@ -212,6 +219,7 @@ export function staffServingQueue(): StaffStationOrder[] {
     status: 'ready' as const,
     elapsedMinutes: order.elapsedMinutes,
     items: SERVING_ITEMS,
+    remainingKitchenItemCount: 1,
     note: '접시 추가 필요',
   }))
 }

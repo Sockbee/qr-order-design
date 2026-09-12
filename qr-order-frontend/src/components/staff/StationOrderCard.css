@@ -16,6 +16,10 @@
   border-color: var(--color-status-attention-fg);
 }
 
+.station-card--serving {
+  min-height: 320px;
+}
+
 .station-card__head {
   display: flex;
   align-items: center;
@@ -28,6 +32,24 @@
   margin: 0;
   font: var(--type-staff-table-no);
   color: var(--color-text-strong);
+}
+
+.station-card__progress,
+.station-card__partial {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font: var(--type-micro-badge);
+}
+
+.station-card__progress {
+  background: var(--color-staff-status-cooking-bg);
+  color: var(--color-staff-status-cooking-fg);
+}
+
+.station-card__partial {
+  background: var(--color-staff-status-ready-bg);
+  color: var(--color-staff-status-ready-fg);
 }
 
 .station-card__items {
@@ -43,6 +65,32 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+.station-card__check {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-canvas);
+  color: var(--color-staff-status-ready-fg);
+  font: var(--type-caption-strong);
+  cursor: pointer;
+}
+
+.station-card__check[aria-checked='true'] {
+  border-color: var(--color-staff-status-ready-fg);
+  background: var(--color-staff-status-ready-bg);
+}
+
+.station-card__item--done .station-card__item-name,
+.station-card__item--done .station-card__item-qty {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
 }
 
 .station-card__item-name {

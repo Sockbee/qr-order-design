@@ -5,6 +5,36 @@
   color: var(--color-text-strong);
 }
 
+.operation-dialog__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.operation-dialog__textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px var(--space-4);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-btn-md);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-strong);
+  font: var(--type-body-default);
+  resize: vertical;
+}
+
+.operation-dialog__textarea:focus {
+  border-color: var(--color-border-selected);
+  outline: 2px solid var(--color-bg-weak);
+}
+
+.operation-dialog__helper {
+  margin: 0;
+  font: var(--type-caption-default);
+  color: var(--color-text-muted);
+}
+
 .operation-dialog__arrow {
   margin: 0;
   font: var(--type-title-section);

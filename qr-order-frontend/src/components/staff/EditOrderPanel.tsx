@@ -1,48 +1,27 @@
 import './EditOrderPanel.css'
 import { OperationalButton } from './OperationalButton'
 import { QuantitySelector } from '../QuantitySelector'
-import { STAFF_NOTE_LABELS } from '../../types/staff'
 import { formatStaffAmount } from '../../utils/price'
-import type { StaffNoteAudience, StaffOrderItem } from '../../types/staff'
-
-const AUDIENCES: StaffNoteAudience[] = ['kitchen', 'serving', 'general']
-
-const AUDIENCE_CHIP_LABELS: Record<StaffNoteAudience, string> = {
-  kitchen: '주방에 표시',
-  serving: '서빙에 표시',
-  general: '테이블만',
-}
+import type { StaffOrderItem } from '../../types/staff'
 
 interface EditOrderPanelProps {
   tableId: string
   items: StaffOrderItem[]
-  note: string
-  noteAudience: StaffNoteAudience
-  savingNote: boolean
   onQuantityChange: (itemId: string, quantity: number) => void
   onCancelItem: (itemId: string) => void
-  onNoteChange: (note: string) => void
-  onAudienceChange: (audience: StaffNoteAudience) => void
-  onSaveNote: () => void
   onClose: () => void
 }
 
 /**
- * A08 — Edit Order / Note (97:1407). Quantity and option changes apply
+ * A08 — Edit Order (97:1407). Quantity changes apply
  * immediately; only cancelling a line goes through a confirm dialog, because
  * only cancelling destroys something.
  */
 export function EditOrderPanel({
   tableId,
   items,
-  note,
-  noteAudience,
-  savingNote,
   onQuantityChange,
   onCancelItem,
-  onNoteChange,
-  onAudienceChange,
-  onSaveNote,
   onClose,
 }: EditOrderPanelProps) {
   return (
@@ -60,7 +39,7 @@ export function EditOrderPanel({
           </button>
         </div>
         <p className="edit-panel__lead">
-          수량·옵션 변경은 바로 반영됩니다 · 취소만 확인을 거칩니다
+          수량 변경은 바로 반영됩니다 · 취소만 확인을 거칩니다
         </p>
       </header>
 
@@ -80,6 +59,7 @@ export function EditOrderPanel({
                   <QuantitySelector
                     value={item.quantity}
                     ariaLabel={`${item.name} 수량`}
+                    disabled={item.preparationStatus !== 'pending'}
                     onChange={(next) => onQuantityChange(item.itemId, next)}
                   />
                 </div>
@@ -90,9 +70,10 @@ export function EditOrderPanel({
                   <OperationalButton
                     variant="danger"
                     size="md"
+                    disabled={item.preparationStatus !== 'pending'}
                     onClick={() => onCancelItem(item.itemId)}
                   >
-                    항목 취소
+                    {item.preparationStatus === 'pending' ? '항목 취소' : '조리 시작됨'}
                   </OperationalButton>
                 </div>
               </li>
@@ -100,47 +81,6 @@ export function EditOrderPanel({
         </ul>
       </div>
 
-      <footer className="edit-panel__note">
-        <p className="edit-panel__note-label">주문 메모</p>
-        <textarea
-          className="edit-panel__note-input"
-          aria-label="주문 메모"
-          rows={2}
-          value={note}
-          onChange={(event) => onNoteChange(event.target.value)}
-        />
-        <div
-          className="edit-panel__audiences"
-          role="radiogroup"
-          aria-label="메모를 표시할 곳"
-        >
-          {AUDIENCES.map((audience) => (
-            <button
-              key={audience}
-              type="button"
-              role="radio"
-              aria-checked={audience === noteAudience}
-              className={`edit-panel__audience edit-panel__audience--${audience}${
-                audience === noteAudience
-                  ? ' edit-panel__audience--selected'
-                  : ''
-              }`}
-              onClick={() => onAudienceChange(audience)}
-              title={`${STAFF_NOTE_LABELS[audience]} 메모`}
-            >
-              {AUDIENCE_CHIP_LABELS[audience]}
-            </button>
-          ))}
-        </div>
-        <div className="edit-panel__note-actions">
-          <OperationalButton variant="secondary" onClick={onClose}>
-            취소
-          </OperationalButton>
-          <OperationalButton loading={savingNote} onClick={onSaveNote}>
-            메모 저장
-          </OperationalButton>
-        </div>
-      </footer>
     </aside>
   )
 }
