@@ -33,9 +33,9 @@ interface OrderStatusChipProps {
 export function OrderStatusChip({ status }: OrderStatusChipProps) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 py-1 px-2.5 rounded-[6px] text-[12px] leading-[18px] whitespace-nowrap ${STATUS_CLASSES[status]}`}
+      className={`inline-flex items-center gap-1.5 h-[22px] px-2 rounded-[6px] text-[12px] leading-none font-bold whitespace-nowrap ${STATUS_CLASSES[status]}`}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-current" aria-hidden="true" />
+      <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
       {LABELS[status]}
     </span>
   )

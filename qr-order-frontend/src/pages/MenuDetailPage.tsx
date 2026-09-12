@@ -6,8 +6,6 @@ import { QuantitySelector } from '../components/customer/QuantitySelector'
 import { formatPrice } from '../utils/price'
 import type { CartLine, MenuItemDetail, MenuOption } from '../types/menu'
 
-const QUANTITY_LABEL_ID = 'menu-detail-quantity'
-
 interface MenuDetailPageProps {
   item: MenuItemDetail
   onBack: () => void
@@ -100,8 +98,8 @@ export function MenuDetailPage({
   })
 
   const originLine = [
-    item.allergens?.length ? `알레르기: ${item.allergens.join(', ')}` : null,
-    item.origin ? `원산지: ${item.origin}` : null,
+    item.allergens?.length ? `알레르기 ${item.allergens.join(', ')}` : null,
+    item.origin ? `원산지 ${item.origin}` : null,
   ]
     .filter(Boolean)
     .join(' · ')
@@ -114,21 +112,26 @@ export function MenuDetailPage({
         actions={[{ label: '직원 호출', onClick: onCallStaff }]}
       />
 
-      <div className="flex-none h-40 bg-surface overflow-hidden">
-        {item.imageUrl && <img className="w-full h-full object-cover" src={item.imageUrl} alt="" />}
+      <div className="flex-none mx-4 mt-2 h-[216px] rounded-[24px] bg-surface overflow-hidden">
+        {item.imageUrl && (
+          <img className="w-full h-full object-cover" src={item.imageUrl} alt="" />
+        )}
       </div>
 
-      <main className="flex flex-1 flex-col gap-6 pt-4 px-4 pb-0">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 font-display font-normal text-[22px] leading-[33px] text-strong">
-            <h2 className="flex-1 min-w-0">{item.name}</h2>
-            <span className="flex-none whitespace-nowrap">
+      <main className="flex flex-1 flex-col gap-5 pt-[18px] px-4 pb-6">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-baseline gap-3">
+            <h2 className="flex-1 min-w-0 font-display font-normal text-[30px] leading-[38px] text-strong break-keep">
+              {item.name}
+            </h2>
+            <span className="flex-none whitespace-nowrap text-xl leading-7 font-bold text-strong">
               {formatPrice(item.price)}
             </span>
           </div>
           <p className="text-sm leading-[21px] font-normal text-body">{item.description}</p>
+          {/* Allergens are never text-muted (CLAUDE.md §6). */}
           {originLine && (
-            <p className="text-sm leading-[21px] font-normal text-body">{originLine}</p>
+            <p className="text-[12px] leading-[18px] font-normal text-body">{originLine}</p>
           )}
         </div>
 
@@ -140,45 +143,39 @@ export function MenuDetailPage({
             onToggle={(optionId) => toggleOption(group.id, optionId)}
           />
         ))}
+      </main>
 
-        <div className="flex items-center gap-2">
-          <span
-            className="flex-1 min-w-0 font-bold text-sm leading-[21px] text-strong"
-            id={QUANTITY_LABEL_ID}
-          >
-            수량
-          </span>
+      <div className="sticky bottom-0 z-[2] bg-canvas border-t border-border-default">
+        <div className="flex items-center gap-3 px-4 pt-3 pb-[var(--layout-safe-area)]">
           <QuantitySelector
+            size="large"
             value={quantity}
             onChange={setQuantity}
             min={item.minQuantity ?? 1}
             max={item.maxQuantity ?? 99}
-            labelledBy={QUANTITY_LABEL_ID}
+            ariaLabel="수량"
           />
+          <div className="flex-1 min-w-0">
+            <Button
+              block
+              size="xlarge"
+              variant="fill"
+              disabled={!canAdd}
+              label="담기"
+              amount={formatPrice(total)}
+              onClick={() =>
+                onAddToCart({
+                  itemId: item.id,
+                  nameSnapshot: item.name,
+                  quantity,
+                  unitPrice,
+                  selectedOptionIds,
+                  selectedOptionNames,
+                })
+              }
+            />
+          </div>
         </div>
-      </main>
-
-      <div className="sticky bottom-0 z-[2] bg-canvas border-t border-border-default">
-        <div className="flex p-4">
-          <Button
-            block
-            size="xlarge"
-            variant="fill"
-            disabled={!canAdd}
-            label={`담기 · ${formatPrice(total)}`}
-            onClick={() =>
-              onAddToCart({
-                itemId: item.id,
-                nameSnapshot: item.name,
-                quantity,
-                unitPrice,
-                selectedOptionIds,
-                selectedOptionNames,
-              })
-            }
-          />
-        </div>
-        <div className="h-[var(--layout-safe-area)] bg-canvas" />
       </div>
     </div>
   )

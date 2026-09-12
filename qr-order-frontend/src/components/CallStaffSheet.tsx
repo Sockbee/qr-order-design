@@ -13,6 +13,22 @@ interface CallStaffSheetProps {
   onCall: (reason: CallReason) => void
   onCancelCall: () => void
   onClose: () => void
+  /** From `usePresence`. */
+  closing?: boolean
+}
+
+function CheckIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M5 12.5l4.5 4.5L19 7.5"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
 }
 
 /**
@@ -23,8 +39,8 @@ interface CallStaffSheetProps {
  * reopens the sheet mid-wait must see "이미 불렀다", never a fresh form that
  * invites a duplicate call.
  *
- * Mounted only while open, so the reason selection resets on each open
- * without an effect to clear it.
+ * Mounted only while open (plus one exit frame), so the reason selection
+ * resets on each open without an effect to clear it.
  */
 export function CallStaffSheet({
   tableNumber,
@@ -34,50 +50,72 @@ export function CallStaffSheet({
   onCall,
   onCancelCall,
   onClose,
+  closing = false,
 }: CallStaffSheetProps) {
   const titleId = useId()
   const sheetRef = useRef<HTMLDivElement>(null)
   const [selectedReason, setSelectedReason] = useState<CallReason | null>(null)
+  // Ref, not a dependency: an inline `onClose` would refocus the sheet on every parent render.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => {
+    onCloseRef.current = onClose
+  })
 
   useEffect(() => {
+    if (closing) {
+      const active = document.activeElement
+      if (active instanceof HTMLElement && sheetRef.current?.contains(active)) active.blur()
+      return
+    }
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
+      if (event.key === 'Escape') onCloseRef.current()
     }
     document.addEventListener('keydown', onKeyDown)
     // Move focus into the sheet so keyboard and screen-reader users land here.
     sheetRef.current?.focus()
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+  }, [closing])
 
   const called = activeCall !== null
 
   return (
-    <div className="fixed inset-0 z-10 flex flex-col justify-end items-center">
+    <div
+      className={`fixed inset-0 z-10 flex flex-col justify-end items-center ${
+        closing ? 'pointer-events-none' : ''
+      }`}
+      aria-hidden={closing || undefined}
+    >
       <button
         type="button"
-        className="absolute inset-0 w-full h-full p-0 border-0 bg-[#000c1e] opacity-[0.55] cursor-pointer"
+        className={`absolute inset-0 w-full h-full p-0 border-0 bg-scrim cursor-pointer motion-reduce:animate-none ${
+          closing ? 'animate-fade-out' : 'animate-fade-in'
+        }`}
         aria-label="닫기"
         onClick={onClose}
       />
 
       <div
         ref={sheetRef}
-        className="relative w-full max-w-[480px] flex flex-col gap-4 pt-6 px-4 pb-[calc(16px+var(--layout-safe-area))] rounded-t-btn-xl bg-canvas animate-sheet-rise motion-reduce:animate-none focus:outline-none"
+        className={`relative w-full max-w-[480px] flex flex-col gap-4 pt-3 px-4 pb-[calc(16px+var(--layout-safe-area))] rounded-t-[20px] bg-canvas focus:outline-none motion-reduce:animate-none ${
+          closing ? 'animate-sheet-drop' : 'animate-sheet-rise'
+        }`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
       >
+        <div className="self-center w-9 h-1 rounded-full bg-border-strong" aria-hidden="true" />
+
         {called ? (
           <>
             <div
-              className="self-center flex items-center justify-center w-14 h-14 rounded-full bg-weak text-link font-display font-normal text-[22px] leading-[33px]"
+              className="self-center mt-2 flex items-center justify-center size-16 rounded-full bg-primary text-on-primary animate-pop-in-slow motion-reduce:animate-none"
               aria-hidden="true"
             >
-              ✓
+              <CheckIcon size={30} />
             </div>
             <h2
-              className="m-0 font-display font-normal text-[22px] leading-[33px] text-strong text-center self-center"
+              className="m-0 font-display font-normal text-[22px] leading-8 text-strong text-center self-center"
               id={titleId}
             >
               직원을 불렀어요
@@ -112,7 +150,10 @@ export function CallStaffSheet({
           </>
         ) : (
           <>
-            <h2 className="m-0 font-display font-normal text-[22px] leading-[33px] text-strong" id={titleId}>
+            <h2
+              className="m-0 font-display font-normal text-[22px] leading-8 text-strong"
+              id={titleId}
+            >
               직원을 부를까요?
             </h2>
             <p className="-mt-2.5 mx-0 mb-0 text-sm leading-[21px] font-normal text-body">
@@ -126,29 +167,27 @@ export function CallStaffSheet({
                   <button
                     key={option.reason}
                     type="button"
-                    className={`flex items-center gap-2 min-h-[52px] ${
-                      selected ? 'px-[11px] border-2 border-border-selected bg-weak text-link' : 'px-3 border border-border-default bg-canvas text-strong'
-                    } rounded-row text-base leading-6 font-normal text-left cursor-pointer transition-[background-color,border-color] duration-150 ease-out motion-reduce:transition-none active:bg-surface`}
+                    className={`flex items-center gap-2.5 min-h-[52px] rounded-row text-[15px] leading-[22px] text-left cursor-pointer transition-[background-color,border-color,color,transform] duration-150 ease-out-soft active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100 ${
+                      selected
+                        ? 'px-[11px] border-2 border-primary bg-selected text-link font-bold'
+                        : 'px-3 border-[1.5px] border-border-strong bg-transparent text-strong font-normal active:bg-surface'
+                    }`}
                     aria-pressed={selected}
                     onClick={() =>
                       setSelectedReason(selected ? null : option.reason)
                     }
                   >
                     <span
-                      className={`flex-none relative w-5 h-5 border-[1.5px] rounded-[6px] ${
-                        selected ? 'border-primary bg-primary' : 'border-border-default bg-canvas'
+                      className={`flex-none flex items-center justify-center size-[22px] rounded-[6px] transition-colors duration-150 ease-out-soft motion-reduce:transition-none ${
+                        selected
+                          ? 'bg-primary text-canvas'
+                          : 'border-[1.5px] border-border-control bg-transparent'
                       }`}
                       aria-hidden="true"
                     >
-                      {selected && (
-                        <span className="absolute inset-0 flex items-center justify-center text-on-primary text-[12px] leading-[18px]">
-                          ✓
-                        </span>
-                      )}
+                      {selected && <CheckIcon size={14} />}
                     </span>
-                    <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {option.label}
-                    </span>
+                    <span className="min-w-0 truncate">{option.label}</span>
                   </button>
                 )
               })}
