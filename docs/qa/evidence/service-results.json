@@ -1,0 +1,314 @@
+[
+  {
+    "name": "test staff roster imported",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "active staff roster",
+    "result": "PASS",
+    "actual": {
+      "members": [
+        {
+          "staffId": "S-901",
+          "name": "QA 직원",
+          "affiliation": "QA",
+          "active": true
+        },
+        {
+          "staffId": "S-902",
+          "name": "QA 비활성",
+          "affiliation": "QA",
+          "active": false
+        }
+      ]
+    }
+  },
+  {
+    "name": "service order created",
+    "result": "PASS",
+    "actual": {
+      "success": true,
+      "data": {
+        "orderId": "b321a8e7-fa28-4368-bd92-ece72b148ea2",
+        "displayNumber": 1070,
+        "displayCode": "A-1070",
+        "table": {
+          "tableId": "T12",
+          "displayName": "QA 테이블 12"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "WAIVED",
+        "totalAmount": 0,
+        "orderKind": "SERVICE",
+        "createdAt": "2026-09-13T14:39:57.774943Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "selectedOptions": []
+          }
+        ],
+        "serviceGrossAmount": 10000,
+        "staffDiscountRate": 20,
+        "staffChargeAmount": 8000,
+        "chargedStaff": {
+          "staffId": "S-901",
+          "name": "QA 직원"
+        },
+        "serviceMessage": "QA service"
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "3da71a3f-bd6e-41b9-9148-5d7c82ba6179",
+        "serverTime": "2026-09-13T14:39:57.794908Z"
+      }
+    }
+  },
+  {
+    "name": "service customer free",
+    "result": "PASS",
+    "actual": {
+      "table": {
+        "tableId": "T12",
+        "displayName": "QA 테이블 12"
+      },
+      "orders": [
+        {
+          "orderId": "b321a8e7-fa28-4368-bd92-ece72b148ea2",
+          "displayCode": "A-1070",
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "totalAmount": 0,
+          "orderKind": "SERVICE",
+          "createdAt": "2026-09-13T14:39:57.774943Z",
+          "items": [
+            {
+              "name": "닭발",
+              "quantity": 1,
+              "lineTotal": 10000,
+              "selectedOptions": []
+            }
+          ],
+          "serviceMessage": "QA service",
+          "chargedStaffName": "QA 직원"
+        }
+      ],
+      "latestPublicStatus": "accepted",
+      "sessionTotalAmount": 0
+    }
+  },
+  {
+    "name": "service retry does not double staff debt",
+    "result": "FAIL",
+    "actual": {
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "orderId": "99347872-cc73-4277-b456-f01a77b88af1",
+          "displayNumber": 1071,
+          "displayCode": "A-1071",
+          "table": {
+            "tableId": "T12",
+            "displayName": "QA 테이블 12"
+          },
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "paymentStatus": "WAIVED",
+          "totalAmount": 0,
+          "orderKind": "SERVICE",
+          "createdAt": "2026-09-13T14:39:57.806121Z",
+          "idempotentReplay": false,
+          "items": [
+            {
+              "lineNo": 1,
+              "menuId": "chicken-feet",
+              "name": "닭발",
+              "basePrice": 10000,
+              "unitPrice": 10000,
+              "quantity": 1,
+              "lineTotal": 10000,
+              "selectedOptions": []
+            }
+          ],
+          "serviceGrossAmount": 10000,
+          "staffDiscountRate": 20,
+          "staffChargeAmount": 8000,
+          "chargedStaff": {
+            "staffId": "S-901",
+            "name": "QA 직원"
+          },
+          "serviceMessage": "QA service"
+        },
+        "meta": {
+          "apiVersion": "v1",
+          "requestId": "efecf6ea-8319-4b28-986d-6e35da309c25",
+          "serverTime": "2026-09-13T14:39:57.819072Z"
+        }
+      }
+    }
+  },
+  {
+    "name": "staff settlement listing",
+    "result": "PASS",
+    "actual": {
+      "staffDiscountRate": 20,
+      "members": [
+        {
+          "staffId": "S-901",
+          "name": "QA 직원",
+          "affiliation": "QA",
+          "serviceOrderCount": 2,
+          "grossAmount": 20000,
+          "chargeAmount": 16000,
+          "settlementStatus": "UNSETTLED",
+          "settledAmount": null,
+          "settledAt": null,
+          "orders": [
+            {
+              "orderId": "b321a8e7-fa28-4368-bd92-ece72b148ea2",
+              "displayCode": "A-1070",
+              "tableId": "T12",
+              "serviceMessage": "QA service",
+              "grossAmount": 10000,
+              "chargeAmount": 8000,
+              "createdAt": "2026-09-13T14:39:57.774943Z"
+            },
+            {
+              "orderId": "99347872-cc73-4277-b456-f01a77b88af1",
+              "displayCode": "A-1071",
+              "tableId": "T12",
+              "serviceMessage": "QA service",
+              "grossAmount": 10000,
+              "chargeAmount": 8000,
+              "createdAt": "2026-09-13T14:39:57.806121Z"
+            }
+          ]
+        },
+        {
+          "staffId": "S-902",
+          "name": "QA 비활성",
+          "affiliation": "QA",
+          "serviceOrderCount": 0,
+          "grossAmount": 0,
+          "chargeAmount": 0,
+          "settlementStatus": "UNSETTLED",
+          "settledAmount": null,
+          "settledAt": null,
+          "orders": []
+        }
+      ],
+      "totalChargeAmount": 16000,
+      "unsettledStaffCount": 2
+    }
+  },
+  {
+    "name": "staff settlement confirm correct amount",
+    "result": "PASS",
+    "actual": {
+      "success": true,
+      "data": {
+        "staffId": "S-901",
+        "name": "QA 직원",
+        "settlementStatus": "SETTLED",
+        "settledAmount": 16000,
+        "settledAt": "2026-09-13T14:39:57.835207Z"
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "06ab264c-a396-4b12-9936-1d33a504e0be",
+        "serverTime": "2026-09-13T14:39:57.837798Z"
+      }
+    }
+  },
+  {
+    "name": "staff settlement replay rejected",
+    "result": "PASS",
+    "actual": {
+      "success": false,
+      "error": {
+        "code": "SETTLEMENT_ALREADY_SETTLED",
+        "message": "이미 정산 완료된 인원입니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "7b9d6bda-3ea9-4e3b-948a-224e72975fb6",
+        "serverTime": "2026-09-13T14:39:57.842357Z"
+      }
+    }
+  },
+  {
+    "name": "settled staff retained",
+    "result": "PASS",
+    "actual": {
+      "success": true,
+      "data": {
+        "staffDiscountRate": 20,
+        "members": [
+          {
+            "staffId": "S-901",
+            "name": "QA 직원",
+            "affiliation": "QA",
+            "serviceOrderCount": 2,
+            "grossAmount": 20000,
+            "chargeAmount": 16000,
+            "settlementStatus": "SETTLED",
+            "settledAmount": 16000,
+            "settledAt": "2026-09-13T14:39:57.835207Z",
+            "orders": [
+              {
+                "orderId": "b321a8e7-fa28-4368-bd92-ece72b148ea2",
+                "displayCode": "A-1070",
+                "tableId": "T12",
+                "serviceMessage": "QA service",
+                "grossAmount": 10000,
+                "chargeAmount": 8000,
+                "createdAt": "2026-09-13T14:39:57.774943Z"
+              },
+              {
+                "orderId": "99347872-cc73-4277-b456-f01a77b88af1",
+                "displayCode": "A-1071",
+                "tableId": "T12",
+                "serviceMessage": "QA service",
+                "grossAmount": 10000,
+                "chargeAmount": 8000,
+                "createdAt": "2026-09-13T14:39:57.806121Z"
+              }
+            ]
+          },
+          {
+            "staffId": "S-902",
+            "name": "QA 비활성",
+            "affiliation": "QA",
+            "serviceOrderCount": 0,
+            "grossAmount": 0,
+            "chargeAmount": 0,
+            "settlementStatus": "UNSETTLED",
+            "settledAmount": null,
+            "settledAt": null,
+            "orders": []
+          }
+        ],
+        "totalChargeAmount": 0,
+        "unsettledStaffCount": 1
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "3b276516-3bd1-4794-a54f-af61ba063d9a",
+        "serverTime": "2026-09-13T14:39:57.846344Z"
+      }
+    }
+  }
+]

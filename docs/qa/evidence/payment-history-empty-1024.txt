@@ -1,0 +1,101 @@
+- navigation "운영 메뉴":
+  - list:
+    - link "테이블 0":
+      - /url: /staff/tables
+      - generic: 테이블
+      - generic: "0"
+    - link "주방 10":
+      - /url: /staff/kitchen
+      - generic: 주방
+      - generic: "10"
+    - link "서빙 0":
+      - /url: /staff/serving
+      - generic: 서빙
+      - generic: "0"
+    - link "결제 6":
+      - /url: /staff/payment
+      - generic: 결제
+      - generic: "6"
+    - link "서비스":
+      - /url: /staff/service
+      - generic: 서비스
+    - link "품절":
+      - /url: /staff/availability
+      - generic: 품절
+    - link "설정":
+      - /url: /staff/settings
+      - generic: 설정
+- main:
+  - heading "결제" [level=1]
+  - paragraph: 결제 대기 6 · 오늘 완료 0
+  - paragraph: 23:35
+  - heading "결제 대기" [level=2]
+  - generic: "6"
+  - article "T02 결제":
+    - heading "T02" [level=3]
+    - generic: 결제 대기
+    - paragraph:
+      - generic: 주문금액
+      - strong: ₩40,000
+    - paragraph:
+      - generic: 결제 금액
+      - strong: ₩40,000
+    - button "입금 확인":
+      - generic: 입금 확인
+  - article "T04 결제":
+    - heading "T04" [level=3]
+    - generic: 결제 대기
+    - paragraph:
+      - generic: 주문금액
+      - strong: ₩100,000
+    - paragraph:
+      - generic: 결제 금액
+      - strong: ₩100,000
+    - button "입금 확인":
+      - generic: 입금 확인
+  - article "T05 결제":
+    - heading "T05" [level=3]
+    - generic: 결제 대기
+    - paragraph:
+      - generic: 주문금액
+      - strong: ₩22,600
+    - paragraph:
+      - generic: 결제 금액
+      - strong: ₩22,600
+    - button "입금 확인":
+      - generic: 입금 확인
+  - article "T06 결제":
+    - heading "T06" [level=3]
+    - generic: 결제 대기
+    - paragraph:
+      - generic: 주문금액
+      - strong: ₩12,100
+    - paragraph:
+      - generic: 결제 금액
+      - strong: ₩12,100
+    - button "입금 확인":
+      - generic: 입금 확인
+  - article "T07 결제":
+    - heading "T07" [level=3]
+    - generic: 결제 대기
+    - paragraph:
+      - generic: 주문금액
+      - strong: ₩10,000
+    - paragraph:
+      - generic: 결제 금액
+      - strong: ₩10,000
+    - button "입금 확인":
+      - generic: 입금 확인
+  - article "T09 결제":
+    - heading "T09" [level=3]
+    - generic: 결제 대기
+    - paragraph:
+      - generic: 주문금액
+      - strong: ₩20,000
+    - paragraph:
+      - generic: 결제 금액
+      - strong: ₩20,000
+    - button "입금 확인":
+      - generic: 입금 확인
+  - heading "결제 완료" [level=2]
+  - generic: "0"

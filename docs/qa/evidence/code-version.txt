@@ -1,0 +1,8 @@
+Start and final: branch dev
+Commit: 4fa56f92bb0b3ba00a38cd97a311d9c447d63277
+First git status --short before creating files: empty output (clean)
+initial-status.txt was captured AFTER creation of docs/qa and thus lists this QA directory itself.
+Final tracked diff: empty. Only docs/qa/ added.
+OS macOS 26.6.2 (25G83) arm64
+Node 25.9.0; npm 11.12.1; Java Temurin 21.0.10; Docker Server 29.3.1; PostgreSQL 17.11
+Default production VITE_API_BASE_URL: absent. .env.local keys are legacy VITE_APPS_SCRIPT_URL and VITE_STAFF_APPS_SCRIPT_URL. Development-only API variable is present. External values not queried.

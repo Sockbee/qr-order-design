@@ -1,0 +1,38 @@
+- banner:
+  - button "뒤로 가기":
+  - heading "QA 옵션 메뉴" [level=1]
+  - button "직원 호출"
+- main:
+  - heading "QA 옵션 메뉴" [level=2]
+  - generic: 12,000원
+  - paragraph: QA only
+  - region "QA 필수":
+    - heading "QA 필수" [level=3]
+    - generic: 필수
+    - checkbox "QA 옵션 1 +100원" [checked]
+    - generic: QA 옵션 1
+    - generic: +100원
+    - checkbox "QA 옵션 2 +200원" [checked]
+    - generic: QA 옵션 2
+    - generic: +200원
+    - checkbox "QA 옵션 3 (품절) +300원" [disabled]
+    - generic: QA 옵션 3 (품절)
+    - generic: +300원
+    - paragraph: 최대 2개까지 선택할 수 있어요.
+  - region "QA 단일 선택":
+    - heading "QA 단일 선택" [level=3]
+    - generic: 필수
+    - radio "단일 1 +0원" [checked] [active]
+    - generic: 단일 1
+    - generic: +0원
+    - radio "단일 2 (품절) +0원" [disabled]
+    - generic: 단일 2 (품절)
+    - generic: +0원
+    - paragraph: 최대 1개까지 선택할 수 있어요.
+- group "수량":
+  - button "수량 줄이기" [disabled]:
+  - generic: "1"
+  - button "수량 늘리기":
+- button "담기 12,300원":
+  - generic: 담기
+  - generic: 12,300원

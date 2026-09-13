@@ -1,0 +1,29 @@
+                                            version
+------------------------------------------------------------------------------------------------
+ PostgreSQL 17.11 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+(1 row)
+
+ test_tables
+-------------
+          21
+(1 row)
+
+ test_orders
+-------------
+          27
+(1 row)
+
+ test_calls
+------------
+          2
+(1 row)
+
+ test_staff
+------------
+          2
+(1 row)
+
+ custom_triggers
+-----------------
+               0
+(1 row)

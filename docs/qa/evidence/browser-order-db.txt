@@ -1,0 +1,19 @@
+ table_id |              session_id              | status | payment_status | final_amount | display_code | total_amount | order_payment |          client_request_id
+----------+--------------------------------------+--------+----------------+--------------+--------------+--------------+---------------+--------------------------------------
+ T01      | d8c436db-444f-4d1f-bf82-6432fb69d203 | CLOSED | PAID           |         8000 | A-1042       |        10000 | PAID          | 5a57e17c-3da4-41d5-b74a-6245901f6570
+ T01      | 95ac2644-3ba8-426b-8028-88c7c57a0223 | CLOSED | PAID           |         8000 | A-1051       |        10000 | PAID          | 8752f466-d245-4e79-bd90-2b02bae0b5b4
+ T12      | 0d4a9494-1abb-4682-b81f-7a1b6b8b122a | OPEN   | UNPAID         |              | A-1070       |            0 | WAIVED        | 57444884-6e2c-46c5-aed3-7e647076e30f
+ T12      | 0d4a9494-1abb-4682-b81f-7a1b6b8b122a | OPEN   | UNPAID         |              | A-1071       |            0 | WAIVED        | c33ba969-daf8-45e6-b2fd-51a4f5ded57d
+ T90      | 90d5752d-0307-4d56-9181-321111f7740f | CLOSED | PAID           |        20000 | A-1055       |        20000 | PAID          | 39724a4d-f8d6-4f3e-9690-06444dd3b510
+ T91      | 593a2641-a38b-458f-98d1-e8a91b80ae0b | OPEN   | UNPAID         |              | A-1056       |        10000 | UNPAID        | 7aa3a350-de1d-440f-9f02-ef2ed21817fc
+ T91      | 593a2641-a38b-458f-98d1-e8a91b80ae0b | OPEN   | UNPAID         |              | A-1057       |        10000 | UNPAID        | 3d119aff-d695-4817-b635-1add7fa5e56e
+ T92      | 3bae3b75-e935-4a73-8778-8b701db89e16 | OPEN   | UNPAID         |              | A-1072       |        13300 | UNPAID        | 87064105-ff79-4df2-a413-cb3ec403fc43
+(8 rows)
+
+ version |              description               | success
+---------+----------------------------------------+---------
+ 1       | initial schema                         | t
+ 2       | staff service and settlements          | t
+ 3       | add utensil call reason                | t
+ 4       | visit notes reset and item preparation | t
+(4 rows)

@@ -1,0 +1,2 @@
+{"status":"UP"}
+HTTP 200

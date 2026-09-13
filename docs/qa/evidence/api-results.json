@@ -1,0 +1,1007 @@
+[
+  {
+    "name": "health readiness",
+    "result": "PASS",
+    "actual": {
+      "status": "UP"
+    }
+  },
+  {
+    "name": "unauthenticated staff/tables/list",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "unauthenticated staff/orders/queue",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "unauthenticated admin/snapshot",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "wrong staff login rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "STAFF_PASSCODE_MISMATCH",
+        "message": "passcode가 올바르지 않습니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "staff login success",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "valid QR bootstrap",
+    "result": "PASS",
+    "actual": {
+      "status": 200,
+      "items": 19
+    }
+  },
+  {
+    "name": "missing token",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "tableToken 값을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "malformed token",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "wrong table token",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "unknown table",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "inactive table rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 410,
+      "error": {
+        "code": "INACTIVE_TABLE",
+        "message": "현재 사용할 수 없는 테이블입니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "closed event bootstrap reports closed",
+    "result": "PASS",
+    "actual": {
+      "status": 200,
+      "store": {
+        "name": "행복식당 본점",
+        "open": false,
+        "notice": "주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요."
+      }
+    }
+  },
+  {
+    "name": "guest order total",
+    "result": "PASS",
+    "actual": {
+      "orderId": "ed7bf442-dfda-48a4-8014-1703f0d6ea68",
+      "displayNumber": 1042,
+      "displayCode": "A-1042",
+      "table": {
+        "tableId": "T01",
+        "displayName": "QA 테이블 1"
+      },
+      "status": "RECEIVED",
+      "publicStatus": "accepted",
+      "paymentStatus": "UNPAID",
+      "totalAmount": 10000,
+      "orderKind": "GUEST",
+      "createdAt": "2026-09-13T14:49:37.547993Z",
+      "idempotentReplay": false,
+      "items": [
+        {
+          "lineNo": 1,
+          "menuId": "chicken-feet",
+          "name": "닭발",
+          "basePrice": 10000,
+          "unitPrice": 10000,
+          "quantity": 1,
+          "lineTotal": 10000,
+          "selectedOptions": []
+        }
+      ]
+    }
+  },
+  {
+    "name": "same request replay",
+    "result": "PASS",
+    "actual": {
+      "orderId": "ed7bf442-dfda-48a4-8014-1703f0d6ea68",
+      "displayNumber": 1042,
+      "displayCode": "A-1042",
+      "table": {
+        "tableId": "T01",
+        "displayName": "QA 테이블 1"
+      },
+      "status": "RECEIVED",
+      "publicStatus": "accepted",
+      "paymentStatus": "UNPAID",
+      "totalAmount": 10000,
+      "orderKind": "GUEST",
+      "createdAt": "2026-09-13T14:49:37.547993Z",
+      "idempotentReplay": true,
+      "items": [
+        {
+          "lineNo": 1,
+          "menuId": "chicken-feet",
+          "name": "닭발",
+          "basePrice": 10000,
+          "unitPrice": 10000,
+          "quantity": 1,
+          "lineTotal": 10000,
+          "selectedOptions": []
+        }
+      ]
+    }
+  },
+  {
+    "name": "same ID different payload rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 409,
+      "error": {
+        "code": "IDEMPOTENCY_CONFLICT",
+        "message": "동일 요청 ID에 다른 주문 정보가 사용되었습니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "4 parallel identical requests one order",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "id": "ed7bf442-dfda-48a4-8014-1703f0d6ea68"
+      },
+      {
+        "status": 200,
+        "id": "ed7bf442-dfda-48a4-8014-1703f0d6ea68"
+      },
+      {
+        "status": 200,
+        "id": "ed7bf442-dfda-48a4-8014-1703f0d6ea68"
+      },
+      {
+        "status": 200,
+        "id": "ed7bf442-dfda-48a4-8014-1703f0d6ea68"
+      }
+    ]
+  },
+  {
+    "name": "4 parallel distinct requests unique numbers",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "code": "A-1043"
+      },
+      {
+        "status": 200,
+        "code": "A-1044"
+      },
+      {
+        "status": 200,
+        "code": "A-1045"
+      },
+      {
+        "status": 200,
+        "code": "A-1046"
+      }
+    ]
+  },
+  {
+    "name": "cross table order hidden",
+    "result": "PASS",
+    "actual": {
+      "status": 404
+    }
+  },
+  {
+    "name": "quantity rejected 0",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "메뉴 수량을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "quantity rejected -1",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "메뉴 수량을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "quantity rejected 11",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "메뉴 수량을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "quantity rejected 1.5",
+    "result": "FAIL",
+    "actual": {
+      "status": 500,
+      "error": {
+        "code": "INTERNAL_ERROR",
+        "message": "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        "retryable": true,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "quantity rejected 2",
+    "result": "FAIL",
+    "actual": {
+      "status": 500,
+      "error": {
+        "code": "INTERNAL_ERROR",
+        "message": "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        "retryable": true,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "quantity max accepted",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "note too long returns 4xx",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "요청사항은 200자 이하여야 합니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "empty items returns 4xx",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "주문 항목 수를 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "unexpected price returns 4xx",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "지원하지 않는 주문 정보가 포함되어 있습니다.",
+        "retryable": false,
+        "details": {
+          "fields": [
+            "price"
+          ],
+          "location": "request"
+        }
+      }
+    }
+  },
+  {
+    "name": "unknown menu returns 4xx",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "MENU_NOT_FOUND",
+        "message": "메뉴 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "menuIds": [
+            "missing"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "invalid options type returns 4xx",
+    "result": "FAIL",
+    "actual": {
+      "status": 500,
+      "error": {
+        "code": "INTERNAL_ERROR",
+        "message": "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        "retryable": true,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "soldout revalidated at submit",
+    "result": "PASS",
+    "actual": {
+      "status": 409,
+      "error": {
+        "code": "MENU_UNAVAILABLE",
+        "message": "품절된 메뉴가 포함되어 있습니다.",
+        "retryable": false,
+        "details": {
+          "menuIds": [
+            "chicken-feet"
+          ]
+        }
+      }
+    }
+  },
+  {
+    "name": "option limits []",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "amount": null,
+      "error": {
+        "code": "INVALID_OPTION_SELECTION",
+        "message": "필수 옵션을 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "optionGroupId": "qa-required"
+        }
+      }
+    }
+  },
+  {
+    "name": "option limits ['qa-o1', 'qa-o2', 'qa-o3']",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "amount": null,
+      "error": {
+        "code": "INVALID_OPTION_SELECTION",
+        "message": "필수 옵션을 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "optionGroupId": "qa-required"
+        }
+      }
+    }
+  },
+  {
+    "name": "option limits ['qa-o1', 'qa-o1']",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "amount": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "중복 옵션이 포함되어 있습니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "option limits ['missing']",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "amount": null,
+      "error": {
+        "code": "INVALID_OPTION_SELECTION",
+        "message": "필수 옵션을 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "optionGroupId": "qa-required"
+        }
+      }
+    }
+  },
+  {
+    "name": "option limits ['qa-o1', 'qa-o2']",
+    "result": "PASS",
+    "actual": {
+      "status": 200,
+      "amount": 10300,
+      "error": null
+    }
+  },
+  {
+    "name": "price snapshot retained",
+    "result": "PASS",
+    "actual": {
+      "orderId": "8b070369-1256-4815-ad51-0bad088c3821",
+      "displayNumber": 1048,
+      "displayCode": "A-1048",
+      "table": {
+        "tableId": "T05",
+        "displayName": "QA 테이블 5"
+      },
+      "status": "RECEIVED",
+      "publicStatus": "accepted",
+      "paymentStatus": "UNPAID",
+      "totalAmount": 10300,
+      "orderKind": "GUEST",
+      "createdAt": "2026-09-13T14:49:37.727843Z",
+      "idempotentReplay": true,
+      "items": [
+        {
+          "lineNo": 1,
+          "menuId": "qa-options",
+          "name": "QA 옵션 메뉴",
+          "basePrice": 10000,
+          "unitPrice": 10300,
+          "quantity": 1,
+          "lineTotal": 10300,
+          "selectedOptions": [
+            {
+              "optionId": "qa-o1",
+              "groupName": "QA 필수",
+              "name": "QA 옵션 1",
+              "priceDelta": 100
+            },
+            {
+              "optionId": "qa-o2",
+              "groupName": "QA 필수",
+              "name": "QA 옵션 2",
+              "priceDelta": 200
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "name": "new price server recalculated",
+    "result": "PASS",
+    "actual": {
+      "status": 200,
+      "total": 12300
+    }
+  },
+  {
+    "name": "soldout option rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 409,
+      "error": {
+        "code": "OPTION_UNAVAILABLE",
+        "message": "품절된 옵션이 포함되어 있습니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "inactive category order blocked",
+    "result": "FAIL",
+    "actual": {
+      "status": 200,
+      "total": 12100
+    }
+  },
+  {
+    "name": "committed order replay after closing",
+    "result": "FAIL",
+    "actual": {
+      "status": 409,
+      "error": {
+        "code": "EVENT_CLOSED",
+        "message": "현재 주문을 받고 있지 않습니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "call created",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "call replay",
+    "result": "PASS",
+    "actual": {
+      "callId": "08e45ee4-7f06-4f38-9d5a-85e7858471e1",
+      "createdAt": "2026-09-13T14:49:37.809447Z",
+      "status": "PENDING",
+      "idempotentReplay": true
+    }
+  },
+  {
+    "name": "call payload conflict",
+    "result": "PASS",
+    "actual": {
+      "status": 409
+    }
+  },
+  {
+    "name": "call throttled",
+    "result": "PASS",
+    "actual": {
+      "status": 429
+    }
+  },
+  {
+    "name": "other table cannot cancel",
+    "result": "PASS",
+    "actual": {
+      "status": 404
+    }
+  },
+  {
+    "name": "call cancel",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "other table independent call",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "staff/customer amount agree",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "518f9928-c54f-42c8-9311-90f0eb5d3170",
+      "tableId": "T01",
+      "originTableId": "T01",
+      "mergedTableIds": [],
+      "subtotalAmount": 10000,
+      "discountRate": 0,
+      "discountAmount": 0,
+      "finalAmount": 10000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 1,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "discount total",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "518f9928-c54f-42c8-9311-90f0eb5d3170",
+      "tableId": "T01",
+      "originTableId": "T01",
+      "mergedTableIds": [],
+      "subtotalAmount": 10000,
+      "discountRate": 20,
+      "discountAmount": 2000,
+      "finalAmount": 8000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 1,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "stale payment amount rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 409,
+      "error": {
+        "code": "BILL_AMOUNT_CHANGED",
+        "message": "결제 금액이 변경되었습니다. 다시 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "actualFinalAmount": 8000,
+          "expectedFinalAmount": 10000
+        }
+      }
+    }
+  },
+  {
+    "name": "payment closes visit",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "paid visit no longer listed",
+    "result": "PASS",
+    "actual": {
+      "table": {
+        "tableId": "T01",
+        "displayName": "QA 테이블 1"
+      },
+      "orders": [],
+      "latestPublicStatus": null,
+      "sessionTotalAmount": 0
+    }
+  },
+  {
+    "name": "next visit only new amount",
+    "result": "PASS",
+    "actual": {
+      "table": {
+        "tableId": "T01",
+        "displayName": "QA 테이블 1"
+      },
+      "orders": [
+        {
+          "orderId": "cd402f60-769d-4b1a-b8c1-44a671bd63c0",
+          "displayCode": "A-1051",
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "totalAmount": 10000,
+          "orderKind": "GUEST",
+          "createdAt": "2026-09-13T14:49:37.877781Z",
+          "items": [
+            {
+              "name": "닭발",
+              "quantity": 1,
+              "lineTotal": 10000,
+              "selectedOptions": []
+            }
+          ]
+        }
+      ],
+      "latestPublicStatus": "accepted",
+      "sessionTotalAmount": 10000
+    }
+  },
+  {
+    "name": "old payment request cannot close next visit",
+    "result": "FAIL",
+    "actual": {
+      "status": 200,
+      "response": {
+        "success": true,
+        "meta": {
+          "apiVersion": "v1",
+          "requestId": "6bd3f6fc-3b30-4cbf-ab5c-0316b6304527",
+          "serverTime": "2026-09-13T14:49:37.896294Z"
+        }
+      }
+    }
+  },
+  {
+    "name": "merge totals",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "f37dd26d-7cde-49be-9fae-e0c2962e3f6b",
+      "tableId": "T08",
+      "originTableId": "T07",
+      "mergedTableIds": [
+        "T08"
+      ],
+      "subtotalAmount": 30000,
+      "discountRate": 0,
+      "discountAmount": 0,
+      "finalAmount": 30000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 2,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "merged discount",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "f37dd26d-7cde-49be-9fae-e0c2962e3f6b",
+      "tableId": "T07",
+      "originTableId": "T07",
+      "mergedTableIds": [
+        "T08"
+      ],
+      "subtotalAmount": 30000,
+      "discountRate": 20,
+      "discountAmount": 6000,
+      "finalAmount": 24000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 2,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "split no duplicate subtotal",
+    "result": "PASS",
+    "actual": [
+      {
+        "sessionId": "f37dd26d-7cde-49be-9fae-e0c2962e3f6b",
+        "tableId": "T07",
+        "originTableId": "T07",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 20,
+        "discountAmount": 2000,
+        "finalAmount": 8000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      {
+        "sessionId": "bdf4850b-aaa6-47cd-911c-f39010aea69b",
+        "tableId": "T08",
+        "originTableId": "T08",
+        "mergedTableIds": [],
+        "subtotalAmount": 20000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 20000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      }
+    ]
+  },
+  {
+    "name": "move empty table",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "origin QR reads moved session",
+    "result": "PASS",
+    "actual": {
+      "table": {
+        "tableId": "T08",
+        "displayName": "QA 테이블 8"
+      },
+      "orders": [
+        {
+          "orderId": "e769d088-a600-4f47-88bd-09564a6df19f",
+          "displayCode": "A-1053",
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "totalAmount": 20000,
+          "orderKind": "GUEST",
+          "createdAt": "2026-09-13T14:49:37.904816Z",
+          "items": [
+            {
+              "name": "닭발",
+              "quantity": 2,
+              "lineTotal": 20000,
+              "selectedOptions": []
+            }
+          ]
+        }
+      ],
+      "latestPublicStatus": "accepted",
+      "sessionTotalAmount": 20000
+    }
+  },
+  {
+    "name": "destination QR reads moved session",
+    "result": "PASS",
+    "actual": {
+      "table": {
+        "tableId": "T09",
+        "displayName": "QA 테이블 9"
+      },
+      "orders": [
+        {
+          "orderId": "e769d088-a600-4f47-88bd-09564a6df19f",
+          "displayCode": "A-1053",
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "totalAmount": 20000,
+          "orderKind": "GUEST",
+          "createdAt": "2026-09-13T14:49:37.904816Z",
+          "items": [
+            {
+              "name": "닭발",
+              "quantity": 2,
+              "lineTotal": 20000,
+              "selectedOptions": []
+            }
+          ]
+        }
+      ],
+      "latestPublicStatus": "accepted",
+      "sessionTotalAmount": 20000
+    }
+  },
+  {
+    "name": "staff creates guest order",
+    "result": "PASS",
+    "actual": {
+      "orderId": "9016cc94-9505-4606-9392-b4d1c6de1b41",
+      "displayCode": "A-1054"
+    }
+  },
+  {
+    "name": "staff quantity edit recalculates",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "c8b7d7f2-d538-493e-95f4-891615176516",
+      "tableId": "T10",
+      "originTableId": "T10",
+      "mergedTableIds": [],
+      "subtotalAmount": 30000,
+      "discountRate": 0,
+      "discountAmount": 0,
+      "finalAmount": 30000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 1,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "cancel item removes amount",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "c8b7d7f2-d538-493e-95f4-891615176516",
+      "tableId": "T10",
+      "originTableId": "T10",
+      "mergedTableIds": [],
+      "subtotalAmount": 0,
+      "discountRate": 0,
+      "discountAmount": 0,
+      "finalAmount": 0,
+      "paymentStatus": "UNPAID",
+      "orderCount": 1,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "rotated QR old token rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "CORS http://localhost:5178",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "CORS http://untrusted.invalid",
+    "result": "PASS",
+    "actual": {
+      "status": 403
+    }
+  },
+  {
+    "name": "revoked token rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 401,
+      "error": {
+        "code": "STAFF_TOKEN_REVOKED",
+        "message": "인증이 해제되었습니다. 다시 로그인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  }
+]

@@ -1,0 +1,478 @@
+[
+  {
+    "name": "closed bootstrap reports open=false",
+    "result": "PASS",
+    "actual": {
+      "status": 200,
+      "store": {
+        "name": "행복식당 본점",
+        "open": false,
+        "notice": "주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요."
+      }
+    }
+  },
+  {
+    "name": "new order while closed rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 409,
+      "error": {
+        "code": "EVENT_CLOSED",
+        "message": "현재 주문을 받고 있지 않습니다.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "unsupported discount rate rejected",
+    "result": "PASS",
+    "actual": {
+      "status": 400,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "할인율을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      }
+    }
+  },
+  {
+    "name": "configured discount 20 percent",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "f37dd26d-7cde-49be-9fae-e0c2962e3f6b",
+      "tableId": "T07",
+      "originTableId": "T07",
+      "mergedTableIds": [],
+      "subtotalAmount": 10000,
+      "discountRate": 20,
+      "discountAmount": 2000,
+      "finalAmount": 8000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 1,
+      "serviceOrderCount": 0,
+      "serviceGrossAmount": 0,
+      "serviceLines": []
+    }
+  },
+  {
+    "name": "rotated old token HTTP401",
+    "result": "PASS",
+    "actual": {
+      "status": 401
+    }
+  },
+  {
+    "name": "open visit note saved",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "visit note persisted",
+    "result": "PASS",
+    "actual": {
+      "sessionId": "09135b28-6b61-49b0-a943-9f5f14e991cb",
+      "tableId": "T11",
+      "displayName": "QA 테이블 11",
+      "orderStatus": "RECEIVED",
+      "openedAt": "2026-09-13T14:49:38.098289Z",
+      "mergedTableIds": [],
+      "originTableId": null,
+      "subtotalAmount": 10000,
+      "discountRate": 0,
+      "discountAmount": 0,
+      "finalAmount": 10000,
+      "paymentStatus": "UNPAID",
+      "orderCount": 1,
+      "items": [
+        {
+          "itemId": "696e3753-3595-4a6d-b09c-65630c796c5e",
+          "name": "닭발",
+          "selectedOptions": [],
+          "quantity": 1,
+          "lineTotal": 10000,
+          "status": "ACTIVE",
+          "preparationStatus": "PENDING",
+          "note": "QA test only"
+        }
+      ],
+      "notes": [
+        {
+          "noteId": "09135b28-6b61-49b0-a943-9f5f14e991cb",
+          "audience": "general",
+          "text": "QA visit note"
+        }
+      ],
+      "call": null
+    }
+  },
+  {
+    "name": "reset closes current visit",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "old reset replay preserves new visit",
+    "result": "PASS",
+    "actual": {
+      "status": 200,
+      "current": {
+        "table": {
+          "tableId": "T11",
+          "displayName": "QA 테이블 11"
+        },
+        "orders": [
+          {
+            "orderId": "839096a6-4852-4f1f-a61c-14f027fb9bcf",
+            "displayCode": "A-1057",
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "totalAmount": 10000,
+            "orderKind": "GUEST",
+            "createdAt": "2026-09-13T14:49:38.127346Z",
+            "items": [
+              {
+                "name": "닭발",
+                "quantity": 1,
+                "lineTotal": 10000,
+                "selectedOptions": []
+              }
+            ]
+          }
+        ],
+        "latestPublicStatus": "accepted",
+        "sessionTotalAmount": 10000
+      }
+    }
+  },
+  {
+    "name": "test staff roster imported",
+    "result": "PASS",
+    "actual": {
+      "status": 200
+    }
+  },
+  {
+    "name": "active staff roster",
+    "result": "PASS",
+    "actual": {
+      "members": [
+        {
+          "staffId": "S-901",
+          "name": "QA 직원",
+          "affiliation": "QA",
+          "active": true
+        },
+        {
+          "staffId": "S-902",
+          "name": "QA 비활성",
+          "affiliation": "QA",
+          "active": false
+        }
+      ]
+    }
+  },
+  {
+    "name": "service order created",
+    "result": "PASS",
+    "actual": {
+      "success": true,
+      "data": {
+        "orderId": "e5e765ae-fb64-4ccf-ba30-081be1209072",
+        "displayNumber": 1058,
+        "displayCode": "A-1058",
+        "table": {
+          "tableId": "T12",
+          "displayName": "QA 테이블 12"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "WAIVED",
+        "totalAmount": 0,
+        "orderKind": "SERVICE",
+        "createdAt": "2026-09-13T14:49:38.148230Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "selectedOptions": []
+          }
+        ],
+        "serviceGrossAmount": 10000,
+        "staffDiscountRate": 20,
+        "staffChargeAmount": 8000,
+        "chargedStaff": {
+          "staffId": "S-901",
+          "name": "QA 직원"
+        },
+        "serviceMessage": "QA service"
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "a73bda22-2653-4448-a7da-4653655e4c58",
+        "serverTime": "2026-09-13T14:49:38.155857Z"
+      }
+    }
+  },
+  {
+    "name": "service customer free",
+    "result": "PASS",
+    "actual": {
+      "table": {
+        "tableId": "T12",
+        "displayName": "QA 테이블 12"
+      },
+      "orders": [
+        {
+          "orderId": "e5e765ae-fb64-4ccf-ba30-081be1209072",
+          "displayCode": "A-1058",
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "totalAmount": 0,
+          "orderKind": "SERVICE",
+          "createdAt": "2026-09-13T14:49:38.148230Z",
+          "items": [
+            {
+              "name": "닭발",
+              "quantity": 1,
+              "lineTotal": 10000,
+              "selectedOptions": []
+            }
+          ],
+          "serviceMessage": "QA service",
+          "chargedStaffName": "QA 직원"
+        }
+      ],
+      "latestPublicStatus": "accepted",
+      "sessionTotalAmount": 0
+    }
+  },
+  {
+    "name": "service retry does not double staff debt",
+    "result": "FAIL",
+    "actual": {
+      "status": 200,
+      "response": {
+        "success": true,
+        "data": {
+          "orderId": "3e67dc5c-7bf8-484b-bb11-9ffc2607eac9",
+          "displayNumber": 1059,
+          "displayCode": "A-1059",
+          "table": {
+            "tableId": "T12",
+            "displayName": "QA 테이블 12"
+          },
+          "status": "RECEIVED",
+          "publicStatus": "accepted",
+          "paymentStatus": "WAIVED",
+          "totalAmount": 0,
+          "orderKind": "SERVICE",
+          "createdAt": "2026-09-13T14:49:38.159973Z",
+          "idempotentReplay": false,
+          "items": [
+            {
+              "lineNo": 1,
+              "menuId": "chicken-feet",
+              "name": "닭발",
+              "basePrice": 10000,
+              "unitPrice": 10000,
+              "quantity": 1,
+              "lineTotal": 10000,
+              "selectedOptions": []
+            }
+          ],
+          "serviceGrossAmount": 10000,
+          "staffDiscountRate": 20,
+          "staffChargeAmount": 8000,
+          "chargedStaff": {
+            "staffId": "S-901",
+            "name": "QA 직원"
+          },
+          "serviceMessage": "QA service"
+        },
+        "meta": {
+          "apiVersion": "v1",
+          "requestId": "cdeb0c87-2cc9-480c-8a04-7bead9426fa7",
+          "serverTime": "2026-09-13T14:49:38.166055Z"
+        }
+      }
+    }
+  },
+  {
+    "name": "staff settlement listing",
+    "result": "PASS",
+    "actual": {
+      "staffDiscountRate": 20,
+      "members": [
+        {
+          "staffId": "S-901",
+          "name": "QA 직원",
+          "affiliation": "QA",
+          "serviceOrderCount": 2,
+          "grossAmount": 20000,
+          "chargeAmount": 16000,
+          "settlementStatus": "UNSETTLED",
+          "settledAmount": null,
+          "settledAt": null,
+          "orders": [
+            {
+              "orderId": "e5e765ae-fb64-4ccf-ba30-081be1209072",
+              "displayCode": "A-1058",
+              "tableId": "T12",
+              "serviceMessage": "QA service",
+              "grossAmount": 10000,
+              "chargeAmount": 8000,
+              "createdAt": "2026-09-13T14:49:38.148230Z"
+            },
+            {
+              "orderId": "3e67dc5c-7bf8-484b-bb11-9ffc2607eac9",
+              "displayCode": "A-1059",
+              "tableId": "T12",
+              "serviceMessage": "QA service",
+              "grossAmount": 10000,
+              "chargeAmount": 8000,
+              "createdAt": "2026-09-13T14:49:38.159973Z"
+            }
+          ]
+        },
+        {
+          "staffId": "S-902",
+          "name": "QA 비활성",
+          "affiliation": "QA",
+          "serviceOrderCount": 0,
+          "grossAmount": 0,
+          "chargeAmount": 0,
+          "settlementStatus": "UNSETTLED",
+          "settledAmount": null,
+          "settledAt": null,
+          "orders": []
+        }
+      ],
+      "totalChargeAmount": 16000,
+      "unsettledStaffCount": 2
+    }
+  },
+  {
+    "name": "staff settlement confirm",
+    "result": "PASS",
+    "actual": {
+      "success": true,
+      "data": {
+        "staffId": "S-901",
+        "name": "QA 직원",
+        "settlementStatus": "SETTLED",
+        "settledAmount": 16000,
+        "settledAt": "2026-09-13T14:49:38.170889Z"
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "dd63d243-f344-4e1f-a815-f255a649b718",
+        "serverTime": "2026-09-13T14:49:38.172235Z"
+      }
+    }
+  },
+  {
+    "name": "staff settlement replay rejected",
+    "result": "PASS",
+    "actual": {
+      "success": false,
+      "error": {
+        "code": "SETTLEMENT_ALREADY_SETTLED",
+        "message": "이미 정산 완료된 인원입니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "fbb7792c-c26f-4669-99d1-fa031b96869d",
+        "serverTime": "2026-09-13T14:49:38.174071Z"
+      }
+    }
+  },
+  {
+    "name": "parallel payment one success",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "error": null
+      },
+      {
+        "status": 404,
+        "error": {
+          "code": "OPEN_SESSION_NOT_FOUND",
+          "message": "사용 중인 테이블이 아닙니다.",
+          "retryable": false,
+          "details": null
+        }
+      }
+    ]
+  },
+  {
+    "name": "order/payment race T14",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "error": null
+      },
+      {
+        "status": 200,
+        "error": null
+      }
+    ]
+  },
+  {
+    "name": "order/payment race T15",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "error": null
+      },
+      {
+        "status": 200,
+        "error": null
+      }
+    ]
+  },
+  {
+    "name": "order/payment race T16",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "error": null
+      },
+      {
+        "status": 200,
+        "error": null
+      }
+    ]
+  },
+  {
+    "name": "order/payment race T17",
+    "result": "PASS",
+    "actual": [
+      {
+        "status": 200,
+        "error": null
+      },
+      {
+        "status": 200,
+        "error": null
+      }
+    ]
+  }
+]
