@@ -15,6 +15,7 @@ interface OrderPollingState {
   data: OrderListResponse | null
   initialLoading: boolean
   lastError: Error | null
+  revision: number
 }
 
 /**
@@ -32,6 +33,7 @@ export function useOrderPolling(
   const [data, setData] = useState<OrderListResponse | null>(null)
   const [lastError, setLastError] = useState<Error | null>(null)
   const [resultSessionKey, setResultSessionKey] = useState('')
+  const [revision, setRevision] = useState(0)
 
   useEffect(() => {
     if (!enabled || !credentials) return
@@ -71,6 +73,7 @@ export function useOrderPolling(
         setData(next)
         setLastError(null)
         setResultSessionKey(sessionKey)
+        setRevision((current) => current + 1)
         schedule(streamConnected ? SSE_RECONCILE_INTERVAL_MS : ORDER_POLL_INTERVAL_MS)
       } catch (error) {
         if (disposed || requestController.signal.aborted) return
@@ -117,6 +120,7 @@ export function useOrderPolling(
       }).finally(() => {
         if (streamController !== next) return
         streamController = null
+        const hadLiveStream = streamConnected
         streamConnected = false
         if (disposed || document.hidden) return
         streamFailureCount += 1
@@ -124,7 +128,9 @@ export function useOrderPolling(
           startStream,
           Math.min(1_000 * 2 ** streamFailureCount, 30_000),
         )
-        schedule(ORDER_POLL_INTERVAL_MS)
+        // Keep the fallback clock independent from the SSE retry clock. A
+        // series of short stream failures must not postpone the next poll.
+        if (hadLiveStream || timer === undefined) schedule(ORDER_POLL_INTERVAL_MS)
       })
     }
 
@@ -160,5 +166,6 @@ export function useOrderPolling(
     data: hasCurrentResult ? data : null,
     initialLoading: enabled && !hasCurrentResult,
     lastError: hasCurrentResult ? lastError : null,
+    revision,
   }
 }

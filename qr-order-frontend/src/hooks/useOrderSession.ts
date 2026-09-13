@@ -20,6 +20,7 @@ export interface OrderSession {
   addToCart: (line: CartLine) => void
   changeQuantity: (index: number, next: number) => void
   removeLine: (index: number) => void
+  repriceCart: (unitPrices: number[]) => void
   /**
    * Commits a server-created order, or creates the mock order when the API is
    * intentionally not configured.
@@ -47,7 +48,15 @@ export function useOrderSession(
       if (matchIndex === -1) return [...current, line]
       return current.map((existing, index) =>
         index === matchIndex
-          ? { ...existing, quantity: existing.quantity + line.quantity }
+          ? {
+              ...existing,
+              quantity: Math.min(
+                existing.quantity + line.quantity,
+                line.maxQuantitySnapshot ?? existing.maxQuantitySnapshot ?? 99,
+              ),
+              maxQuantitySnapshot:
+                line.maxQuantitySnapshot ?? existing.maxQuantitySnapshot,
+            }
           : existing,
       )
     })
@@ -56,13 +65,25 @@ export function useOrderSession(
   const changeQuantity = (index: number, next: number) => {
     setCart((current) =>
       current.map((line, lineIndex) =>
-        lineIndex === index ? { ...line, quantity: next } : line,
+        lineIndex === index
+          ? {
+              ...line,
+              quantity: Math.min(next, line.maxQuantitySnapshot ?? 99),
+            }
+          : line,
       ),
     )
   }
 
   const removeLine = (index: number) => {
     setCart((current) => current.filter((_, lineIndex) => lineIndex !== index))
+  }
+
+  const repriceCart = (unitPrices: number[]) => {
+    setCart((current) => current.map((line, index) => ({
+      ...line,
+      unitPrice: unitPrices[index] ?? line.unitPrice,
+    })))
   }
 
   const placeOrder = (remoteOrder?: PlacedOrder): PlacedOrder => {
@@ -82,5 +103,13 @@ export function useOrderSession(
     return placed
   }
 
-  return { cart, orders, addToCart, changeQuantity, removeLine, placeOrder }
+  return {
+    cart,
+    orders,
+    addToCart,
+    changeQuantity,
+    removeLine,
+    repriceCart,
+    placeOrder,
+  }
 }

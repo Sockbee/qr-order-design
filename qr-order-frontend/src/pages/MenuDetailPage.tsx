@@ -168,6 +168,7 @@ export function MenuDetailPage({
                   itemId: item.id,
                   nameSnapshot: item.name,
                   quantity,
+                  maxQuantitySnapshot: item.maxQuantity ?? 99,
                   unitPrice,
                   selectedOptionIds,
                   selectedOptionNames,

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   BrowserRouter,
   Navigate,
@@ -29,12 +29,18 @@ import {
 } from './data/menu'
 import { tableSession } from './data/session'
 import {
+  readStored,
+  removeStored,
+  sessionScopedKey,
   LAST_TABLE_ID_KEY,
   LAST_TOKEN_KEY,
   readStoredString,
   writeStoredString,
+  writeStored,
 } from './utils/storage'
 import type { TableCredentials } from './types/session'
+import type { CartLine } from './types/menu'
+import { ApiClientError } from './api/client'
 
 /**
  * Routes follow UX-STRUCTURE §2.1. Screens not yet built (S00 session resolve,
@@ -49,6 +55,20 @@ import type { TableCredentials } from './types/session'
 
 interface RouteProps {
   session: OrderSession
+}
+
+interface PendingOrder {
+  clientRequestId: string
+  signature: string
+}
+
+function orderCartSignature(cart: CartLine[]): string {
+  return JSON.stringify(cart.map((line) => ({
+    itemId: line.itemId,
+    quantity: line.quantity,
+    selectedOptionIds: [...(line.selectedOptionIds ?? [])].sort(),
+    unitPrice: line.unitPrice,
+  })))
 }
 
 interface CatalogRouteProps {
@@ -80,24 +100,26 @@ function TableConfirmationRoute({
   onCredentials,
   storefront,
 }: {
-  onCredentials: (credentials: TableCredentials) => void
+  onCredentials: (credentials: TableCredentials | null) => void
   storefront: ReturnType<typeof useStorefront>
 }) {
   const { tableId } = useParams()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const token = searchParams.get('token')
+  const routeCredentials = parseCredentials(tableId, token)
+  const invalidQr = routeCredentials === null
 
   // Re-scanning the same QR rejoins the existing session (UX-STRUCTURE §5.1).
   useEffect(() => {
     const credentials = parseCredentials(tableId, token)
+    onCredentials(credentials)
     if (!credentials) return
     writeStoredString(LAST_TABLE_ID_KEY, credentials.tableId)
     writeStoredString(LAST_TOKEN_KEY, credentials.tableToken)
-    onCredentials(credentials)
   }, [onCredentials, tableId, token])
 
-  const fallbackSession = storefront.configured ? null : {
+  const fallbackSession = storefront.configured || invalidQr ? null : {
     ...tableSession,
     token: token ?? tableSession.token,
     tableNumber: Number(tableId?.slice(1)) || tableSession.tableNumber,
@@ -107,8 +129,10 @@ function TableConfirmationRoute({
     <TableConfirmationPage
       session={storefront.data?.session ?? fallbackSession}
       loading={storefront.loading}
-      errorMessage={storefront.error?.message}
-      retryable={storefront.retryable}
+      errorMessage={invalidQr
+        ? '유효하지 않은 QR 코드입니다. 테이블의 QR을 다시 스캔해 주세요.'
+        : storefront.error?.message}
+      retryable={!invalidQr && storefront.retryable}
       onRetry={storefront.retry}
       onStart={() => navigate('/menu')}
     />
@@ -227,7 +251,9 @@ function OrderConfirmationRoute({
    */
   const [placing, setPlacing] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const requestIdRef = useRef<string | null>(null)
+  const pendingKey = credentials
+    ? sessionScopedKey(credentials.tableToken, 'pending-order')
+    : null
 
   if (session.cart.length === 0 && !placing) {
     return <Navigate to="/cart" replace />
@@ -262,9 +288,19 @@ function OrderConfirmationRoute({
           return
         }
 
-        requestIdRef.current ??= crypto.randomUUID()
-        void createOrder(credentials, session.cart, requestIdRef.current)
+        const signature = orderCartSignature(session.cart)
+        const pending = pendingKey
+          ? readStored<PendingOrder | null>(pendingKey, null)
+          : null
+        const clientRequestId = pending?.signature === signature
+          ? pending.clientRequestId
+          : crypto.randomUUID()
+        if (pendingKey) {
+          writeStored(pendingKey, { clientRequestId, signature } satisfies PendingOrder)
+        }
+        void createOrder(credentials, session.cart, clientRequestId)
           .then((response) => {
+            if (pendingKey) removeStored(pendingKey)
             const placed = session.placeOrder(
               mapCreatedOrder(response, tableNumber),
             )
@@ -274,6 +310,14 @@ function OrderConfirmationRoute({
           })
           .catch((error: unknown) => {
             setPlacing(false)
+            if (error instanceof ApiClientError && error.code === 'ORDER_PRICE_CHANGED') {
+              const details = error.details as { items?: Array<{ unitPrice?: unknown }> } | undefined
+              const unitPrices = details?.items?.map((item) => Number(item.unitPrice)) ?? []
+              if (unitPrices.length === session.cart.length && unitPrices.every(Number.isSafeInteger)) {
+                session.repriceCart(unitPrices)
+                if (pendingKey) removeStored(pendingKey)
+              }
+            }
             setErrorMessage(
               error instanceof Error
                 ? error.message
@@ -342,9 +386,12 @@ function App() {
   const initialToken = new URLSearchParams(location.search).get('token')
   const storedTableId = readStoredString(LAST_TABLE_ID_KEY)
   const storedToken = readStoredString(LAST_TOKEN_KEY)
+  const enteredFromQr = location.pathname.startsWith('/t/')
   const [credentials, setCredentials] = useState<TableCredentials | null>(() => {
-    return parseCredentials(initialTableMatch?.[1], initialToken) ??
-      parseCredentials(storedTableId, storedToken)
+    const urlCredentials = parseCredentials(initialTableMatch?.[1], initialToken)
+    return enteredFromQr
+      ? urlCredentials
+      : parseCredentials(storedTableId, storedToken)
   })
   const storefront = useStorefront(credentials)
   const session = useOrderSession(
@@ -358,7 +405,11 @@ function App() {
    * navigation between the menu, an item and the order history — the same
    * reason the cart does.
    */
-  const staffCall = useStaffCall(credentials)
+  const staffCall = useStaffCall(
+    credentials,
+    remote.initialLoading ? undefined : remote.data?.activeCall ?? null,
+    remote.revision,
+  )
   const [callSheetOpen, setCallSheetOpen] = useState(false)
   const callSheet = usePresence(callSheetOpen)
   const categories = storefront.data?.categories ??
