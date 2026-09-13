@@ -4,9 +4,19 @@
 
 #!include:.gitignore
 
+# Retired integrations must never enter the Cloud Build source archive.
+/apps-script/
+/netlify.toml
+**/.netlify/
+
 # Nested frontend dependencies are covered by its own .gitignore, but Cloud
 # Build only expands the root include above.
 **/node_modules/
 **/node_modules/**
+qr-order-frontend/dist/
+qr-order-frontend/dist-ssr/
+qr-order-frontend/coverage/
+qr-order-frontend/.vite/
+**/*.tsbuildinfo
 **/.idea/
 **/.idea/**
