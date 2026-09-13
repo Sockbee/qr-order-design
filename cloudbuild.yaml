@@ -64,6 +64,14 @@ steps:
           curl --fail --retry 3 --retry-delay 2 "$${SERVICE_URL}/v3/api-docs/customer"
         fi
     waitFor: ['deploy-backend']
+  - id: deploy-frontend
+    name: us-docker.pkg.dev/firebase-cli/us/firebase
+    args:
+      - deploy
+      - --project=${PROJECT_ID}
+      - --only=hosting
+      - --non-interactive
+    waitFor: [ 'smoke-health' ]
 
 images:
   - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPOSITORY}/backend:${SHORT_SHA}'
