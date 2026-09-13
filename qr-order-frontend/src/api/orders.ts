@@ -1,6 +1,6 @@
 import { callAppsScript } from './client'
 import type { CartLine } from '../types/menu'
-import type { OrderKind, OrderStatus, PlacedOrder } from '../types/order'
+import type { ItemPreparationStatus, OrderKind, OrderStatus, PlacedOrder } from '../types/order'
 import type { TableCredentials } from '../types/session'
 import { calculateCartTotal } from '../utils/cart'
 
@@ -16,6 +16,8 @@ export interface CreateOrderResponse {
   createdAt: string
   idempotentReplay: boolean
   items: Array<{
+    preparationStatus?: 'PENDING' | 'READY' | 'SERVED'
+    status?: string
     lineNo: number
     menuId: string
     name: string
@@ -66,6 +68,8 @@ export function mapCreatedOrder(
     tableNumber,
     lines: response.items.map((item) => ({
       itemId: item.menuId,
+      preparationStatus: mapPreparationStatus(item.preparationStatus),
+      cancelled: item.status === 'CANCELLED',
       nameSnapshot: item.name,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
@@ -74,7 +78,7 @@ export function mapCreatedOrder(
     })),
     total: response.totalAmount,
     placedAt: response.createdAt,
-    status: response.publicStatus,
+    status: mapCustomerStatus(response.status, response.publicStatus),
   }
 }
 
@@ -91,6 +95,8 @@ export interface OrderListItem {
   chargedStaffName?: string | null
   createdAt: string
   items: Array<{
+    preparationStatus?: 'PENDING' | 'READY' | 'SERVED'
+    status?: string
     name: string
     quantity: number
     lineTotal: number
@@ -139,6 +145,8 @@ export function mapRemoteOrders(
       originTableId: order.tableId,
       lines: order.items.map((item, index) => ({
         itemId: `${order.orderId}:${index + 1}`,
+        preparationStatus: mapPreparationStatus(item.preparationStatus),
+        cancelled: item.status === 'CANCELLED',
         nameSnapshot: item.name,
         quantity: item.quantity,
         unitPrice: item.lineTotal / item.quantity,
@@ -146,7 +154,7 @@ export function mapRemoteOrders(
       })),
       total: order.totalAmount,
       placedAt: order.createdAt,
-      status: order.publicStatus,
+      status: mapCustomerStatus(order.status, order.publicStatus),
       kind: order.orderKind ?? 'GUEST',
       /*
        * Only carried for comped rounds. A GUEST order has no message and no
@@ -158,4 +166,24 @@ export function mapRemoteOrders(
       chargedStaffName:
         order.orderKind === 'SERVICE' ? (order.chargedStaffName ?? null) : null,
     }))
+}
+
+/** Also correct responses from an older server during a rolling deployment. */
+function mapCustomerStatus(status: string, fallback: OrderStatus): OrderStatus {
+  switch (status) {
+    case 'RECEIVED': case 'CONFIRMED': return 'accepted'
+    case 'PREPARING': case 'SERVING': return 'preparing'
+    case 'COMPLETED': return 'served'
+    case 'CANCELLED': return 'cancelled'
+    default: return fallback === 'closed' ? 'served' : fallback
+  }
+}
+
+function mapPreparationStatus(status?: string): ItemPreparationStatus | undefined {
+  switch (status) {
+    case 'PENDING': return 'pending'
+    case 'READY': return 'ready'
+    case 'SERVED': return 'served'
+    default: return undefined
+  }
 }

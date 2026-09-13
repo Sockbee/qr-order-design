@@ -372,7 +372,6 @@ function OrderStatusRoute({
     <OrderStatusPage
       groupTableIds={remote.data?.groupTableIds}
       orders={orders}
-      latestPublicStatus={remote.data?.latestPublicStatus}
       sessionTotalAmount={remote.data?.sessionTotalAmount}
       onBack={() => navigate('/menu')}
       onOrderMore={() => navigate('/menu')}

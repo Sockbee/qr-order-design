@@ -4,13 +4,13 @@ import { OrderLine } from '../components/OrderLine'
 import { OrderRound } from '../components/OrderRound'
 import { StatusTracker } from '../components/StatusTracker'
 import { menuItems } from '../data/menu'
+import { itemProgress, overallOrderStatus } from '../utils/order'
 import { formatPrice } from '../utils/price'
 import type { PlacedOrder } from '../types/order'
 
 interface OrderStatusPageProps {
   orders: PlacedOrder[]
   groupTableIds?: string[]
-  latestPublicStatus?: Exclude<PlacedOrder['status'], 'cancelled'> | null
   sessionTotalAmount?: number
   onBack: () => void
   onOrderMore: () => void
@@ -20,7 +20,6 @@ interface OrderStatusPageProps {
 export function OrderStatusPage({
   orders,
   groupTableIds = [],
-  latestPublicStatus,
   sessionTotalAmount,
   onBack,
   onOrderMore,
@@ -28,11 +27,7 @@ export function OrderStatusPage({
 }: OrderStatusPageProps) {
   // Newest first, without mutating the session's ordering.
   const rounds = orders.map((order, index) => ({ order, round: index + 1 })).reverse()
-  const latestActiveOrder = orders.findLast((order) => order.status !== 'cancelled')
-  const fallbackStatus = latestActiveOrder?.status
-  const currentStatus = latestPublicStatus ??
-    (fallbackStatus === 'cancelled' ? 'accepted' : fallbackStatus) ??
-    'accepted'
+  const currentStatus = overallOrderStatus(orders)
   const sessionTotal = sessionTotalAmount ?? orders
     .filter((order) => order.status !== 'cancelled')
     .reduce((sum, order) => sum + order.total, 0)
@@ -111,6 +106,7 @@ export function OrderStatusPage({
                     name={name}
                     quantity={line.quantity}
                     amount={line.unitPrice * line.quantity}
+                    status={itemProgress(line, order.status)}
                     comped={order.kind === 'SERVICE'}
                   />
                 )
