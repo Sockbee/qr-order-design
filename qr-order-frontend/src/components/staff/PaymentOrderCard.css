@@ -75,3 +75,7 @@
   font: var(--type-caption-default);
   color: var(--color-text-muted);
 }
+
+.payment-card__record { margin: 0; color: var(--color-text-body); font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.payment-payer-input { width: 100%; min-height: 56px; padding: 14px 16px; border: 1px solid var(--color-border-default); border-radius: 10px; background: var(--color-bg-canvas); color: var(--color-text-strong); font: inherit; box-sizing: border-box; }
+.payment-payer-error { color: var(--color-text-danger); font-size: 14px; }
