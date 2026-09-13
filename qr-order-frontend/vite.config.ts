@@ -25,9 +25,19 @@ function staffHistoryFallback() {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, '.', '')
   const apiProxyTarget = env.API_PROXY_TARGET?.trim().replace(/\/$/, '')
+  const apiBaseUrl = env.VITE_API_BASE_URL?.trim()
+  const mocksEnabled = env.VITE_ENABLE_MOCKS === 'true'
+
+  if (!apiBaseUrl && mode !== 'test' && (command === 'build' || !mocksEnabled)) {
+    throw new Error(
+      command === 'build'
+        ? 'VITE_API_BASE_URL is required for production builds.'
+        : 'Set VITE_API_BASE_URL, or explicitly set VITE_ENABLE_MOCKS=true for local UI development.',
+    )
+  }
 
   return {
     plugins: [staffHistoryFallback(), react(), tailwindcss()],
