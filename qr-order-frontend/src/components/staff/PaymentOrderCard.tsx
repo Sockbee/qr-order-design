@@ -51,7 +51,14 @@ export function PaymentOrderCard({
         </p>
       </div>
 
-      {order.minutesSinceServed !== null && (
+      {bill.paid && (
+        <p className="payment-card__record">
+          입금자 {order.payerName ?? '기존 기록 없음'}<br />
+          확인: {order.paymentConfirmedBy ?? '기존 기록 없음'}
+          {order.paidAt && ` · ${new Date(order.paidAt).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' })}`}
+        </p>
+      )}
+      {!bill.paid && order.minutesSinceServed !== null && (
         <p className="payment-card__waited">
           {`서빙 완료 후 ${order.minutesSinceServed}분`}
         </p>

@@ -44,6 +44,9 @@ export interface StaffQueueResponse {
     discountAmount: number
     finalAmount: number
     paymentStatus: 'UNPAID' | 'PAID'
+    payerName?: string | null
+    paymentConfirmedBy?: string | null
+    paidAt?: string | null
     servedAt: string | null
   }>
   counts: StaffStationCounts
@@ -145,6 +148,9 @@ export function mapPaymentQueue(
 ): StaffPaymentOrder[] {
   return response.payment.map((row) => ({
     sessionId: row.sessionId,
+    payerName: row.payerName,
+    paymentConfirmedBy: row.paymentConfirmedBy,
+    paidAt: row.paidAt,
     tableId: row.tableId,
     bill: {
       subtotalAmount: row.subtotalAmount,

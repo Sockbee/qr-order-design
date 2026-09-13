@@ -5,7 +5,6 @@ import {
   applyTableDiscount,
   cancelStaffOrderItem,
   cancelStaffTableOrders,
-  confirmTablePayment,
   mergeTables,
   moveTable,
   splitTable,
@@ -23,12 +22,6 @@ interface StaffOperationsState {
   merge: (primary: string, secondary: string, onDone: () => void) => void
   split: (tableId: string, onDone: () => void) => void
   discount: (tableId: string, rate: number, onDone: () => void) => void
-  confirmPayment: (
-    tableId: string,
-    expectedSessionId: string,
-    expectedFinalAmount: number,
-    onDone: () => void,
-  ) => void
   quantity: (itemId: string, quantity: number, onDone: () => void) => void
   cancelItem: (itemId: string, onDone: () => void) => void
   saveNote: (
@@ -94,19 +87,6 @@ export function useStaffOperations(): StaffOperationsState {
     discount: useCallback(
       (tableId, rate, onDone) =>
         run(() => applyTableDiscount(tableId, rate), onDone),
-      [run],
-    ),
-    confirmPayment: useCallback(
-      (tableId, expectedSessionId, expectedFinalAmount, onDone) =>
-        run(
-          () => confirmTablePayment(
-            tableId,
-            expectedSessionId,
-            crypto.randomUUID(),
-            expectedFinalAmount,
-          ),
-          onDone,
-        ),
       [run],
     ),
     quantity: useCallback(
