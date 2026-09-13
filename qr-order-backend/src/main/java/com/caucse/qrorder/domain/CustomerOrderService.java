@@ -246,7 +246,7 @@ public class CustomerOrderService {
             Map<String, Object> row = ApiEnvelope.map(
                     "orderId", orderId.toString(), "displayCode", rs.getString("display_code"),
                     "tableId", rs.getString("table_id"),
-                    "status", rs.getString("status"), "publicStatus", rs.getString("public_status"),
+                    "status", rs.getString("status"), "publicStatus", CustomerOrderStatus.fromInternal(rs.getString("status")),
                     "totalAmount", rs.getInt("total_amount"), "orderKind", rs.getString("order_kind"),
                     "createdAt", rs.getObject("created_at", OffsetDateTime.class).toInstant().toString(),
                     "items", listItems(orderId));
@@ -478,7 +478,7 @@ public class CustomerOrderService {
                     "orderId", orderId.toString(), "displayNumber", rs.getLong("display_number"),
                     "displayCode", rs.getString("display_code"),
                     "table", ApiEnvelope.map("tableId", rs.getString("table_id"), "displayName", rs.getString("display_name")),
-                    "status", rs.getString("status"), "publicStatus", rs.getString("public_status"),
+                    "status", rs.getString("status"), "publicStatus", CustomerOrderStatus.fromInternal(rs.getString("status")),
                     "paymentStatus", rs.getString("payment_status"), "totalAmount", rs.getInt("total_amount"),
                     "orderKind", rs.getString("order_kind"),
                     "createdAt", rs.getObject("created_at", OffsetDateTime.class).toInstant().toString(),
@@ -499,17 +499,18 @@ public class CustomerOrderService {
             return ApiEnvelope.map("lineNo", rs.getInt("line_no"), "menuId", rs.getString("menu_id"),
                     "name", rs.getString("menu_name_snapshot"), "basePrice", rs.getInt("base_price_snapshot"),
                     "unitPrice", rs.getInt("unit_price_snapshot"), "quantity", rs.getInt("quantity"),
-                    "lineTotal", rs.getInt("line_total"), "selectedOptions", options);
+                    "lineTotal", rs.getInt("line_total"), "selectedOptions", options,
+                    "preparationStatus", rs.getString("preparation_status"), "status", rs.getString("status"));
         }, orderId);
     }
 
     private List<Map<String, Object>> listItems(UUID orderId) {
         return jdbc.query("""
-                SELECT order_item_id,menu_name_snapshot,quantity,line_total FROM order_items
+                SELECT order_item_id,menu_name_snapshot,quantity,line_total,preparation_status FROM order_items
                 WHERE order_id=? AND status='ACTIVE' ORDER BY line_no
                 """, (rs, index) -> ApiEnvelope.map(
                 "name", rs.getString("menu_name_snapshot"), "quantity", rs.getInt("quantity"),
-                "lineTotal", rs.getInt("line_total"),
+                "lineTotal", rs.getInt("line_total"), "preparationStatus", rs.getString("preparation_status"),
                 "selectedOptions", jdbc.queryForList("""
                         SELECT option_name_snapshot FROM order_item_options WHERE order_item_id=? ORDER BY sort_order
                         """, String.class, rs.getObject("order_item_id", UUID.class))), orderId);

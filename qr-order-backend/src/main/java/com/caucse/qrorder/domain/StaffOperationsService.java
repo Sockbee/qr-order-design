@@ -22,9 +22,6 @@ import java.util.UUID;
 public class StaffOperationsService {
     private static final Map<String, String> REMOTE_STATUS = Map.of(
             "RECEIVED", "RECEIVED", "COOKING", "PREPARING", "READY", "SERVING", "SERVED", "COMPLETED");
-    private static final Map<String, String> PUBLIC_STATUS = Map.of(
-            "RECEIVED", "accepted", "CONFIRMED", "accepted", "PREPARING", "preparing",
-            "SERVING", "served", "COMPLETED", "closed", "CANCELLED", "cancelled");
     private final JdbcTemplate jdbc;
     private final CustomerOrderService customerOrders;
     private final DomainEventService events;
@@ -441,7 +438,7 @@ public class StaffOperationsService {
             updated = jdbc.update("""
                     UPDATE orders SET status=?,public_status=?,status_updated_at=now(),updated_at=now()
                     WHERE session_id = ANY(?::uuid[]) AND status<>'CANCELLED'
-                    """, status, PUBLIC_STATUS.get(status), (Object) uuidArray(bill.sessionIds()));
+                    """, status, CustomerOrderStatus.fromInternal(status), (Object) uuidArray(bill.sessionIds()));
             affectedTables = orderScope.audience(bill.primarySessionId());
         } else {
             affectedTables = jdbc.queryForList("SELECT table_id FROM orders WHERE order_id::text=?", String.class, orderId);
@@ -461,7 +458,7 @@ public class StaffOperationsService {
             updated = jdbc.update("""
                     UPDATE orders SET status=?,public_status=?,status_updated_at=now(),updated_at=now()
                     WHERE order_id::text=? AND status<>'CANCELLED' AND payment_status<>'PAID'
-                    """, status, PUBLIC_STATUS.get(status), orderId);
+                    """, status, CustomerOrderStatus.fromInternal(status), orderId);
             if (updated > 0 && "SERVED".equals(remote)) recalculatePreparationOrder(parsedOrderId);
         }
         if (updated == 0) throw ApiException.notFound("ORDER_NOT_FOUND", "주문 정보를 찾을 수 없습니다.");
@@ -807,10 +804,10 @@ public class StaffOperationsService {
         String status;
         if (pending == 0 && ready == 0 && served > 0) status = "COMPLETED";
         else if (pending == 0 && ready > 0) status = "SERVING";
-        else if (ready > 0 || served > 0) status = "PREPARING";
+        else if (pending > 0) status = "PREPARING";
         else return;
         jdbc.update("UPDATE orders SET status=?,public_status=?,status_updated_at=now(),updated_at=now() WHERE order_id=?",
-                status, PUBLIC_STATUS.get(status), orderId);
+                status, CustomerOrderStatus.fromInternal(status), orderId);
     }
 
     private void audit(StaffPrincipal staff, String action, String entityType, String entityId, String from, String to) {

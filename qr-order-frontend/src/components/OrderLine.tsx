@@ -1,6 +1,8 @@
+import { OrderStatusChip } from './OrderStatusChip'
 import { formatPrice } from '../utils/price'
 
 interface OrderLineProps {
+  status?: 'preparing' | 'served' | 'cancelled'
   name: string
   quantity: number
   /** Line total: unit price including options, times quantity. */
@@ -13,20 +15,23 @@ interface OrderLineProps {
   comped?: boolean
 }
 
-export function OrderLine({ name, quantity, amount, comped = false }: OrderLineProps) {
+export function OrderLine({ name, quantity, amount, status, comped = false }: OrderLineProps) {
   return (
-    <div className="flex items-center gap-2 w-full">
-      <p className="flex-1 min-w-0 text-base leading-6 font-normal text-strong overflow-hidden text-ellipsis whitespace-nowrap">
-        {name} × {quantity}
-      </p>
-      {comped && (
-        <p className="flex-none text-base leading-6 font-normal text-body line-through whitespace-nowrap">
-          {formatPrice(amount)}
+    <div className="flex flex-col gap-1.5 w-full">
+      <div className="flex items-center gap-2 w-full">
+        <p className="flex-1 min-w-0 text-base leading-6 font-normal text-strong overflow-hidden text-ellipsis whitespace-nowrap">
+          {name} × {quantity}
         </p>
-      )}
-      <p className="flex-none font-bold text-base leading-6 text-strong whitespace-nowrap">
-        {comped ? formatPrice(0) : formatPrice(amount)}
-      </p>
+        {comped && (
+          <p className="flex-none text-base leading-6 font-normal text-body line-through whitespace-nowrap">
+            {formatPrice(amount)}
+          </p>
+        )}
+        <p className="flex-none font-bold text-base leading-6 text-strong whitespace-nowrap">
+          {comped ? formatPrice(0) : formatPrice(amount)}
+        </p>
+      </div>
+      {status && <div><OrderStatusChip status={status} /></div>}
     </div>
   )
 }

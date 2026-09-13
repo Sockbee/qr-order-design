@@ -510,6 +510,57 @@ class QrOrderApiIntegrationTest {
     }
 
     @Test
+    void customerProgressWaitsForActualServingAndExposesEachMenu() {
+        StaffPrincipal staff = new StaffPrincipal("주방", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        var result = orders.create(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN,
+                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 3000,
+                "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()),
+                                 Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))), false);
+        UUID orderId = UUID.fromString(result.get("orderId").toString());
+        List<String> itemIds = jdbc.queryForList("SELECT order_item_id::text FROM order_items WHERE order_id=? ORDER BY line_no", String.class, orderId);
+        assertCustomerProgress(orderId, "accepted", List.of("PENDING", "PENDING"));
+        // Serving an order without any ready menu must not announce completion.
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "preparing", List.of("PENDING", "PENDING"));
+        staffOperations.updateItemPreparation(itemIds.getFirst(), true, staff);
+        assertCustomerProgress(orderId, "preparing", List.of("READY", "PENDING"));
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "preparing", List.of("SERVED", "PENDING"));
+        staffOperations.updateItemPreparation(itemIds.get(1), true, staff);
+        assertCustomerProgress(orderId, "preparing", List.of("SERVED", "READY"));
+        // Existing rows from before this policy can contain the former public mapping.
+        jdbc.update("UPDATE orders SET public_status='served' WHERE order_id=?", orderId);
+        assertCustomerProgress(orderId, "preparing", List.of("SERVED", "READY"));
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "served", List.of("SERVED", "SERVED"));
+        assertEquals("served", jdbc.queryForObject("SELECT public_status FROM orders WHERE order_id=?", String.class, orderId));
+    }
+
+    @Test
+    void bulkKitchenCompletionIsPreparingAndBulkServingCompletionIsServed() {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        var result = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        UUID orderId = UUID.fromString(result.get("orderId").toString());
+        staffOperations.updateStatus(Map.of("tableId", "T01", "status", "READY"), staff);
+        assertCustomerProgress(orderId, "preparing", List.of("READY"));
+        staffOperations.updateItemPreparation(jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?", String.class, orderId), false, staff);
+        assertCustomerProgress(orderId, "preparing", List.of("PENDING"));
+        staffOperations.updateStatus(Map.of("tableId", "T01", "status", "READY"), staff);
+        staffOperations.updateStatus(Map.of("tableId", "T01", "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "served", List.of("SERVED"));
+    }
+
+    private void assertCustomerProgress(UUID orderId, String status, List<String> itemStatuses) {
+        var detail = orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", orderId.toString()));
+        assertEquals(status, detail.get("publicStatus"));
+        assertEquals(itemStatuses, ((List<?>) detail.get("items")).stream().map(Map.class::cast).map(item -> item.get("preparationStatus")).toList());
+        var list = orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN));
+        var row = ((List<?>) list.get("orders")).stream().map(Map.class::cast).filter(order -> orderId.toString().equals(order.get("orderId"))).findFirst().orElseThrow();
+        assertEquals(status, row.get("publicStatus"));
+        assertEquals(itemStatuses, ((List<?>) row.get("items")).stream().map(Map.class::cast).map(item -> item.get("preparationStatus")).toList());
+    }
+
+    @Test
     void serviceOrdersStayFreeForGuestsAndCanBeSettledExactlyOnce() throws Exception {
         String token = staffToken();
 

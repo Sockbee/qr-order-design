@@ -6,7 +6,6 @@ const STEPS: { status: TrackableOrderStatus; label: string }[] = [
   { status: 'accepted', label: '접수됨' },
   { status: 'preparing', label: '조리 중' },
   { status: 'served', label: '서빙 완료' },
-  { status: 'closed', label: '완료' },
 ]
 
 interface StatusTrackerProps {
@@ -14,12 +13,12 @@ interface StatusTrackerProps {
 }
 
 export function StatusTracker({ status }: StatusTrackerProps) {
-  const currentIndex = STEPS.findIndex((step) => step.status === status)
-  // 완료 is terminal, so nothing pulses there.
-  const live = status !== 'closed'
+  const currentIndex = STEPS.findIndex((step) => step.status === (status === 'closed' ? 'served' : status))
+  // Serving is the final customer-visible step.
+  const live = status !== 'served' && status !== 'closed'
 
   return (
-    <ol className="grid grid-cols-4 w-full m-0 p-0 list-none" aria-label="주문 진행 상태">
+    <ol className="grid grid-cols-3 w-full m-0 p-0 list-none" aria-label="주문 진행 상태">
       {STEPS.map((step, index) => {
         const phase =
           index < currentIndex
