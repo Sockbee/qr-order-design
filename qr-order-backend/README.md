@@ -67,10 +67,10 @@ Terraform은 staging에서만 문서 JSON과 UI를 켜고 production에서는 �
 ```
 
 The integration suite uses Testcontainers PostgreSQL 17 and verifies Flyway,
-QR authentication, bootstrap, idempotent ordering, calls, staff login,
+QR authentication, bootstrap, price-confirmed and idempotent ordering, calls, staff login,
 dashboard snapshots, status updates, call acknowledgement, database login
-throttling, concurrent display-number allocation, and merge/split/move/payment
-transactions.
+throttling, concurrent display-number allocation, service/payment idempotency,
+paid-visit history, and merge/split/move/payment transactions.
 It also validates the generated customer/staff/admin OpenAPI documents, Bearer
 security declaration, common error envelope, and SSE media type.
 

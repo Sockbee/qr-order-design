@@ -82,6 +82,7 @@ export function CartPage({
                   options={options}
                   lineTotal={line.unitPrice * line.quantity}
                   quantity={line.quantity}
+                  maxQuantity={line.maxQuantitySnapshot ?? item?.maxQuantity ?? 99}
                   imageUrl={item?.imageUrl}
                   onQuantityChange={(next) => handleQuantityChange(index, next)}
                 />

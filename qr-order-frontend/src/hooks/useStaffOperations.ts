@@ -25,6 +25,7 @@ interface StaffOperationsState {
   discount: (tableId: string, rate: number, onDone: () => void) => void
   confirmPayment: (
     tableId: string,
+    expectedSessionId: string,
     expectedFinalAmount: number,
     onDone: () => void,
   ) => void
@@ -96,8 +97,16 @@ export function useStaffOperations(): StaffOperationsState {
       [run],
     ),
     confirmPayment: useCallback(
-      (tableId, expectedFinalAmount, onDone) =>
-        run(() => confirmTablePayment(tableId, expectedFinalAmount), onDone),
+      (tableId, expectedSessionId, expectedFinalAmount, onDone) =>
+        run(
+          () => confirmTablePayment(
+            tableId,
+            expectedSessionId,
+            crypto.randomUUID(),
+            expectedFinalAmount,
+          ),
+          onDone,
+        ),
       [run],
     ),
     quantity: useCallback(

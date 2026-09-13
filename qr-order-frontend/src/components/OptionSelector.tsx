@@ -6,6 +6,7 @@ interface OptionSelectorProps {
   priceDelta: number
   selected: boolean
   disabled?: boolean
+  soldOut?: boolean
   /** Shared name for the radio inputs belonging to one group. */
   name: string
   onSelect: () => void
@@ -17,6 +18,7 @@ export function OptionSelector({
   priceDelta,
   selected,
   disabled = false,
+  soldOut = false,
   name,
   onSelect,
 }: OptionSelectorProps) {
@@ -71,7 +73,7 @@ export function OptionSelector({
         }`}
       >
         {label}
-        {disabled && ' (품절)'}
+        {soldOut && ' (품절)'}
       </span>
       {/* Price is never text-muted (CLAUDE.md §6). */}
       <span

@@ -1,7 +1,7 @@
 /*
- * A01 — Table Home (90:2), 1194×834. The rail is fixed at 88 and the main
+ * A01 — 소프트 한신포차 (349:2282), 1194×834. The rail is fixed at 88 and the main
  * column takes the rest, so the layout holds on a narrower iPad (1024×768)
- * without a second breakpoint: the grid simply wraps to fewer columns.
+ * with a scaled floor plan and a 48px minimum touch target.
  */
 .staff-home {
   display: flex;
@@ -17,8 +17,8 @@
 }
 
 /*
- * A02 is A01 with the inspector docked on the right; the grid keeps the same
- * tile size and simply wraps to fewer columns.
+ * A02 is A01 with the inspector docked on the right; the floor plan scales down
+ * and scrolls when needed to retain usable touch targets.
  */
 .staff-home--with-panel .staff-home__main {
   min-width: 0;
@@ -127,3 +127,5 @@
   bottom: var(--layout-staff-gutter);
   z-index: 5;
 }
+
+.staff-home__grid:has(.table-floor-plan) { display: block; padding: 0; overflow: hidden; }

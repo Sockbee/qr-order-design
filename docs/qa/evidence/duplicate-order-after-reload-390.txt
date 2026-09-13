@@ -1,0 +1,24 @@
+- banner:
+  - button "뒤로 가기":
+  - heading "주문 내역" [level=1]
+  - button "직원 호출"
+- main:
+  - list "주문 진행 상태":
+    - generic: 접수됨
+    - generic: 조리 중
+    - generic: 서빙 완료
+    - generic: 완료
+  - paragraph: 2차 주문 · 오후 11:36
+  - generic: 접수됨
+  - paragraph: 닭발 × 1
+  - paragraph: 10,000원
+  - paragraph: 1차 주문 · 오후 11:36
+  - generic: 접수됨
+  - paragraph: 닭발 × 1
+  - paragraph: 10,000원
+  - paragraph: 현재까지 합계
+  - paragraph: 20,000원
+- button "추가 주문":
+  - generic: 추가 주문
+- button "직원 호출":
+  - generic: 직원 호출

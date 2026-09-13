@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { DialogSummary, ImpactNote, StaffDialog } from './StaffDialog'
-import { TableChoice } from './TableChoice'
+import { ImpactNote, StaffDialog } from './StaffDialog'
+import { TableFloorPlan } from './TableFloorPlan'
 import './OperationDialogs.css'
 import { formatStaffAmount } from '../../utils/price'
 import type { StaffTableSummary } from '../../types/staff'
@@ -8,7 +8,6 @@ import type { StaffTableSummary } from '../../types/staff'
 interface MergeTablesDialogProps {
   primary: StaffTableSummary
   tables: StaffTableSummary[]
-  orderCount: number
   submitting: boolean
   onConfirm: (secondaryTableId: string) => void
   onCancel: () => void
@@ -17,31 +16,28 @@ interface MergeTablesDialogProps {
 /**
  * A05 — Merge Tables (95:1103).
  *
- * Merging is one level deep only (§4.15): a table that is already part of a
- * group cannot be merged again, so those are offered but not selectable.
+ * Add independent tables to one flat group; never nest existing groups.
  */
 export function MergeTablesDialog({
   primary,
   tables,
-  orderCount,
   submitting,
   onConfirm,
   onCancel,
 }: MergeTablesDialogProps) {
   const [secondaryId, setSecondaryId] = useState<string | null>(null)
-  const secondary =
-    tables.find((table) => table.tableId === secondaryId) ?? null
+  const secondary = tables.find((table) =>
+    table.tableId === secondaryId && table.tableId !== primary.tableId &&
+    table.occupied && !table.mergeLabel && !table.paid,
+  ) ?? null
 
-  const candidates = tables.filter(
-    (table) => table.tableId !== primary.tableId,
-  )
   const total = primary.amount + (secondary?.amount ?? 0)
-  const label = secondary
-    ? `${primary.tableId}+${secondary.tableId}`
-    : primary.tableId
+  const primaryLabel = primary.mergeLabel?.replace(' 합석', '') ?? primary.tableId
+  const label = secondary ? `${primaryLabel}+${secondary.tableId}` : primaryLabel
 
   return (
     <StaffDialog
+      size="floor"
       title="테이블 합치기"
       confirmLabel="합치기"
       confirmDisabled={!secondary}
@@ -51,7 +47,7 @@ export function MergeTablesDialog({
     >
       <div className="operation-dialog__picked">
         <div className="operation-dialog__picked-card">
-          <p className="operation-dialog__picked-table">{primary.tableId}</p>
+          <p className="operation-dialog__picked-table">{primaryLabel}</p>
           <p className="operation-dialog__picked-amount">
             {formatStaffAmount(primary.amount)}
           </p>
@@ -70,36 +66,24 @@ export function MergeTablesDialog({
         </div>
       </div>
 
-      <p className="operation-dialog__label">합석할 테이블 선택</p>
-      <div className="operation-dialog__choices">
-        {candidates.map((table) => (
-          <TableChoice
-            key={table.tableId}
-            tableId={table.tableId}
-            caption={
-              table.mergeLabel
-                ? '이미 합석'
-                : table.occupied
-                  ? '사용 중'
-                  : '비어 있음'
-            }
-            /* Empty tables have nothing to merge, and chains are rejected. */
-            disabled={!table.occupied || Boolean(table.mergeLabel)}
-            selected={table.tableId === secondaryId}
-            onSelect={setSecondaryId}
-          />
-        ))}
+      <p className="operation-dialog__label">합석할 테이블 선택 · {label} · 현재 금액 합계 {formatStaffAmount(total)}</p>
+      <div className="operation-dialog__floor">
+        <TableFloorPlan
+          tables={tables}
+          selectedTableIds={[...primaryLabel.split('+'), ...(secondary ? [secondary.tableId] : [])]}
+          onSelect={setSecondaryId}
+          disabledReason={(table) => {
+            if (table.tableId === primary.tableId) return '현재 테이블'
+            if (table.mergeLabel) return '이미 합석'
+            if (!table.occupied) return '비어 있음'
+            if (table.paid) return '결제 완료'
+          }}
+        />
       </div>
 
-      <DialogSummary
-        label="합친 결과"
-        table={label}
-        meta={`${formatStaffAmount(total)} · 주문 ${orderCount}건`}
-      />
-
       <ImpactNote title="합치면 이렇게 됩니다">
-        주문은 원래 테이블 기준으로 그대로 남고 결제 금액만 합산됩니다. 홈에서 두
-        테이블은 일반 테이블이 아니라 합석 카드로 함께 표시됩니다.
+        합석한 모든 테이블에서 현재 방문의 기존 주문과 추가 주문내역을 함께 봅니다.
+        현재 테이블의 할인율로 결제 금액을 합산합니다. 분리하면 각 테이블에서 접수한 주문만 남습니다.
       </ImpactNote>
     </StaffDialog>
   )

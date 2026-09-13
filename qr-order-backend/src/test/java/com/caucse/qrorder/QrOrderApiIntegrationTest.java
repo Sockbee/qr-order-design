@@ -67,6 +67,7 @@ class QrOrderApiIntegrationTest {
     @Autowired ObjectMapper mapper;
     @Autowired CustomerOrderService orders;
     @Autowired StaffOperationsService staffOperations;
+    @Autowired com.caucse.qrorder.sse.DomainEventService events;
 
     @BeforeEach
     void table() {
@@ -88,6 +89,7 @@ class QrOrderApiIntegrationTest {
                 """);
         jdbc.update("UPDATE settings SET value='1042' WHERE key='NEXT_DISPLAY_NUMBER'");
         jdbc.update("UPDATE settings SET value='20' WHERE key='STAFF_DISCOUNT_RATE'");
+        jdbc.update("UPDATE settings SET value='TRUE' WHERE key='EVENT_OPEN'");
     }
 
     @Test
@@ -158,7 +160,7 @@ class QrOrderApiIntegrationTest {
 
         String requestId = UUID.randomUUID().toString();
         String order = """
-                {"tableId":"T01","tableToken":"%s","clientRequestId":"%s","note":"",
+                {"tableId":"T01","tableToken":"%s","clientRequestId":"%s","expectedTotalAmount":20000,"note":"",
                  "items":[{"menuId":"chicken-feet","quantity":2,"selectedOptionIds":[]}]}
                 """.formatted(TABLE_TOKEN, requestId);
         String orderResponse = mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content(order))
@@ -176,6 +178,10 @@ class QrOrderApiIntegrationTest {
                 """.formatted(TABLE_TOKEN, callRequestId);
         mvc.perform(post("/api/v1/customer/calls/create").contentType("application/json").content(call))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.status", is("PENDING")));
+        mvc.perform(post("/api/v1/customer/orders/list").contentType("application/json")
+                        .content(credentials))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.activeCall.reason", is("WATER_UTENSIL")));
         mvc.perform(post("/api/v1/customer/calls/create").contentType("application/json").content(call))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.idempotentReplay", is(true)));
         mvc.perform(post("/api/v1/customer/calls/create").contentType("application/json").content("""
@@ -206,6 +212,10 @@ class QrOrderApiIntegrationTest {
         mvc.perform(post("/api/v1/staff/calls/acknowledge").header("Authorization", "Bearer " + staffToken)
                         .contentType("application/json").content("{\"tableId\":\"T01\"}"))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.acknowledgedCount", is(1)));
+        mvc.perform(post("/api/v1/customer/orders/list").contentType("application/json")
+                        .content(credentials))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.activeCall").doesNotExist());
         mvc.perform(post("/api/v1/staff/orders/create").header("Authorization", "Bearer " + staffToken)
                         .contentType("application/json").content("""
                                 {"tableId":"T01","note":"현장 추가",
@@ -249,6 +259,7 @@ class QrOrderApiIntegrationTest {
                     request.put("tableId", "T01");
                     request.put("tableToken", TABLE_TOKEN);
                     request.put("clientRequestId", UUID.randomUUID().toString());
+                    request.put("expectedTotalAmount", 1500);
                     request.put("note", "");
                     request.put("items", List.of(Map.of(
                             "menuId", "cola", "quantity", 1, "selectedOptionIds", List.of())));
@@ -297,6 +308,104 @@ class QrOrderApiIntegrationTest {
     }
 
     @Test
+    void mergedCustomersShareCurrentOrdersAndEventsThenSplitByOriginSession() {
+        for (int i = 2; i <= 4; i++) {
+            jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES(?,?,?,?)",
+                    "T0" + i, "테이블 " + i, StaffTokenService.sha256Hex(PEPPER + ":" + String.valueOf(i).repeat(64)), i);
+        }
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        Map<String, Object> old = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        staffOperations.confirmPayment("T01", 1500, staff);
+        Map<String, Object> a = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        Map<String, Object> b = orders.create(customerOrder("T02", "2".repeat(64), "cider"), false);
+        orders.create(customerOrder("T03", "3".repeat(64), "cola"), false);
+        Map<String, Object> outside = orders.create(customerOrder("T04", "4".repeat(64), "cola"), false);
+        staffOperations.merge("T01", "T02", staff);
+        // A third four-seat table joins the same flat group through any member.
+        staffOperations.merge("T02", "T03", staff);
+        assertThrows(ApiException.class, () -> staffOperations.merge("T01", "T02", staff));
+        Map<String, Object> c = orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        var request = Map.<String, Object>of("tableId", "T01", "tableToken", TABLE_TOKEN);
+        var shared = orders.list(request);
+        assertEquals(List.of("T01", "T02", "T03"), shared.get("groupTableIds"));
+        assertEquals(6000, shared.get("sessionTotalAmount"));
+        assertEquals(shared.get("orders"), orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("orders"));
+        assertEquals(shared.get("orders"), orders.list(Map.of("tableId", "T03", "tableToken", "3".repeat(64))).get("orders"));
+        assertEquals(staffOperations.tableDetail("T01").get("items"), staffOperations.tableDetail("T03").get("items"));
+        assertEquals(4, staffOperations.tableDetail("T02").get("orderCount"));
+        assertEquals(b.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", b.get("orderId"))).get("orderId"));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", old.get("orderId"))));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "displayCode", outside.get("displayCode"))));
+        assertEquals(List.of("T01", "T02", "T03"), jdbc.queryForList(
+                "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
+                String.class, c.get("orderId").toString()));
+        var memberTotals = (List<?>) staffOperations.tableDetail("T02").get("mergeMembers");
+        assertEquals(List.of(1500, 3000, 1500), memberTotals.stream().map(Map.class::cast).map(m -> m.get("amount")).toList());
+        staffOperations.split("T03", staff);
+        assertEquals(1500, orders.list(request).get("sessionTotalAmount"));
+        assertEquals(3000, orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("sessionTotalAmount"));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", c.get("orderId"))));
+        assertEquals(a.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "displayCode", a.get("displayCode"))).get("orderId"));
+        Map<String, Object> after = orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        assertEquals(List.of("T02"), jdbc.queryForList(
+                "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
+                String.class, after.get("orderId").toString()));
+        staffOperations.confirmPayment("T02", 4500, staff);
+        assertEquals(List.of(), orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("orders"));
+        assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+    }
+
+    @Test
+    void mergedOrderChangesAndServiceOrdersNotifyEveryGroupMemberForReplay() {
+        jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES('T02','테이블 2',?,2)",
+                StaffTokenService.sha256Hex(PEPPER + ":" + "c".repeat(64)));
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        var other = orders.create(customerOrder("T02", "c".repeat(64), "cola"), false);
+        staffOperations.merge("T01", "T02", staff);
+        String itemId = jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?::uuid", String.class, other.get("orderId"));
+        long before = events.latestId();
+        staffOperations.updateOrder(Map.of("operation", "quantity", "itemId", itemId, "quantity", 2), staff);
+        staffOperations.updateItemPreparation(itemId, true, staff);
+        assertEquals(4500, orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("sessionTotalAmount"));
+        assertEquals(List.of("order.updated", "order.item.updated"), events.after(before, "T01", 100).stream().map(e -> e.type()).toList());
+        assertEquals(List.of("order.updated", "order.item.updated"), events.after(before, "T02", 100).stream().map(e -> e.type()).toList());
+        var service = orders.createService(Map.of("tableId", "T02", "clientRequestId", UUID.randomUUID().toString(),
+                "chargedStaffId", "S-001", "serviceMessage", "함께 드세요",
+                "items", List.of(Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))), "S-001", 20, "카운터");
+        assertEquals(service.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", service.get("orderId"))).get("orderId"));
+        staffOperations.updateItemPreparation(itemId, false, staff);
+        staffOperations.updateOrder(Map.of("operation", "cancel-item", "itemId", itemId), staff);
+        assertEquals(1500, orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("sessionTotalAmount"));
+        assertEquals(orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("orders"),
+                orders.list(Map.of("tableId", "T02", "tableToken", "c".repeat(64))).get("orders"));
+    }
+
+    @Test
+    void movedQrSharesGroupAndReceivesSplitAndPaymentEvents() {
+        for (int i = 2; i <= 3; i++) jdbc.update(
+                "INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES(?,?,?,?)",
+                "T0" + i, "테이블 " + i, StaffTokenService.sha256Hex(PEPPER + ":" + String.valueOf(i).repeat(64)), i);
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        staffOperations.move("T01", "T03", staff);
+        orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        staffOperations.merge("T03", "T02", staff);
+        assertEquals(List.of("T02", "T03"), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("groupTableIds"));
+        var added = orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        assertEquals(List.of("T01", "T02", "T03"), jdbc.queryForList(
+                "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
+                String.class, added.get("orderId").toString()));
+        staffOperations.split("T02", staff);
+        assertEquals(List.of("T03"), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("groupTableIds"));
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM domain_events WHERE table_id='T01' AND payload->>'operation'='split'", Integer.class));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", added.get("orderId"))));
+        staffOperations.confirmPayment("T03", 1500, staff);
+        assertEquals(List.of(), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("orders"));
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM domain_events WHERE table_id='T01' AND event_type='payment.confirmed'", Integer.class));
+    }
+
+    @Test
     void customerOrderListShowsOnlyTheCurrentOpenVisit() {
         StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
         Map<String, Object> first = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
@@ -323,9 +432,10 @@ class QrOrderApiIntegrationTest {
         StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
         Map<String, Object> guest = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
         Map<String, Object> service = orders.createService(Map.of(
-                "tableId", "T01", "chargedStaffId", "S-001", "serviceMessage", "서비스",
+                "tableId", "T01", "clientRequestId", UUID.randomUUID().toString(),
+                "chargedStaffId", "S-001", "serviceMessage", "서비스",
                 "items", List.of(Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))),
-                "S-001", "김하늘", 20, "카운터");
+                "S-001", 20, "카운터");
         UUID sessionId = UUID.fromString(String.valueOf(staffOperations.tableDetail("T01").get("sessionId")));
         staffOperations.saveTableNote("T01", "유아 의자 사용 중", staff);
         assertEquals("유아 의자 사용 중", ((List<?>) staffOperations.tableDetail("T01").get("notes")).stream()
@@ -366,7 +476,7 @@ class QrOrderApiIntegrationTest {
         StaffPrincipal staff = new StaffPrincipal("주방", Instant.now(), Instant.now().plusSeconds(3600), 1);
         Map<String, Object> order = orders.create(new HashMap<>(Map.of(
                 "tableId", "T01", "tableToken", TABLE_TOKEN,
-                "clientRequestId", UUID.randomUUID().toString(), "note", "",
+                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 4500, "note", "",
                 "items", List.of(
                         Map.of("menuId", "cola", "quantity", 2, "selectedOptionIds", List.of()),
                         Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of())))), false);
@@ -400,6 +510,57 @@ class QrOrderApiIntegrationTest {
     }
 
     @Test
+    void customerProgressWaitsForActualServingAndExposesEachMenu() {
+        StaffPrincipal staff = new StaffPrincipal("주방", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        var result = orders.create(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN,
+                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 3000,
+                "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()),
+                                 Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))), false);
+        UUID orderId = UUID.fromString(result.get("orderId").toString());
+        List<String> itemIds = jdbc.queryForList("SELECT order_item_id::text FROM order_items WHERE order_id=? ORDER BY line_no", String.class, orderId);
+        assertCustomerProgress(orderId, "accepted", List.of("PENDING", "PENDING"));
+        // Serving an order without any ready menu must not announce completion.
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "preparing", List.of("PENDING", "PENDING"));
+        staffOperations.updateItemPreparation(itemIds.getFirst(), true, staff);
+        assertCustomerProgress(orderId, "preparing", List.of("READY", "PENDING"));
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "preparing", List.of("SERVED", "PENDING"));
+        staffOperations.updateItemPreparation(itemIds.get(1), true, staff);
+        assertCustomerProgress(orderId, "preparing", List.of("SERVED", "READY"));
+        // Existing rows from before this policy can contain the former public mapping.
+        jdbc.update("UPDATE orders SET public_status='served' WHERE order_id=?", orderId);
+        assertCustomerProgress(orderId, "preparing", List.of("SERVED", "READY"));
+        staffOperations.updateStatus(Map.of("orderId", orderId.toString(), "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "served", List.of("SERVED", "SERVED"));
+        assertEquals("served", jdbc.queryForObject("SELECT public_status FROM orders WHERE order_id=?", String.class, orderId));
+    }
+
+    @Test
+    void bulkKitchenCompletionIsPreparingAndBulkServingCompletionIsServed() {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        var result = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        UUID orderId = UUID.fromString(result.get("orderId").toString());
+        staffOperations.updateStatus(Map.of("tableId", "T01", "status", "READY"), staff);
+        assertCustomerProgress(orderId, "preparing", List.of("READY"));
+        staffOperations.updateItemPreparation(jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?", String.class, orderId), false, staff);
+        assertCustomerProgress(orderId, "preparing", List.of("PENDING"));
+        staffOperations.updateStatus(Map.of("tableId", "T01", "status", "READY"), staff);
+        staffOperations.updateStatus(Map.of("tableId", "T01", "status", "SERVED"), staff);
+        assertCustomerProgress(orderId, "served", List.of("SERVED"));
+    }
+
+    private void assertCustomerProgress(UUID orderId, String status, List<String> itemStatuses) {
+        var detail = orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", orderId.toString()));
+        assertEquals(status, detail.get("publicStatus"));
+        assertEquals(itemStatuses, ((List<?>) detail.get("items")).stream().map(Map.class::cast).map(item -> item.get("preparationStatus")).toList());
+        var list = orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN));
+        var row = ((List<?>) list.get("orders")).stream().map(Map.class::cast).filter(order -> orderId.toString().equals(order.get("orderId"))).findFirst().orElseThrow();
+        assertEquals(status, row.get("publicStatus"));
+        assertEquals(itemStatuses, ((List<?>) row.get("items")).stream().map(Map.class::cast).map(item -> item.get("preparationStatus")).toList());
+    }
+
+    @Test
     void serviceOrdersStayFreeForGuestsAndCanBeSettledExactlyOnce() throws Exception {
         String token = staffToken();
 
@@ -411,19 +572,19 @@ class QrOrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.members[1].active", is(false)));
 
         String inactiveRequest = """
-                {"tableId":"T01","chargedStaffId":"S-002","serviceMessage":null,
+                {"tableId":"T01","clientRequestId":"%s","chargedStaffId":"S-002","serviceMessage":null,
                  "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
-                """;
+                """.formatted(UUID.randomUUID());
         mvc.perform(post("/api/v1/staff/orders/service").header("Authorization", "Bearer " + token)
                         .contentType("application/json").content(inactiveRequest))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code", is("STAFF_MEMBER_INACTIVE")));
 
         String serviceRequest = """
-                {"tableId":"T01","chargedStaffId":"S-001",
+                {"tableId":"T01","clientRequestId":"%s","chargedStaffId":"S-001",
                  "serviceMessage":"기다려 주셔서 감사합니다!",
                  "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
-                """;
+                """.formatted(UUID.randomUUID());
         String response = mvc.perform(post("/api/v1/staff/orders/service")
                         .header("Authorization", "Bearer " + token)
                         .contentType("application/json").content(serviceRequest))
@@ -437,6 +598,14 @@ class QrOrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.chargedStaff.name", is("김하늘")))
                 .andReturn().getResponse().getContentAsString();
         String serviceOrderId = mapper.readTree(response).get("data").get("orderId").asString();
+        mvc.perform(post("/api/v1/staff/orders/service")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content(serviceRequest))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.orderId", is(serviceOrderId)))
+                .andExpect(jsonPath("$.data.idempotentReplay", is(true)));
+        assertEquals(1, jdbc.queryForObject(
+                "SELECT count(*) FROM orders WHERE order_kind='SERVICE'", Integer.class));
 
         mvc.perform(post("/api/v1/customer/orders/list").contentType("application/json").content("""
                         {"tableId":"T01","tableToken":"%s"}
@@ -558,6 +727,112 @@ class QrOrderApiIntegrationTest {
                 "SELECT count(*) FROM audit_logs WHERE action='STAFF_MEMBERS_IMPORTED'", Integer.class));
     }
 
+    @Test
+    void rejectsInvalidPayloadAs400AndReplaysCommittedOrderAfterClosing() throws Exception {
+        String requestId = UUID.randomUUID().toString();
+        String valid = """
+                {"tableId":"T01","tableToken":"%s","clientRequestId":"%s",
+                 "expectedTotalAmount":1500,"note":"",
+                 "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
+                """.formatted(TABLE_TOKEN, requestId);
+        mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content(valid))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.idempotentReplay", is(false)));
+
+        jdbc.update("UPDATE settings SET value='FALSE' WHERE key='EVENT_OPEN'");
+        mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content(valid))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.idempotentReplay", is(true)));
+
+        mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content("""
+                {"tableId":"T01","tableToken":"%s","clientRequestId":"%s",
+                 "expectedTotalAmount":1500,"note":"",
+                 "items":[{"menuId":"cola","quantity":1.5,"selectedOptionIds":[]}]}
+                """.formatted(TABLE_TOKEN, UUID.randomUUID())))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code", is("INVALID_REQUEST")))
+                .andExpect(jsonPath("$.error.retryable", is(false)));
+    }
+
+    @Test
+    void rejectsChangedCustomerPriceAndReturnsCurrentQuote() throws Exception {
+        mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content("""
+                {"tableId":"T01","tableToken":"%s","clientRequestId":"%s",
+                 "expectedTotalAmount":1500,"note":"",
+                 "items":[{"menuId":"cola","quantity":2,"selectedOptionIds":[]}]}
+                """.formatted(TABLE_TOKEN, UUID.randomUUID())))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code", is("ORDER_PRICE_CHANGED")))
+                .andExpect(jsonPath("$.error.details.actualTotalAmount", is(3000)))
+                .andExpect(jsonPath("$.error.details.items[0].unitPrice", is(1500)));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM table_sessions", Integer.class));
+    }
+
+    @Test
+    void paymentRequestIsBoundToOneVisitAndPaidVisitsAppearInTodaysQueue() {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        String firstSessionId = String.valueOf(staffOperations.tableDetail("T01").get("sessionId"));
+        String paymentRequestId = UUID.randomUUID().toString();
+        staffOperations.confirmPayment("T01", firstSessionId, paymentRequestId, 1500, staff);
+
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cider"), false);
+        String secondSessionId = String.valueOf(staffOperations.tableDetail("T01").get("sessionId"));
+        staffOperations.confirmPayment("T01", firstSessionId, paymentRequestId, 1500, staff);
+        assertEquals("OPEN", jdbc.queryForObject(
+                "SELECT status FROM table_sessions WHERE session_id=?::uuid", String.class, secondSessionId));
+
+        ApiException stale = assertThrows(ApiException.class, () -> staffOperations.confirmPayment(
+                "T01", firstSessionId, UUID.randomUUID().toString(), 1500, staff));
+        assertEquals("TABLE_SESSION_CHANGED", stale.code());
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> payment = (List<Map<String, Object>>) staffOperations.queues().get("payment");
+        assertEquals(2, payment.size());
+        assertTrue(payment.stream().anyMatch(row -> "PAID".equals(row.get("paymentStatus"))));
+        assertTrue(payment.stream().anyMatch(row -> secondSessionId.equals(row.get("sessionId"))));
+    }
+
+    @Test
+    void orderEditAndPaymentSerializeOnTheVisitLock() throws Exception {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        UUID itemId = jdbc.queryForObject("SELECT order_item_id FROM order_items LIMIT 1", UUID.class);
+        String sessionId = String.valueOf(staffOperations.tableDetail("T01").get("sessionId"));
+        jdbc.execute("""
+                CREATE FUNCTION qa_delay_item_update() RETURNS trigger AS $$
+                BEGIN
+                  IF NEW.quantity <> OLD.quantity THEN PERFORM pg_sleep(1); END IF;
+                  RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql
+                """);
+        jdbc.execute("""
+                CREATE TRIGGER qa_delay_item_update_trigger
+                BEFORE UPDATE ON order_items
+                FOR EACH ROW EXECUTE FUNCTION qa_delay_item_update()
+                """);
+
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Void> edit = executor.submit(() -> staffOperations.updateOrder(
+                    Map.of("operation", "quantity", "itemId", itemId.toString(), "quantity", 3), staff));
+            Thread.sleep(150);
+            ApiException changed = assertThrows(ApiException.class, () -> staffOperations.confirmPayment(
+                    "T01", sessionId, UUID.randomUUID().toString(), 1500, staff));
+            assertEquals("BILL_AMOUNT_CHANGED", changed.code());
+            edit.get();
+            assertEquals(4500, jdbc.queryForObject("SELECT total_amount FROM orders", Integer.class));
+            assertEquals("OPEN", jdbc.queryForObject(
+                    "SELECT status FROM table_sessions WHERE session_id=?::uuid", String.class, sessionId));
+        } finally {
+            executor.shutdownNow();
+            jdbc.execute("DROP TRIGGER IF EXISTS qa_delay_item_update_trigger ON order_items");
+            jdbc.execute("DROP FUNCTION IF EXISTS qa_delay_item_update()");
+        }
+    }
+
     private String staffToken() throws Exception {
         String loginResponse = mvc.perform(post("/api/v1/staff/login").contentType("application/json")
                         .content("{\"passcode\":\"" + PASSCODE + "\",\"deviceLabel\":\"카운터\"}"))
@@ -571,6 +846,20 @@ class QrOrderApiIntegrationTest {
         request.put("tableId", tableId);
         request.put("tableToken", token);
         request.put("clientRequestId", UUID.randomUUID().toString());
+        request.put("expectedTotalAmount", switch (menuId) {
+            case "chicken-feet", "tteokbokki-egg-fried-set" -> 10_000;
+            case "jjapagetti-egg-cheese" -> 5_000;
+            case "spicy-pork" -> 9_000;
+            case "perilla-egg-fry-sikhye-set" -> 8_000;
+            case "seaweed-soup-rice", "dried-snack-platter" -> 7_000;
+            case "tuna-mayo-rice-ball" -> 6_000;
+            case "cheese-egg-custard" -> 9_000;
+            case "red-bean-bingsu", "soju", "beer" -> 4_500;
+            case "banana-milk-highball", "mix-coffee-highball", "classic-highball" -> 5_000;
+            case "frozen-sikhye", "eolbaksa" -> 3_000;
+            case "cola", "cider" -> 1_500;
+            default -> throw new IllegalArgumentException(menuId);
+        });
         request.put("note", "");
         request.put("items", List.of(Map.of(
                 "menuId", menuId, "quantity", 1, "selectedOptionIds", List.of())));

@@ -12,7 +12,7 @@ interface StaffDialogProps {
   confirmDisabled?: boolean
   submitting?: boolean
   /** `wide` is the 680px operation dialog; `narrow` the 480px confirm. */
-  size?: 'wide' | 'narrow'
+  size?: 'wide' | 'narrow' | 'floor'
   onConfirm: () => void
   onCancel: () => void
 }

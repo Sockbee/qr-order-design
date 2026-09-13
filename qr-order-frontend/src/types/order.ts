@@ -2,7 +2,7 @@ import type { CartLine } from './menu'
 
 /**
  * Diner-visible order states (UX-STRUCTURE §5.2, §5.4).
- * The kitchen-side machine is longer; these are the four the diner sees.
+ * Three visible steps. `closed` remains readable for older persisted orders.
  */
 export type OrderStatus =
   | 'accepted'
@@ -22,7 +22,15 @@ export type OrderStatus =
  */
 export type OrderKind = 'GUEST' | 'SERVICE'
 
+export type ItemPreparationStatus = 'pending' | 'ready' | 'served'
+
+export interface PlacedOrderLine extends CartLine {
+  preparationStatus?: ItemPreparationStatus
+  cancelled?: boolean
+}
+
 export interface PlacedOrder {
+  originTableId?: string
   /** Server UUID when this order came from the API. */
   id?: string
   /** Absent on locally-placed orders, which are always GUEST. */
@@ -37,7 +45,7 @@ export interface PlacedOrder {
   /** Diner-facing order number, e.g. "A-1042". */
   number: string
   tableNumber: number
-  lines: CartLine[]
+  lines: PlacedOrderLine[]
   total: number
   /** ISO timestamp, kept serializable for the localStorage work to come. */
   placedAt: string

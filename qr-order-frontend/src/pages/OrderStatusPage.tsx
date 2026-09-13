@@ -4,12 +4,13 @@ import { OrderLine } from '../components/OrderLine'
 import { OrderRound } from '../components/OrderRound'
 import { StatusTracker } from '../components/StatusTracker'
 import { menuItems } from '../data/menu'
+import { itemProgress, overallOrderStatus } from '../utils/order'
 import { formatPrice } from '../utils/price'
 import type { PlacedOrder } from '../types/order'
 
 interface OrderStatusPageProps {
   orders: PlacedOrder[]
-  latestPublicStatus?: Exclude<PlacedOrder['status'], 'cancelled'> | null
+  groupTableIds?: string[]
   sessionTotalAmount?: number
   onBack: () => void
   onOrderMore: () => void
@@ -18,7 +19,7 @@ interface OrderStatusPageProps {
 
 export function OrderStatusPage({
   orders,
-  latestPublicStatus,
+  groupTableIds = [],
   sessionTotalAmount,
   onBack,
   onOrderMore,
@@ -26,11 +27,7 @@ export function OrderStatusPage({
 }: OrderStatusPageProps) {
   // Newest first, without mutating the session's ordering.
   const rounds = orders.map((order, index) => ({ order, round: index + 1 })).reverse()
-  const latestActiveOrder = orders.findLast((order) => order.status !== 'cancelled')
-  const fallbackStatus = latestActiveOrder?.status
-  const currentStatus = latestPublicStatus ??
-    (fallbackStatus === 'cancelled' ? 'accepted' : fallbackStatus) ??
-    'accepted'
+  const currentStatus = overallOrderStatus(orders)
   const sessionTotal = sessionTotalAmount ?? orders
     .filter((order) => order.status !== 'cancelled')
     .reduce((sum, order) => sum + order.total, 0)
@@ -79,6 +76,9 @@ export function OrderStatusPage({
       {appBar}
 
       <main className="flex flex-1 flex-col gap-5 pt-5 px-4 pb-6">
+        {groupTableIds.length > 1 && <p className="rounded-lg bg-surface p-3 text-sm text-body">
+          {groupTableIds.join(' + ')} 합석 · 주문내역 공유
+        </p>}
         <StatusTracker status={currentStatus} />
 
         <div className="flex flex-col gap-3">
@@ -92,6 +92,7 @@ export function OrderStatusPage({
               serviceMessage={order.serviceMessage}
               chargedStaffName={order.chargedStaffName}
             >
+              {groupTableIds.length > 1 && <p className="text-xs text-body pb-2">{order.originTableId ?? `T${String(order.tableNumber).padStart(2, '0')}`}에서 접수</p>}
               {order.lines.map((line, index) => {
                 const currentMenuItem = menuItems.find(
                   (candidate) => candidate.id === line.itemId,
@@ -105,6 +106,7 @@ export function OrderStatusPage({
                     name={name}
                     quantity={line.quantity}
                     amount={line.unitPrice * line.quantity}
+                    status={itemProgress(line, order.status)}
                     comped={order.kind === 'SERVICE'}
                   />
                 )

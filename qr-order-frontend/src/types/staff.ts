@@ -91,6 +91,7 @@ export interface StaffTableHomeData {
 
 /** One line of the A02 order list (staff/StaffOrderItem, 87:68). */
 export interface StaffOrderItem {
+  originTableId?: string
   itemId: string
   name: string
   /** Joined option summary, or `—` when there is none. */
@@ -133,6 +134,7 @@ export interface StaffBill {
 
 /** Everything the 420px inspector panel renders for one table. */
 export interface StaffTableDetail {
+  mergeMembers?: Array<{ tableId: string; amount: number; orderCount: number }>
   /** The visit the operator inspected; reset uses it as an idempotency guard. */
   sessionId: string | null
   tableId: string
@@ -169,6 +171,7 @@ export interface StaffStationOrder {
 
 /** One card in the payment queue (staff/PaymentOrderCard). */
 export interface StaffPaymentOrder {
+  sessionId: string
   tableId: string
   bill: StaffBill
   /** "서빙 완료 후 12분" — how long the table has been waiting to settle. */

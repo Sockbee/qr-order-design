@@ -111,12 +111,13 @@ export function buildTableHomeData(
 ): StaffTableHomeData {
   const pending = callGroups.filter((group) => !group.acknowledged)
   const delayedTableCount = tables.filter(isDelayed).length
+  const groups = new Map(tables.map((table) => [table.mergeLabel ?? table.tableId, table]))
   return {
     tables,
     callGroups,
     callingTableCount: pending.length,
     activeTableCount: tables.filter((table) => table.occupied).length,
-    pendingItemCount: tables.reduce(
+    pendingItemCount: [...groups.values()].reduce(
       (total, table) => total + table.pendingItemCount,
       0,
     ),

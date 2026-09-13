@@ -268,6 +268,7 @@ Request:
   "tableId": "T12",
   "tableToken": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   "clientRequestId": "8eaf87de-7f16-43cb-a7ee-dba5054567cc",
+  "expectedTotalAmount": 23000,
   "note": "",
   "items": [
     {
@@ -284,7 +285,11 @@ Request:
 }
 ```
 
-금지 field: `price`, `unitPrice`, `lineTotal`, `totalAmount`, 메뉴/옵션 이름 snapshot. 포함돼도 무시하는 것보다 `INVALID_REQUEST`로 거절해 계약 오류를 빨리 발견하는 것을 권장한다.
+`expectedTotalAmount`는 고객이 확정 화면에서 본 합계다. 서버 재계산 값이 다르면
+`ORDER_PRICE_CHANGED`와 최신 행별 금액을 반환하며 주문을 저장하지 않는다. 클라이언트는
+최신 금액을 표시하고 다시 확인받는다. 금지 field: `price`, `unitPrice`, `lineTotal`,
+`totalAmount`, 메뉴/옵션 이름 snapshot. 포함돼도 무시하는 것보다 `INVALID_REQUEST`로
+거절해 계약 오류를 빨리 발견하는 것을 권장한다.
 
 Response `data`:
 
@@ -636,11 +641,16 @@ Request:
 {
   "apiVersion": "v1",
   "tableId": "T08",
+  "expectedSessionId": "2bc315f8-01f6-47d7-a7e8-e1882df6544c",
+  "clientRequestId": "d15dbcd6-c262-4d6f-a962-832f2a8d49e0",
   "expectedFinalAmount": 116000
 }
 ```
 
-- `expectedFinalAmount`는 **필수**다. 서버가 재계산한 값과 다르면 `BILL_AMOUNT_CHANGED`로 거절한다. 운영진이 확인 다이얼로그를 읽는 사이에 주문이 추가되면 화면 금액과 실제 청구가 어긋나므로, 본 적 없는 금액을 확정하는 일을 막는다.
+- 세 필드는 모두 필수다. `expectedSessionId`는 화면에서 읽은 방문에만 결제를 적용하고,
+  `clientRequestId`는 응답 유실 재시도를 같은 결제로 복구한다. 이미 처리한 요청 ID를
+  같은 payload로 보내면 기존 성공을 반환하며 다음 방문에는 적용하지 않는다.
+- `expectedFinalAmount`가 서버 재계산 값과 다르면 `BILL_AMOUNT_CHANGED`로 거절한다. 운영진이 확인 다이얼로그를 읽는 사이에 주문이 추가되면 화면 금액과 실제 청구가 어긋나므로, 본 적 없는 금액을 확정하는 일을 막는다.
 - 대표 세션에 `subtotal_amount`/`discount_amount`/`final_amount`를 snapshot하고 `payment_status=PAID`, `paid_at`을 기록한다.
 - 그룹의 종속 세션과 모든 Orders의 `payment_status`를 함께 갱신한다(mirror).
 - 그룹의 모든 세션을 `CLOSED`로 바꾼다.
@@ -692,6 +702,7 @@ Request:
   "apiVersion": "v1",
   "staffToken": "...",
   "tableId": "T12",
+  "clientRequestId": "d15dbcd6-c262-4d6f-a962-832f2a8d49e0",
   "chargedStaffId": "S-014",
   "serviceMessage": "오래 기다리셨습니다. 맛있게 드세요!",
   "items": [
@@ -699,6 +710,9 @@ Request:
   ]
 }
 ```
+
+`clientRequestId`는 필수다. 동일 ID와 동일 지급 내용의 재전송은 기존 주문을
+`idempotentReplay=true`로 반환하고, 내용이 다르면 `IDEMPOTENCY_CONFLICT`로 거절한다.
 
 Response `data`:
 

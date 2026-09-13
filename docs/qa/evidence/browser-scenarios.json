@@ -1,0 +1,154 @@
+[
+  {
+    "id": "B01",
+    "viewport": "390x844",
+    "origin": "localhost:5178",
+    "steps": "QR T90 → menu/category → 닭발 detail → quantity 2 → cart → reload",
+    "result": "PASS",
+    "observation": "cart quantity 2 / 20000 retained"
+  },
+  {
+    "id": "B02",
+    "viewport": "390x844",
+    "origin": "localhost:5178",
+    "steps": "cart confirm → double-click confirm → done → history",
+    "result": "PASS",
+    "observation": "A-1055, one order 20000; DB evidence browser-order-db.txt"
+  },
+  {
+    "id": "B03",
+    "viewport": "1024x768",
+    "origin": "localhost:5178",
+    "steps": "protected staff tables → wrong login → correct login → table T90 detail",
+    "result": "PASS",
+    "observation": "login rejection recovery; guest/staff 20000 match"
+  },
+  {
+    "id": "B04",
+    "viewport": "1024x768",
+    "origin": "localhost:5178",
+    "steps": "customer water call → staff acknowledge → customer reload/open call",
+    "result": "FAIL",
+    "observation": "QA-008: staff count 0, customer waiting remains"
+  },
+  {
+    "id": "B05",
+    "viewport": "1024x768",
+    "origin": "localhost:5178",
+    "steps": "T90 COOKING → kitchen item ready → serving complete",
+    "result": "PASS",
+    "observation": "queue transition and customer preparing state received; checkbox check tool timed out after item removed, verified in serving queue"
+  },
+  {
+    "id": "B06",
+    "viewport": "1024x768",
+    "origin": "localhost:5178",
+    "steps": "T90 payment confirmation → customer orders → staff payment reload",
+    "result": "PASS/FAIL",
+    "observation": "customer empty visit PASS; staff completed 0 FAIL QA-011"
+  },
+  {
+    "id": "B07",
+    "viewport": "1280x720 then 390x844",
+    "origin": "localhost:4178",
+    "steps": "T91 order commit → proxy discards response/502 → reload → retry",
+    "result": "FAIL",
+    "observation": "QA-002: A-1056/A-1057, total 20000"
+  },
+  {
+    "id": "B08",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "T91 saved credentials → /t/T92?token=bad",
+    "result": "FAIL",
+    "observation": "QA-006: T91 shown instead of invalid QR error"
+  },
+  {
+    "id": "B09",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "valid T92 QR → menu/cart",
+    "result": "PASS",
+    "observation": "T92 selected, cart empty; no T91 orders in new table"
+  },
+  {
+    "id": "B10",
+    "viewport": "mobile screenshot 375x812",
+    "origin": "localhost:4178",
+    "steps": "QA menu required options + single option",
+    "result": "PASS/FAIL",
+    "observation": "missing required disabled; multi max 2 PASS; single alternative disabled and falsely sold out FAIL"
+  },
+  {
+    "id": "B11",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "cart 12300 → admin base price change → confirm 12300",
+    "result": "FAIL",
+    "observation": "QA-005: server/order done 13300"
+  },
+  {
+    "id": "B12",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "events 503 → state mutation → fallback poll",
+    "result": "FAIL",
+    "observation": "QA-014: first next orders/list at 45.29s; reconnected later; no long-duration replay claim"
+  },
+  {
+    "id": "B13",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "cart quantity 11 for max 10 → confirm",
+    "result": "FAIL",
+    "observation": "QA-010 server400; quantity reduction/removal recovers"
+  },
+  {
+    "id": "B14",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "delay orders/create 65s → app back at32s → response",
+    "result": "PASS/confirmation needed",
+    "observation": "32s still pending/back no-op, 65.022s server400, enabled retry restored; no infinite stall test"
+  },
+  {
+    "id": "B15",
+    "viewport": "1280x800",
+    "origin": "localhost:4179",
+    "steps": "default npm build → /staff/tables without login → /",
+    "result": "FAIL",
+    "observation": "QA-001 mock operations and mock customer store"
+  },
+  {
+    "id": "B16",
+    "viewport": "1024x768",
+    "origin": "localhost:5178",
+    "steps": "server epoch invalidation → staff tables",
+    "result": "PASS",
+    "observation": "login required again"
+  },
+  {
+    "id": "B17",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "all API503 → QR entry → normal network → Retry",
+    "result": "PASS",
+    "observation": "error message with retry; correct T92 restored"
+  },
+  {
+    "id": "B18",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "direct /cart → decrease to0 → confirm deletion",
+    "result": "PASS",
+    "observation": "empty cart, total0, order disabled"
+  },
+  {
+    "id": "B19",
+    "viewport": "390x844",
+    "origin": "localhost:4178",
+    "steps": "close customer tab → reopen /orders",
+    "result": "PASS(partial)",
+    "observation": "T92 current order amount13300 restored; no detailed initial status assertion"
+  }
+]

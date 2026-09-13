@@ -1,0 +1,71 @@
+.table-floor-plan {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.table-floor-plan__title {
+  flex: none;
+  height: 44px;
+  margin: 0;
+  padding: 8px 16px;
+  font: var(--type-caption-strong);
+  color: var(--color-text-strong);
+}
+.table-floor-plan__viewport { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: auto; }
+.table-floor-plan__canvas { position: relative; flex-shrink: 0; margin: auto; }
+.table-floor-plan__landmark {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-muted);
+  font-size: max(9px, calc(12px * var(--floor-scale)));
+  font-weight: 700;
+}
+.table-floor-plan__table {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--color-border-default);
+  border-radius: 6px;
+  background: var(--color-bg-canvas);
+  color: var(--color-text-strong);
+  cursor: pointer;
+  isolation: isolate;
+}
+.table-floor-plan__table--round { border-radius: 50%; }
+.table-floor-plan__table--empty { background: var(--color-bg-surface); color: var(--color-text-body); }
+.table-floor-plan__table--diamond { border: 0; background: transparent; }
+.table-floor-plan__diamond { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.table-floor-plan__table--delayed { border: 2px solid var(--color-status-attention-fg); }
+.table-floor-plan__table--selected,
+.table-floor-plan__table--merged { border: 2px solid var(--color-bg-primary); }
+.table-floor-plan__table--selected { background: var(--color-bg-weak); }
+.table-floor-plan__table:focus-visible { outline: 3px solid var(--color-bg-primary); outline-offset: 3px; }
+.table-floor-plan__table:disabled { cursor: default; }
+.table-floor-plan__table:disabled:not(.table-floor-plan__table--selected) { opacity: .65; }
+.table-floor-plan__number { font-size: max(14px, calc(22px * var(--floor-scale))); font-weight: 700; line-height: 1.2; }
+.table-floor-plan__amount { font-size: max(10px, calc(12px * var(--floor-scale))); font-weight: 700; line-height: 1.5; }
+.table-floor-plan__capacity { font-size: max(9px, calc(11px * var(--floor-scale))); line-height: 1.5; white-space: nowrap; }
+.table-floor-plan__table--delayed .table-floor-plan__capacity { color: var(--color-status-attention-fg); }
+.table-floor-plan__call { position: absolute; top: -8px; right: -8px; padding: 1px 4px; border-radius: 4px; background: var(--color-status-attention-bg); color: var(--color-status-attention-fg); font: var(--type-micro-badge); }
+.table-floor-plan__caption { flex: none; height: 26px; margin: 0; padding: 2px 16px; font-size: 11px; color: var(--color-text-muted); }
+.table-floor-plan__extras { display: flex; flex-wrap: wrap; gap: 16px; padding: 16px; }
+.table-floor-plan__extras h3 { width: 100%; font: var(--type-caption-strong); }
+
+/* Keep the exported diamond geometry when showing selection or delay. */
+.table-floor-plan__table--diamond { border: 0; background: transparent; }
+.table-floor-plan__table--diamond.table-floor-plan__table--selected .table-floor-plan__diamond,
+.table-floor-plan__table--diamond.table-floor-plan__table--merged .table-floor-plan__diamond {
+  filter: drop-shadow(1px 0 0 var(--color-bg-primary)) drop-shadow(-1px 0 0 var(--color-bg-primary)) drop-shadow(0 1px 0 var(--color-bg-primary)) drop-shadow(0 -1px 0 var(--color-bg-primary));
+}
+.table-floor-plan__table--diamond.table-floor-plan__table--delayed:not(.table-floor-plan__table--selected) .table-floor-plan__diamond {
+  filter: drop-shadow(1px 0 0 var(--color-status-attention-fg)) drop-shadow(-1px 0 0 var(--color-status-attention-fg));
+}

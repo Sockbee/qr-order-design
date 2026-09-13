@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { StaffServicePage } from './StaffServicePage'
 import type { ServiceDraftLine } from './StaffServicePage'
@@ -30,6 +30,7 @@ export function StaffServiceRoute() {
   const [confirming, setConfirming] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const requestId = useRef(crypto.randomUUID())
 
   const close = () => navigate(`/staff/tables/${tableId}`)
 
@@ -77,6 +78,7 @@ export function StaffServiceRoute() {
     setSubmitting(true)
     void createServiceOrder(
       tableId,
+      requestId.current,
       chargedStaffId,
       serviceMessage.trim() || null,
       draft.map((line) => ({

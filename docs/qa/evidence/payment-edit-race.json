@@ -1,0 +1,53 @@
+{
+  "before": {
+    "sessionId": "adf3f5fb-52dd-4d6d-9e47-d0e0aae0a3e1",
+    "tableId": "T16",
+    "displayName": "QA 테이블 16",
+    "orderStatus": "RECEIVED",
+    "openedAt": "2026-09-13T14:49:38.232692Z",
+    "mergedTableIds": [],
+    "originTableId": null,
+    "subtotalAmount": 10000,
+    "discountRate": 0,
+    "discountAmount": 0,
+    "finalAmount": 10000,
+    "paymentStatus": "UNPAID",
+    "orderCount": 1,
+    "items": [
+      {
+        "itemId": "2b02fe2e-890a-4b2a-a143-4c180e4bffe0",
+        "name": "닭발",
+        "selectedOptions": [],
+        "quantity": 1,
+        "lineTotal": 10000,
+        "status": "ACTIVE",
+        "preparationStatus": "PENDING",
+        "note": "QA test only"
+      }
+    ],
+    "notes": [],
+    "call": null
+  },
+  "edit": [
+    200,
+    {
+      "success": true,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "430a0754-4f3d-4630-9b75-ad95ded8da55",
+        "serverTime": "2026-09-13T14:52:26.412220Z"
+      }
+    }
+  ],
+  "payment": [
+    200,
+    {
+      "success": true,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "24c70af0-9773-4926-9936-3277faa18c73",
+        "serverTime": "2026-09-13T14:52:25.254684Z"
+      }
+    }
+  ]
+}

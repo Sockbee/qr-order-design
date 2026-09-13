@@ -1,0 +1,16 @@
+- banner:
+  - button "뒤로 가기":
+  - heading "주문 확인" [level=1]
+- main:
+  - paragraph: 테이블 92
+  - paragraph: 닭발 × 11
+  - paragraph: 110,000원
+  - term: 총 결제금액
+  - definition: 110,000원
+  - paragraph: 후불 결제 · 식사 후 카운터에서 결제해 주세요
+  - alert: 메뉴 수량을 확인해 주세요.
+  - button "수정하기":
+    - generic: 수정하기
+- button "주문 확정 110,000원":
+  - generic: 주문 확정
+  - generic: 110,000원

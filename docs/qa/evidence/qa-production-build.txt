@@ -1,0 +1,25 @@
+
+> qr-order-frontend@0.0.0 build
+> tsc -b && vite build --outDir /tmp/qr-order-qa/dist
+
+vite v8.2.2 building client environment for production...
+transforming...
+✓ 175 modules transformed.
+
+(!) outDir /tmp/qr-order-qa/dist is not inside project root and will not be emptied.
+Use --emptyOutDir to override.
+
+rendering chunks...
+computing gzip size...
+../../../../../tmp/qr-order-qa/dist/staff.html                            0.92 kB │ gzip:  0.47 kB
+../../../../../tmp/qr-order-qa/dist/index.html                            1.10 kB │ gzip:  0.53 kB
+../../../../../tmp/qr-order-qa/dist/assets/logo-paper-BUANKrgS.png       76.72 kB
+../../../../../tmp/qr-order-qa/dist/assets/BMEULJIROTTF-wHhLyP1J.ttf  2,133.41 kB
+../../../../../tmp/qr-order-qa/dist/assets/events-Dhedq0FJ.css            3.45 kB │ gzip:  1.19 kB
+../../../../../tmp/qr-order-qa/dist/assets/customer-Bckk-JUO.css         32.91 kB │ gzip:  7.32 kB
+../../../../../tmp/qr-order-qa/dist/assets/staff-DHChS9ZO.css            54.40 kB │ gzip:  6.77 kB
+../../../../../tmp/qr-order-qa/dist/assets/customer-Dc3qRp-9.js          52.42 kB │ gzip: 13.91 kB
+../../../../../tmp/qr-order-qa/dist/assets/staff-BBzDgfBg.js            100.84 kB │ gzip: 26.17 kB
+../../../../../tmp/qr-order-qa/dist/assets/events-DXGH8hxB.js           242.79 kB │ gzip: 77.98 kB
+
+✓ built in 165ms

@@ -1,21 +1,30 @@
 package com.caucse.qrorder.sse;
 
 import tools.jackson.databind.ObjectMapper;
+import com.caucse.qrorder.domain.TableOrderScope;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class DomainEventService {
     private final JdbcTemplate jdbc;
     private final ObjectMapper mapper;
+    private final TableOrderScope orderScope;
 
-    public DomainEventService(JdbcTemplate jdbc, ObjectMapper mapper) {
+    public DomainEventService(JdbcTemplate jdbc, ObjectMapper mapper, TableOrderScope orderScope) {
         this.jdbc = jdbc;
         this.mapper = mapper;
+        this.orderScope = orderScope;
+    }
+
+    public void publishOrder(String type, String entityId, UUID orderId, Map<String, Object> payload) {
+        UUID sessionId = jdbc.queryForObject("SELECT session_id FROM orders WHERE order_id=?", UUID.class, orderId);
+        for (String tableId : orderScope.audience(sessionId)) publish(type, entityId, tableId, payload);
     }
 
     public long publish(String type, String entityId, String tableId, Map<String, Object> payload) {

@@ -8,6 +8,7 @@ interface CartLineProps {
   /** Line total: unit price including options, times quantity. */
   lineTotal: number
   quantity: number
+  maxQuantity?: number
   imageUrl?: string
   onQuantityChange: (next: number) => void
 }
@@ -17,6 +18,7 @@ export function CartLine({
   options,
   lineTotal,
   quantity,
+  maxQuantity,
   imageUrl,
   onQuantityChange,
 }: CartLineProps) {
@@ -40,6 +42,7 @@ export function CartLine({
             value={quantity}
             onChange={onQuantityChange}
             min={0}
+            max={maxQuantity}
             ariaLabel={`${name} 수량`}
           />
         </div>

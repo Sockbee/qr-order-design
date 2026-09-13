@@ -1,0 +1,8 @@
+ table_id |              session_id              | status | payment_status | final_amount | display_code | total_amount | order_payment | quantity | line_total
+----------+--------------------------------------+--------+----------------+--------------+--------------+--------------+---------------+----------+------------
+ T16      | 1c47a1e1-d394-48b2-a48c-ae9d1e850492 | CLOSED | PAID           |        10000 | A-1065       |        10000 | PAID          |        1 |      10000
+ T16      | adf3f5fb-52dd-4d6d-9e47-d0e0aae0a3e1 | CLOSED | PAID           |        10000 | A-1066       |        30000 | PAID          |        3 |      30000
+(2 rows)
+
+DROP TRIGGER
+DROP FUNCTION

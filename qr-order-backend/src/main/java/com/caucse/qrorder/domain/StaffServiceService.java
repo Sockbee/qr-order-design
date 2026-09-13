@@ -53,7 +53,7 @@ public class StaffServiceService {
         if (discountRate < 0 || discountRate > 100) {
             throw new IllegalStateException("STAFF_DISCOUNT_RATE must be between 0 and 100");
         }
-        return customerOrders.createService(body, member.id(), member.name(), discountRate, staff.deviceLabel());
+        return customerOrders.createService(body, member.id(), discountRate, staff.deviceLabel());
     }
 
     public Map<String, Object> listSettlements(boolean includeSettled) {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiClientError } from '../api/client'
 import { hasStaffApi, isStaffAuthError } from '../api/staff/client'
 import {
@@ -41,7 +41,11 @@ interface StaffStationsState {
   completeAll: (orderId: string) => void
   serveReady: (orderId: string) => void
   togglePreparation: (orderId: string, itemId: string, ready: boolean) => void
-  confirmPayment: (tableId: string, expectedFinalAmount: number) => void
+  confirmPayment: (
+    tableId: string,
+    sessionId: string,
+    expectedFinalAmount: number,
+  ) => void
 }
 
 function toApiError(caught: unknown): ApiClientError {
@@ -75,6 +79,7 @@ export function useStaffStations(): StaffStationsState {
   const [resolved, setResolved] = useState<string[]>([])
   const [itemOverrides, setItemOverrides] = useState<Record<string, boolean>>({})
   const [cookingOverrides, setCookingOverrides] = useState<string[]>([])
+  const paymentRequestIds = useRef(new Map<string, string>())
 
   useEffect(() => {
     if (!configured) return
@@ -213,15 +218,25 @@ export function useStaffStations(): StaffStationsState {
   )
 
   const confirmPayment = useCallback(
-    (tableId: string, expectedFinalAmount: number) => {
+    (tableId: string, sessionId: string, expectedFinalAmount: number) => {
       const resolve = () => setResolved((current) => [...current, `payment:${tableId}`])
       if (!configured) {
         resolve()
         return
       }
+      const clientRequestId = paymentRequestIds.current.get(sessionId) ?? crypto.randomUUID()
+      paymentRequestIds.current.set(sessionId, clientRequestId)
       setBusyId(tableId)
-      void confirmTablePayment(tableId, expectedFinalAmount)
-        .then(resolve)
+      void confirmTablePayment(
+        tableId,
+        sessionId,
+        clientRequestId,
+        expectedFinalAmount,
+      )
+        .then(() => {
+          paymentRequestIds.current.delete(sessionId)
+          resolve()
+        })
         .catch((caught: unknown) => setError(toApiError(caught)))
         .finally(() => setBusyId(null))
     },

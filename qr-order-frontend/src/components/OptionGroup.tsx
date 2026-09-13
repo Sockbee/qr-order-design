@@ -44,7 +44,10 @@ export function OptionGroup({
               selected={selected}
               // Max-reached greys out the remaining unselected rows
               // (UX-STRUCTURE §5.3).
-              disabled={option.soldOut || (maxReached && !selected)}
+              disabled={Boolean(option.soldOut) || (
+                type === 'check' && maxReached && !selected
+              )}
+              soldOut={Boolean(option.soldOut)}
               onSelect={() => onToggle(option.id)}
             />
           )

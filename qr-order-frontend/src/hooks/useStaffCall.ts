@@ -39,6 +39,8 @@ function newRequestId(): string {
  */
 export function useStaffCall(
   credentials: TableCredentials | null,
+  activeCallSnapshot: ActiveCall | null | undefined = undefined,
+  snapshotRevision = 0,
 ): StaffCallState {
   const storageKey = credentials
     ? sessionScopedKey(credentials.tableToken, 'active-call')
@@ -48,13 +50,38 @@ export function useStaffCall(
   )
   const [phase, setPhase] = useState<StaffCallPhase>(activeCall ? 'called' : 'idle')
   const [error, setError] = useState<StaffCallError | null>(null)
+  const activeCallStorageKey = useRef(storageKey)
   /** Reused across retries so a timed-out call is not raised twice. */
   const requestIdRef = useRef<string>(newRequestId())
 
   useEffect(() => {
-    if (!storageKey) return
+    if (!storageKey || activeCallStorageKey.current !== storageKey) return
     writeStored(storageKey, activeCall)
   }, [activeCall, storageKey])
+
+  useEffect(() => {
+    if (activeCallStorageKey.current === storageKey) return
+    activeCallStorageKey.current = storageKey
+    const restored = storageKey
+      ? readStored<ActiveCall | null>(storageKey, null)
+      : null
+    const timer = window.setTimeout(() => {
+      setActiveCall(restored)
+      setPhase(restored ? 'called' : 'idle')
+      setError(null)
+      requestIdRef.current = newRequestId()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [storageKey])
+
+  useEffect(() => {
+    if (activeCallSnapshot === undefined) return
+    const timer = window.setTimeout(() => {
+      setActiveCall(activeCallSnapshot)
+      setPhase(activeCallSnapshot ? 'called' : 'idle')
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [activeCallSnapshot, snapshotRevision])
 
   const call = useCallback(
     (reason: CallReason) => {

@@ -1,0 +1,19 @@
+Starting a Gradle Daemon (subsequent builds will be faster)
+Calculating task graph as no cached configuration is available for tasks: test bootJar
+> Task :processTestResources NO-SOURCE
+> Task :processResources UP-TO-DATE
+> Task :compileJava UP-TO-DATE
+> Task :classes UP-TO-DATE
+> Task :compileTestJava UP-TO-DATE
+> Task :testClasses UP-TO-DATE
+> Task :resolveMainClassName
+> Task :bootJar
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+{"@timestamp":"2026-09-13T14:25:31.070408Z","log":{"level":"INFO","logger":"org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"},"process":{"pid":32816,"thread":{"name":"SpringApplicationShutdownHook"}},"service":{"name":"qr-order-backend","node":{}},"message":"Closing JPA EntityManagerFactory for persistence unit 'default'","tags":["COMMONS-LOGGING"],"ecs":{"version":"8.11"}}
+{"@timestamp":"2026-09-13T14:25:31.073592Z","log":{"level":"INFO","logger":"com.zaxxer.hikari.HikariDataSource"},"process":{"pid":32816,"thread":{"name":"SpringApplicationShutdownHook"}},"service":{"name":"qr-order-backend","node":{}},"message":"HikariPool-1 - Shutdown initiated...","ecs":{"version":"8.11"}}
+{"@timestamp":"2026-09-13T14:25:31.075702Z","log":{"level":"INFO","logger":"com.zaxxer.hikari.HikariDataSource"},"process":{"pid":32816,"thread":{"name":"SpringApplicationShutdownHook"}},"service":{"name":"qr-order-backend","node":{}},"message":"HikariPool-1 - Shutdown completed.","ecs":{"version":"8.11"}}
+> Task :test
+
+BUILD SUCCESSFUL in 12s
+6 actionable tasks: 3 executed, 3 up-to-date
+Configuration cache entry stored.
