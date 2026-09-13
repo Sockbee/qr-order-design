@@ -28,6 +28,8 @@ public final class OpenApiRequests {
                     requiredMode = Schema.RequiredMode.REQUIRED) String tableToken,
             @Schema(format = "uuid", example = "d15dbcd6-c262-4d6f-a962-832f2a8d49e0",
                     requiredMode = Schema.RequiredMode.REQUIRED) String clientRequestId,
+            @Schema(example = "20000", minimum = "0", requiredMode = Schema.RequiredMode.REQUIRED)
+            int expectedTotalAmount,
             @Schema(example = "덜 맵게 부탁드립니다", maxLength = 200) String note,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<CustomerOrderItem> items) {}
 
@@ -97,6 +99,10 @@ public final class OpenApiRequests {
     @Schema(name = "PaymentConfirmRequest")
     public record PaymentConfirm(
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
+            @Schema(format = "uuid", example = "2bc315f8-01f6-47d7-a7e8-e1882df6544c",
+                    requiredMode = Schema.RequiredMode.REQUIRED) String expectedSessionId,
+            @Schema(format = "uuid", example = "d15dbcd6-c262-4d6f-a962-832f2a8d49e0",
+                    requiredMode = Schema.RequiredMode.REQUIRED) String clientRequestId,
             @Schema(example = "27000", minimum = "0", requiredMode = Schema.RequiredMode.REQUIRED)
             int expectedFinalAmount) {}
 
@@ -136,6 +142,8 @@ public final class OpenApiRequests {
     @Schema(name = "StaffServiceOrderCreateRequest")
     public record StaffServiceOrderCreate(
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
+            @Schema(format = "uuid", example = "d15dbcd6-c262-4d6f-a962-832f2a8d49e0",
+                    requiredMode = Schema.RequiredMode.REQUIRED) String clientRequestId,
             @Schema(example = "S-014", requiredMode = Schema.RequiredMode.REQUIRED) String chargedStaffId,
             @Schema(example = "오래 기다리셨습니다. 맛있게 드세요!", maxLength = 100) String serviceMessage,
             @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<StaffServiceOrderItem> items) {}
