@@ -31,7 +31,7 @@
 6. Secret 값과 DB 사용자 등록
 7. Cloud Build 서비스 계정 권한 설정
 8. 첫 백엔드 이미지 빌드 및 최종 Terraform 적용
-9. API 검증, 테이블 import, Netlify 연결
+9. API 검증, 테이블 import, Firebase Hosting 연결
 
 ## 1. Google Cloud 프로젝트와 결제 준비
 
@@ -206,8 +206,8 @@ region              = "asia-northeast3"
 environment         = "staging"
 container_image     = "us-docker.pkg.dev/cloudrun/container/hello:latest"
 bootstrap_mode      = true
-allowed_origins     = "https://deploy-preview-1--your-site.netlify.app"
-frontend_base_url   = "https://deploy-preview-1--your-site.netlify.app"
+allowed_origins     = "https://your-firebase-project-id.web.app"
+frontend_base_url   = "https://your-firebase-project-id.web.app"
 deletion_protection = false
 ```
 
@@ -217,7 +217,7 @@ deletion_protection = false
 - `environment`: 첫 배포에서는 `staging`
 - `container_image`: 첫 적용에서만 Google 공개 hello 이미지 사용
 - `bootstrap_mode`: Secret 버전이 아직 없으므로 첫 적용에서만 `true`
-- `allowed_origins`: API 호출을 허용할 Netlify origin. 여러 개면 쉼표로 구분
+- `allowed_origins`: API 호출을 허용할 프런트엔드 origin. 여러 개면 쉼표로 구분
 - `frontend_base_url`: QR URL을 만들 때 사용할 프런트엔드 주소
 - `deletion_protection`: staging은 삭제할 수 있게 `false`, 운영은 `true`
 
@@ -699,9 +699,11 @@ unset STAFF_TOKEN
 마이그레이션과 기존 QR 검증이 모두 끝나면 `.local-data/Tables.csv`는 암호화된 운영
 백업 위치로 옮기거나 로컬에서 안전하게 삭제합니다.
 
-## 12. Netlify 프런트엔드 연결
+## 12. Firebase Hosting 프런트엔드 연결
 
-Netlify의 staging 사이트 설정에서 환경 변수를 다음처럼 지정하고 다시 배포합니다.
+프런트엔드 빌드 환경에서 환경 변수를 다음처럼 지정합니다. Cloud Build에서는
+`_FRONTEND_API_BASE_URL`로 전달합니다. 빌드 후 루트 `firebase.json`에 설정된
+`qr-order-frontend/dist`를 Firebase Hosting에 배포합니다.
 
 ```text
 VITE_API_BASE_URL=https://Cloud-Run에서-받은-주소
@@ -713,7 +715,7 @@ Cloud Run URL은 다음 명령으로 다시 확인할 수 있습니다.
 terraform -chdir=/Users/samso/Desktop/qr-order-design/infra output -raw cloud_run_url
 ```
 
-Netlify 주소가 `allowed_origins`와 정확히 일치해야 합니다. preview URL을 추가하거나
+Firebase Hosting 주소 또는 실제 사용자 지정 도메인이 `allowed_origins`와 정확히 일치해야 합니다. preview URL을 추가하거나
 주소가 바뀌면 `infra/terraform.tfvars`의 `allowed_origins`를 고치고 Terraform을 다시
 적용합니다.
 

@@ -9,9 +9,7 @@ import type {
 
 /**
  * A02 needs one table's bill *and* its order lines, notes and pending call.
- * apps-script-api-design.md has `tables/bill` (§4.12) for the money only, so
- * `tables/detail` is specified here from what the panel draws (89:8); the
- * server returns that screen-shaped snapshot without exposing Sheet fields.
+ * The staff `tables/detail` endpoint returns that snapshot in one response.
  */
 export interface StaffTableDetailResponse {
   mergeMembers?: Array<{ tableId: string; amount: number; orderCount: number }>

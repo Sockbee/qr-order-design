@@ -60,8 +60,8 @@ export interface StaffTableSummary {
 }
 
 /**
- * A table's unacknowledged calls, merged into one row (apps-script-api-design
- * §4.10). Never the raw rows: staff/CallRow (106:124) merges by table, dates
+ * A table's unacknowledged calls, merged into one row.
+ * staff/CallRow (106:124) merges by table, dates
  * the group from its oldest call, and concatenates the reasons.
  */
 export interface StaffCallGroup {

@@ -5,15 +5,20 @@ React + TypeScript + Vite 프론트엔드입니다.
 
 ## 환경 변수
 
-`.env.example`을 참고해 로컬 `.env.local` 또는 Netlify 환경 변수에 다음 값을
-설정합니다.
+`.env.example`을 참고해 로컬 `.env.local` 또는 빌드 환경 변수에 다음 값을
+설정합니다. Cloud Build에서는 `_FRONTEND_API_BASE_URL`로 전달합니다.
 
 ```text
 VITE_API_BASE_URL=https://qr-order-staging-PROJECT_NUMBER.asia-northeast3.run.app
 ```
 
-실제 배포 URL과 테이블 token은 Git에 커밋하지 않습니다. Netlify 환경 변수를 변경하면
-Vite bundle을 다시 만들도록 새 배포를 실행해야 합니다.
+실제 배포 URL과 테이블 token은 Git에 커밋하지 않습니다. API 환경 변수를 변경하면
+Vite bundle을 다시 빌드한 뒤 Firebase Hosting에 배포해야 합니다.
+루트 `firebase.json`의 배포 대상은 `qr-order-frontend/dist`입니다.
+
+사용 종료한 `apps-script/`, `netlify.toml`, `.netlify/`는 Git 추적과 Cloud Build
+소스 업로드에서 제외합니다. 로컬에 남아 있어도 현재 앱의 빌드에는 사용하지 않습니다.
+과거 Apps Script 설계 및 PR 문서는 이력 참고용이며 현재 실행 의존성이 아닙니다.
 
 Cloud Run이 운영 도메인만 CORS 허용하는 상태에서 로컬 프론트를 실제 API에 연결하려면
 `.env.development.local`에 다음처럼 설정합니다. 개발 서버가 요청을 Cloud Run으로

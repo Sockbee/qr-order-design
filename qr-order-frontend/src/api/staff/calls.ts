@@ -2,7 +2,7 @@ import { callStaffApi } from './client'
 import type { CallReason } from '../../types/call'
 import type { StaffCallGroup } from '../../types/staff'
 
-/** apps-script-api-design.md §4.10 — merged, never the raw Calls rows. */
+/** Pending calls grouped by table by the staff API. */
 export interface StaffCallGroupResponse {
   tableId: string
   displayName: string
