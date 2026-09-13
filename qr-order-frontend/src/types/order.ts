@@ -23,6 +23,7 @@ export type OrderStatus =
 export type OrderKind = 'GUEST' | 'SERVICE'
 
 export interface PlacedOrder {
+  originTableId?: string
   /** Server UUID when this order came from the API. */
   id?: string
   /** Absent on locally-placed orders, which are always GUEST. */

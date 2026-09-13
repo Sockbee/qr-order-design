@@ -370,6 +370,7 @@ function OrderStatusRoute({
    */
   return (
     <OrderStatusPage
+      groupTableIds={remote.data?.groupTableIds}
       orders={orders}
       latestPublicStatus={remote.data?.latestPublicStatus}
       sessionTotalAmount={remote.data?.sessionTotalAmount}

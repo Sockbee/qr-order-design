@@ -18,6 +18,7 @@ export function StaffOrderItem({ item }: { item: OrderItem }) {
     >
       <div className="order-item__line">
         <div className="order-item__info">
+          {item.originTableId && <span className="order-item__option">{item.originTableId}에서 접수</span>}
           <span className="order-item__name">{item.name}</span>
           <span className="order-item__option">{item.optionSummary}</span>
           {item.cancelled && (

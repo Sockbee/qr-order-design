@@ -68,7 +68,7 @@ export function useOrderPolling(
       controller = requestController
       try {
         const next = await listOrders(credentials, requestController.signal)
-        if (disposed) return
+        if (disposed || requestController.signal.aborted) return
         failureCount = 0
         setData(next)
         setLastError(null)

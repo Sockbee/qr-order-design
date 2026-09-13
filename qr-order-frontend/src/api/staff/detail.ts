@@ -14,6 +14,7 @@ import type {
  * server returns that screen-shaped snapshot without exposing Sheet fields.
  */
 export interface StaffTableDetailResponse {
+  mergeMembers?: Array<{ tableId: string; amount: number; orderCount: number }>
   sessionId: string | null
   tableId: string
   displayName: string
@@ -29,6 +30,7 @@ export interface StaffTableDetailResponse {
   paymentStatus: 'UNPAID' | 'PAID' | null
   orderCount: number
   items: Array<{
+    tableId?: string
     itemId: string
     name: string
     selectedOptions: string[]
@@ -105,6 +107,7 @@ export function mapStaffTableDetail(
     orderCount: response.orderCount,
     items: response.items.map((item) => ({
       itemId: item.itemId,
+      originTableId: response.mergedTableIds.length > 0 ? item.tableId : undefined,
       name: item.name,
       // A02 draws an em dash rather than an empty row when there is no option.
       optionSummary:
@@ -130,6 +133,7 @@ export function mapStaffTableDetail(
           callIds: response.call.callIds,
         }
       : null,
+    mergeMembers: response.mergeMembers ?? [],
     mergeLabel:
       response.mergedTableIds.length > 0 && response.originTableId
         ? `${[response.originTableId, ...response.mergedTableIds].join('+')} 합석`
