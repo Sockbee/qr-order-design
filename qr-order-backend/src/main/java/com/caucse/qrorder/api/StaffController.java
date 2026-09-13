@@ -32,11 +32,13 @@ public class StaffController {
     private final StaffOperationsService service;
     private final StaffServiceService staffService;
     private final SseHub sse;
+    private final com.caucse.qrorder.domain.MenuSalesService menuSales;
 
-    public StaffController(StaffOperationsService service, StaffServiceService staffService, SseHub sse) {
+    public StaffController(StaffOperationsService service, StaffServiceService staffService, SseHub sse, com.caucse.qrorder.domain.MenuSalesService menuSales) {
         this.service = service;
         this.staffService = staffService;
         this.sse = sse;
+        this.menuSales = menuSales;
     }
 
     @PostMapping("/members/list")
@@ -109,7 +111,7 @@ public class StaffController {
                 required(body, "expectedSessionId"),
                 required(body, "clientRequestId"),
                 number(body, "expectedFinalAmount"),
-                staff));
+                staff, required(body, "payerName")));
     }
     @Operation(summary = "주문 상태 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.OrderStatus.class))))
@@ -145,6 +147,14 @@ public class StaffController {
     @PostMapping("/orders/cancel") ApiEnvelope<Void> cancel(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.cancelOrders(required(body, "tableId"), staff));
     }
+    @PostMapping("/sales/menu")
+    @Operation(summary = "메뉴별 판매 통계", description = "주문일 기준. 일반·학생회비 납부자·서비스별 할인 반영 금액을 조회합니다.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
+                    content = @Content(schema = @Schema(implementation = OpenApiRequests.MenuSales.class))))
+    ApiEnvelope<Map<String, Object>> menuSales(@RequestBody Map<String, Object> body) {
+        return ApiEnvelope.ok(menuSales.report(required(body, "startDate"), required(body, "endDate")));
+    }
+
     @PostMapping("/menu/list")
     @Operation(summary = "운영 메뉴 목록 조회")
     ApiEnvelope<Map<String, Object>> menu() { return ApiEnvelope.ok(service.menu()); }

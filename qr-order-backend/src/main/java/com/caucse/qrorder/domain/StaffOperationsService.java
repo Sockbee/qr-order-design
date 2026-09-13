@@ -354,18 +354,22 @@ public class StaffOperationsService {
 
     @Transactional
     public Void confirmPayment(String tableId, String expectedSessionIdValue,
-                               String clientRequestIdValue, int expected, StaffPrincipal staff) {
+                               String clientRequestIdValue, int expected, StaffPrincipal staff, String payerName) {
+        if (payerName == null || payerName.strip().isEmpty() || payerName.strip().length() > 100) {
+            throw ApiException.invalid("입금자명을 1~100자로 입력해 주세요.");
+        }
+        payerName = payerName.strip();
         UUID expectedSessionId = uuid(expectedSessionIdValue);
         UUID clientRequestId = uuid(clientRequestIdValue);
         jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", Object.class,
                 clientRequestId.toString());
         Map<String, Object> prior = jdbc.query("""
-                SELECT session_id,final_amount FROM table_sessions WHERE payment_request_id=?
+                SELECT session_id,final_amount,payer_name FROM table_sessions WHERE payment_request_id=?
                 """, rs -> rs.next() ? ApiEnvelope.map(
                 "sessionId", rs.getObject("session_id", UUID.class),
-                "finalAmount", rs.getInt("final_amount")) : null, clientRequestId);
+                "finalAmount", rs.getInt("final_amount"), "payerName", rs.getString("payer_name")) : null, clientRequestId);
         if (prior != null) {
-            if (!expectedSessionId.equals(prior.get("sessionId")) || expected != (Integer) prior.get("finalAmount")) {
+            if (!expectedSessionId.equals(prior.get("sessionId")) || expected != (Integer) prior.get("finalAmount") || !payerName.equals(prior.get("payerName"))) {
                 throw ApiException.conflict("IDEMPOTENCY_CONFLICT", "동일 요청 ID에 다른 결제 정보가 사용되었습니다.");
             }
             return null;
@@ -382,14 +386,15 @@ public class StaffOperationsService {
         List<String> audience = orderScope.audience(bill.primarySessionId());
         jdbc.update("""
                 UPDATE table_sessions SET payment_status='PAID',subtotal_amount=?,discount_amount=?,final_amount=?,
-                  paid_at=now(),closed_at=now(),status='CLOSED',close_reason='PAYMENT',updated_at=now()
+                  paid_at=now(),closed_at=now(),status='CLOSED',close_reason='PAYMENT',updated_at=now(),
+                  payer_name=?,payment_confirmed_by=?
                 WHERE session_id = ANY(?::uuid[])
-                """, bill.subtotal(), bill.discountAmount(), bill.finalAmount(), (Object) uuidArray(bill.sessionIds()));
+                """, bill.subtotal(), bill.discountAmount(), bill.finalAmount(), payerName, staff.deviceLabel(), (Object) uuidArray(bill.sessionIds()));
         jdbc.update("""
-                UPDATE orders SET payment_status='PAID',paid_at=now(),updated_at=now()
-                WHERE session_id = ANY(?::uuid[]) AND order_kind='GUEST'
+                UPDATE orders SET payment_status='PAID',paid_at=now(),updated_at=now(),paid_discount_rate=?
+                WHERE session_id = ANY(?::uuid[]) AND order_kind='GUEST' AND status<>'CANCELLED'
                 """,
-                (Object) uuidArray(bill.sessionIds()));
+                bill.discountRate(), (Object) uuidArray(bill.sessionIds()));
         jdbc.update("UPDATE table_sessions SET payment_request_id=? WHERE session_id=?",
                 clientRequestId, bill.primarySessionId());
         audit(staff, "PAYMENT_CONFIRMED", "TABLE_SESSION", bill.primarySessionId().toString(), "UNPAID", String.valueOf(expected));
@@ -399,14 +404,14 @@ public class StaffOperationsService {
 
     /** Internal convenience for trusted callers; HTTP clients must provide both guards. */
     @Transactional
-    public Void confirmPayment(String tableId, int expected, StaffPrincipal staff) {
+    public Void confirmPayment(String tableId, int expected, StaffPrincipal staff, String payerName) {
         Bill bill = requireBill(tableId);
         return confirmPayment(
                 tableId,
                 bill.primarySessionId().toString(),
                 UUID.randomUUID().toString(),
                 expected,
-                staff);
+                staff, payerName);
     }
 
     @Transactional
@@ -517,6 +522,7 @@ public class StaffOperationsService {
         String timeZone = setting("TIME_ZONE");
         payment.addAll(jdbc.query("""
                 SELECT s.session_id,s.table_id,s.subtotal_amount,s.discount_rate,s.discount_amount,s.final_amount,
+                       s.payer_name,s.payment_confirmed_by,s.paid_at,
                        COALESCE((
                          SELECT max(o.status_updated_at)
                          FROM orders o JOIN table_sessions member ON member.session_id=o.session_id
@@ -534,7 +540,8 @@ public class StaffOperationsService {
                 "discountRate", rs.getInt("discount_rate"),
                 "discountAmount", rs.getInt("discount_amount"),
                 "finalAmount", rs.getInt("final_amount"),
-                "paymentStatus", "PAID",
+                "paymentStatus", "PAID", "payerName", rs.getString("payer_name"),
+                "paymentConfirmedBy", rs.getString("payment_confirmed_by"), "paidAt", instant(rs, "paid_at"),
                 "servedAt", instant(rs, "served_at")), timeZone, timeZone));
         return ApiEnvelope.map("kitchen", kitchen, "serving", serving, "payment", payment, "counts", stationCounts());
     }
