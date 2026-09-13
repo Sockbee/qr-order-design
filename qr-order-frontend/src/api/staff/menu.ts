@@ -2,10 +2,7 @@ import { callStaffApi } from './client'
 import type { MenuCategory, MenuItemSummary } from '../../types/menu'
 
 /**
- * The staff menu list and the sold-out switch. Neither action exists in
- * apps-script-api-design.md yet — the customer's `POST /menu` (§4.3) is
- * table-token scoped and read-only, so the staff deployment needs its own.
- * See the PR document.
+ * The staff menu list and sold-out switch use authenticated staff endpoints.
  */
 export interface StaffMenuResponse {
   categories: Array<{ id: string; label: string; heading?: string }>

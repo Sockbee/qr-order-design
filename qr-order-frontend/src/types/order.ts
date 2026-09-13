@@ -17,8 +17,7 @@ export type OrderStatus =
  */
 /**
  * A round the staff comped. The diner is billed 0 for it; a staff member
- * carries the cost, which is not the diner's business and is never sent here
- * (apps-script-api-design §4.6).
+ * carries the cost, which is not the diner's business and is never sent here.
  */
 export type OrderKind = 'GUEST' | 'SERVICE'
 

@@ -14,8 +14,7 @@ interface QueueItemResponse {
 }
 
 /**
- * B01–B03 queues. `orders/queue` is another action this frontend specifies
- * rather than finds in apps-script-api-design.md — see the PR document.
+ * B01–B03 queues from the staff `orders/queue` endpoint.
  *
  * All three stations come back in one response so the navigation rail can
  * show the same four counts on every screen without three extra polls.

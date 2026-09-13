@@ -1,8 +1,7 @@
 import { callStaffApi } from './client'
 
 /**
- * Table operations. Unlike `tables/list` and `tables/detail`, every action
- * here is already specified in apps-script-api-design.md §4.13–§4.17.
+ * Table operations through the Spring Boot staff API.
  */
 
 /**

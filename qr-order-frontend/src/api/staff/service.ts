@@ -6,11 +6,7 @@ import type {
 } from '../../types/staff'
 
 /**
- * Service grants and staff settlement — apps-script-api-design §4.20–§4.22.
- *
- * Unlike `menu/list` and `orders/queue`, every action here is specified in
- * that document, so the transport names below are the contract rather than
- * this frontend's invention.
+ * Service grants and staff settlement through the Spring Boot staff API.
  */
 
 /** Settings `STAFF_DISCOUNT_RATE`. Mirrored locally for the mock path only. */
