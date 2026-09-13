@@ -96,6 +96,11 @@ public final class OpenApiRequests {
             @Schema(format = "uuid", example = "2bc315f8-01f6-47d7-a7e8-e1882df6544c",
                     requiredMode = Schema.RequiredMode.REQUIRED) String expectedSessionId) {}
 
+    @Schema(name = "MenuSalesRequest")
+    public record MenuSales(
+            @Schema(example = "2026-09-14", requiredMode = Schema.RequiredMode.REQUIRED) String startDate,
+            @Schema(example = "2026-09-14", requiredMode = Schema.RequiredMode.REQUIRED) String endDate) {}
+
     @Schema(name = "PaymentConfirmRequest")
     public record PaymentConfirm(
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
@@ -104,7 +109,8 @@ public final class OpenApiRequests {
             @Schema(format = "uuid", example = "d15dbcd6-c262-4d6f-a962-832f2a8d49e0",
                     requiredMode = Schema.RequiredMode.REQUIRED) String clientRequestId,
             @Schema(example = "27000", minimum = "0", requiredMode = Schema.RequiredMode.REQUIRED)
-            int expectedFinalAmount) {}
+            int expectedFinalAmount,
+            @Schema(example = "김민수", requiredMode = Schema.RequiredMode.REQUIRED) String payerName) {}
 
     @Schema(name = "OrderStatusRequest",
             description = "tableId와 orderId 중 정확히 하나와 변경할 status를 전달합니다.")

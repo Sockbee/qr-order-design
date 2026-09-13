@@ -67,6 +67,8 @@ class QrOrderApiIntegrationTest {
     @Autowired ObjectMapper mapper;
     @Autowired CustomerOrderService orders;
     @Autowired StaffOperationsService staffOperations;
+    @Autowired com.caucse.qrorder.domain.MenuSalesService sales;
+    @Autowired com.caucse.qrorder.domain.StaffServiceService services;
     @Autowired com.caucse.qrorder.sse.DomainEventService events;
 
     @BeforeEach
@@ -120,7 +122,7 @@ class QrOrderApiIntegrationTest {
                         path.getKey() + " request schema must declare named properties");
             }
         }
-        assertEquals(38, documentedRequestBodies);
+        assertEquals(39, documentedRequestBodies);
 
         mvc.perform(get("/v3/api-docs/customer"))
                 .andExpect(status().isOk())
@@ -293,7 +295,7 @@ class QrOrderApiIntegrationTest {
                 "note", ""), staff);
         staffOperations.merge("T01", "T02", staff);
         staffOperations.discount("T01", 20, staff);
-        assertThrows(ApiException.class, () -> staffOperations.confirmPayment("T01", 2_399, staff));
+        assertThrows(ApiException.class, () -> staffOperations.confirmPayment("T01", 2_399, staff, "테스트 입금자"));
         staffOperations.split("T01", staff);
         staffOperations.move("T01", "T03", staff);
 
@@ -302,7 +304,7 @@ class QrOrderApiIntegrationTest {
                 "SELECT count(*) FROM table_sessions WHERE origin_table_id='T01' AND status='OPEN'", Integer.class));
         assertEquals("T03", jdbc.queryForObject(
                 "SELECT table_id FROM table_sessions WHERE origin_table_id='T01' AND status='OPEN'", String.class));
-        staffOperations.confirmPayment("T03", 2_400, staff);
+        staffOperations.confirmPayment("T03", 2_400, staff, "테스트 입금자");
         assertEquals("CLOSED", jdbc.queryForObject(
                 "SELECT status FROM table_sessions WHERE origin_table_id='T01' ORDER BY opened_at DESC LIMIT 1", String.class));
     }
@@ -315,7 +317,7 @@ class QrOrderApiIntegrationTest {
         }
         StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
         Map<String, Object> old = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
-        staffOperations.confirmPayment("T01", 1500, staff);
+        staffOperations.confirmPayment("T01", 1500, staff, "테스트 입금자");
         Map<String, Object> a = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
         Map<String, Object> b = orders.create(customerOrder("T02", "2".repeat(64), "cider"), false);
         orders.create(customerOrder("T03", "3".repeat(64), "cola"), false);
@@ -350,7 +352,7 @@ class QrOrderApiIntegrationTest {
         assertEquals(List.of("T02"), jdbc.queryForList(
                 "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
                 String.class, after.get("orderId").toString()));
-        staffOperations.confirmPayment("T02", 4500, staff);
+        staffOperations.confirmPayment("T02", 4500, staff, "테스트 입금자");
         assertEquals(List.of(), orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("orders"));
         assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
     }
@@ -400,7 +402,7 @@ class QrOrderApiIntegrationTest {
         assertEquals(List.of("T03"), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("groupTableIds"));
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM domain_events WHERE table_id='T01' AND payload->>'operation'='split'", Integer.class));
         assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", added.get("orderId"))));
-        staffOperations.confirmPayment("T03", 1500, staff);
+        staffOperations.confirmPayment("T03", 1500, staff, "테스트 입금자");
         assertEquals(List.of(), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("orders"));
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM domain_events WHERE table_id='T01' AND event_type='payment.confirmed'", Integer.class));
     }
@@ -409,7 +411,7 @@ class QrOrderApiIntegrationTest {
     void customerOrderListShowsOnlyTheCurrentOpenVisit() {
         StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
         Map<String, Object> first = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
-        staffOperations.confirmPayment("T01", 1500, staff);
+        staffOperations.confirmPayment("T01", 1500, staff, "테스트 입금자");
 
         Map<String, Object> afterPayment = orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN));
         assertEquals(List.of(), afterPayment.get("orders"));
@@ -684,7 +686,7 @@ class QrOrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.subtotalAmount", is(1500)))
                 .andExpect(jsonPath("$.data.serviceGrossAmount", is(0)));
         staffOperations.confirmPayment("T01", 1500,
-                new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1));
+                new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1), "테스트 입금자");
         assertEquals("WAIVED", jdbc.queryForObject(
                 "SELECT payment_status FROM orders WHERE order_id=?::uuid", String.class, serviceOrderId));
         assertEquals(1, jdbc.queryForObject(
@@ -775,16 +777,16 @@ class QrOrderApiIntegrationTest {
         orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
         String firstSessionId = String.valueOf(staffOperations.tableDetail("T01").get("sessionId"));
         String paymentRequestId = UUID.randomUUID().toString();
-        staffOperations.confirmPayment("T01", firstSessionId, paymentRequestId, 1500, staff);
+        staffOperations.confirmPayment("T01", firstSessionId, paymentRequestId, 1500, staff, "테스트 입금자");
 
         orders.create(customerOrder("T01", TABLE_TOKEN, "cider"), false);
         String secondSessionId = String.valueOf(staffOperations.tableDetail("T01").get("sessionId"));
-        staffOperations.confirmPayment("T01", firstSessionId, paymentRequestId, 1500, staff);
+        staffOperations.confirmPayment("T01", firstSessionId, paymentRequestId, 1500, staff, "테스트 입금자");
         assertEquals("OPEN", jdbc.queryForObject(
                 "SELECT status FROM table_sessions WHERE session_id=?::uuid", String.class, secondSessionId));
 
         ApiException stale = assertThrows(ApiException.class, () -> staffOperations.confirmPayment(
-                "T01", firstSessionId, UUID.randomUUID().toString(), 1500, staff));
+                "T01", firstSessionId, UUID.randomUUID().toString(), 1500, staff, "테스트 입금자"));
         assertEquals("TABLE_SESSION_CHANGED", stale.code());
 
         @SuppressWarnings("unchecked")
@@ -820,7 +822,7 @@ class QrOrderApiIntegrationTest {
                     Map.of("operation", "quantity", "itemId", itemId.toString(), "quantity", 3), staff));
             Thread.sleep(150);
             ApiException changed = assertThrows(ApiException.class, () -> staffOperations.confirmPayment(
-                    "T01", sessionId, UUID.randomUUID().toString(), 1500, staff));
+                    "T01", sessionId, UUID.randomUUID().toString(), 1500, staff, "테스트 입금자"));
             assertEquals("BILL_AMOUNT_CHANGED", changed.code());
             edit.get();
             assertEquals(4500, jdbc.queryForObject("SELECT total_amount FROM orders", Integer.class));
@@ -831,6 +833,102 @@ class QrOrderApiIntegrationTest {
             jdbc.execute("DROP TRIGGER IF EXISTS qa_delay_item_update_trigger ON order_items");
             jdbc.execute("DROP FUNCTION IF EXISTS qa_delay_item_update()");
         }
+    }
+
+    @Test
+    void salesReclassifyOnlyAfterPaymentAndPersistPayerAtomically() throws Exception {
+        StaffPrincipal staff = new StaffPrincipal("결제", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        services.createServiceOrder(Map.of("tableId", "T01", "clientRequestId", UUID.randomUUID().toString(),
+                "chargedStaffId", "S-001", "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()))), staff);
+        staffOperations.discount("T01", 20, staff);
+        assertEquals(3000L, salesAmount("GENERAL"));
+        assertEquals(1200L, salesAmount("SERVICE"));
+        assertEquals(0L, salesAmount("MEMBER"));
+        String session = staffOperations.tableDetail("T01").get("sessionId").toString();
+        String request = UUID.randomUUID().toString();
+        assertThrows(ApiException.class, () -> staffOperations.confirmPayment("T01", session, request, 2400, staff, "  "));
+        assertEquals("UNPAID", jdbc.queryForObject("SELECT payment_status FROM table_sessions WHERE session_id=?::uuid", String.class, session));
+        staffOperations.confirmPayment("T01", session, request, 2400, staff, " 김민수 ");
+        staffOperations.confirmPayment("T01", session, request, 2400, staff, "김민수");
+        assertEquals(0L, salesAmount("GENERAL"));
+        assertEquals(2400L, salesAmount("MEMBER"));
+        assertEquals(1200L, salesAmount("SERVICE"));
+        assertEquals(3L, salesRows().stream().mapToLong(r -> ((Number) r.get("quantity")).longValue()).sum());
+        assertEquals("김민수", jdbc.queryForObject("SELECT payer_name FROM table_sessions WHERE session_id=?::uuid", String.class, session));
+        assertEquals("결제", jdbc.queryForObject("SELECT payment_confirmed_by FROM table_sessions WHERE session_id=?::uuid", String.class, session));
+        assertEquals("IDEMPOTENCY_CONFLICT", assertThrows(ApiException.class,
+                () -> staffOperations.confirmPayment("T01", session, request, 2400, staff, "다른 이름")).code());
+        var queue = (List<?>) staffOperations.queues().get("payment");
+        assertTrue(queue.stream().map(Map.class::cast).anyMatch(row -> "김민수".equals(row.get("payerName")) && row.get("paidAt") != null));
+        String token = staffToken();
+        String today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString();
+        mvc.perform(post("/api/v1/staff/sales/menu").header("Authorization", "Bearer " + token)
+                .contentType("application/json").content(mapper.writeValueAsString(Map.of("startDate", today, "endDate", today))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.rows.length()", is(2)));
+        mvc.perform(post("/api/v1/staff/sales/menu").contentType("application/json").content("{}"))
+                .andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/staff/tables/confirm-payment").header("Authorization", "Bearer " + token)
+                .contentType("application/json").content(mapper.writeValueAsString(Map.of("tableId", "T01", "expectedSessionId", session,
+                        "clientRequestId", request, "expectedFinalAmount", 2400))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void serviceSalesKeepEachOrdersDiscountRateAndExcludeCancellation() {
+        StaffPrincipal staff = new StaffPrincipal("결제", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        for (int rate : List.of(20, 50)) {
+            jdbc.update("UPDATE settings SET value=? WHERE key='STAFF_DISCOUNT_RATE'", String.valueOf(rate));
+            services.createServiceOrder(Map.of("tableId", "T01", "clientRequestId", UUID.randomUUID().toString(),
+                    "chargedStaffId", "S-001", "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()))), staff);
+        }
+        assertEquals(1950L, salesAmount("SERVICE"));
+        assertEquals(2, salesRows().size());
+        jdbc.update("UPDATE orders SET status='CANCELLED' WHERE staff_discount_rate=20");
+        assertEquals(750L, salesAmount("SERVICE"));
+        assertThrows(ApiException.class, () -> sales.report("invalid", "2026-09-14"));
+        assertThrows(ApiException.class, () -> sales.report("2026-09-14", "2026-09-13"));
+        assertThrows(ApiException.class, () -> sales.report("2020-01-01", "2026-09-14"));
+        assertEquals(0, ((List<?>) sales.report("2000-01-01", "2000-01-01").get("rows")).size());
+    }
+
+    @Test
+    void mergedBillSalesApplyPrimaryDiscountOnceWithConsistentWonRoundingAcrossDates() {
+        StaffPrincipal staff = new StaffPrincipal("결제", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        String token2 = "c".repeat(64);
+        jdbc.update("INSERT INTO tables(table_id,display_name,token_hash) VALUES('T02','테이블 2',?)",
+                StaffTokenService.sha256Hex(PEPPER + ":" + token2));
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        orders.create(customerOrder("T02", token2, "cider"), false);
+        jdbc.update("UPDATE order_items SET line_total=5003,unit_price_snapshot=5003,base_price_snapshot=5003");
+        jdbc.update("UPDATE orders SET total_amount=5003");
+        jdbc.update("UPDATE orders SET created_at='2026-09-13 14:59:00+00' WHERE table_id='T01'");
+        jdbc.update("UPDATE orders SET created_at='2026-09-13 15:01:00+00' WHERE table_id='T02'");
+        staffOperations.merge("T01", "T02", staff);
+        staffOperations.discount("T01", 20, staff);
+        assertEquals(10006L, sumSales(sales.report("2026-09-13", "2026-09-14")));
+        staffOperations.confirmPayment("T02", 8005, staff, "합석 손님");
+        assertEquals(8005L, sumSales(sales.report("2026-09-13", "2026-09-14")));
+        assertEquals(4003L, sumSales(sales.report("2026-09-13", "2026-09-13")));
+        assertEquals(4002L, sumSales(sales.report("2026-09-14", "2026-09-14")));
+        // The payment snapshot remains stable if the table discount setting changes later.
+        jdbc.update("UPDATE table_sessions SET discount_rate=0");
+        assertEquals(8005L, sumSales(sales.report("2026-09-13", "2026-09-14")));
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> salesRows() {
+        String today = java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString();
+        return (List<Map<String, Object>>) sales.report(today, today).get("rows");
+    }
+    private long salesAmount(String type) {
+        return salesRows().stream().filter(row -> type.equals(row.get("type")))
+                .mapToLong(row -> ((Number) row.get("amount")).longValue()).sum();
+    }
+    private long sumSales(Map<String, Object> report) {
+        return ((List<?>) report.get("rows")).stream().map(Map.class::cast)
+                .mapToLong(row -> ((Number) row.get("amount")).longValue()).sum();
     }
 
     private String staffToken() throws Exception {

@@ -171,6 +171,9 @@ export interface StaffStationOrder {
 
 /** One card in the payment queue (staff/PaymentOrderCard). */
 export interface StaffPaymentOrder {
+  payerName?: string | null
+  paymentConfirmedBy?: string | null
+  paidAt?: string | null
   sessionId: string
   tableId: string
   bill: StaffBill

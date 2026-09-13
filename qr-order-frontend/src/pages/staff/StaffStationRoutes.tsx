@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StaffStationPage } from './StaffStationPage'
+import { PaymentConfirmDialog } from '../../components/staff/PaymentConfirmDialog'
 import { PaymentOrderCard } from '../../components/staff/PaymentOrderCard'
 import { StationOrderCard } from '../../components/staff/StationOrderCard'
 import { useStaffStations } from '../../hooks/useStaffStations'
@@ -147,10 +148,13 @@ export function StaffServingRoute() {
 /** B03 — Payment (91:723). */
 export function StaffPaymentRoute() {
   const stations = useStations()
+  const [target, setTarget] = useState<{ tableId: string; sessionId: string; amount: number } | null>(null)
+  const openPayment = (tableId: string, sessionId: string, amount: number) => setTarget({ tableId, sessionId, amount })
   const pending = stations.payment.filter((row) => !row.bill.paid)
   const done = stations.payment.filter((row) => row.bill.paid)
 
   return (
+    <>
     <StaffStationPage
       title="결제"
       summary={
@@ -176,7 +180,7 @@ export function StaffPaymentRoute() {
               key={order.sessionId}
               order={order}
               busy={stations.busyId === order.tableId}
-              onConfirm={stations.confirmPayment}
+              onConfirm={openPayment}
             />
           )),
         },
@@ -189,11 +193,19 @@ export function StaffPaymentRoute() {
               key={order.sessionId}
               order={order}
               busy={false}
-              onConfirm={stations.confirmPayment}
+              onConfirm={openPayment}
             />
           )),
         },
       ]}
     />
+    {target && <PaymentConfirmDialog key={target.sessionId} tableId={target.tableId} amount={target.amount}
+      submitting={stations.busyId === target.tableId}
+      onCancel={() => { if (!stations.busyId) setTarget(null) }}
+      onConfirm={async (payerName) => {
+        await stations.confirmPayment(target.tableId, target.sessionId, target.amount, payerName)
+        setTarget(null)
+      }} />}
+    </>
   )
 }

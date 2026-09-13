@@ -21,6 +21,7 @@ import {
   StaffPaymentRoute,
   StaffServingRoute,
 } from './pages/staff/StaffStationRoutes'
+import { StaffSalesPage } from './pages/staff/StaffSalesPage'
 import { StaffAvailabilityRoute } from './pages/staff/StaffAvailabilityRoute'
 import { StaffTableHomePage } from './pages/staff/StaffTableHomePage'
 import { StaffSettingsPage } from './pages/staff/StaffSettingsPage'
@@ -201,6 +202,7 @@ function StaffApp() {
             </RequireStaffAuth>
           )}
         />
+        <Route path="/staff/sales" element={<RequireStaffAuth auth={auth}><StaffSalesPage /></RequireStaffAuth>} />
         <Route
           path="/staff/settings"
           element={(

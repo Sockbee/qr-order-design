@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiClientError } from '../api/client'
-import { hasStaffApi, isStaffAuthError } from '../api/staff/client'
+import { hasStaffApi, isStaffAuthError, readStaffSession } from '../api/staff/client'
 import {
   advanceStaffOrder,
   getStaffQueues,
@@ -45,7 +45,8 @@ interface StaffStationsState {
     tableId: string,
     sessionId: string,
     expectedFinalAmount: number,
-  ) => void
+    payerName: string,
+  ) => Promise<void>
 }
 
 function toApiError(caught: unknown): ApiClientError {
@@ -79,6 +80,7 @@ export function useStaffStations(): StaffStationsState {
   const [resolved, setResolved] = useState<string[]>([])
   const [itemOverrides, setItemOverrides] = useState<Record<string, boolean>>({})
   const [cookingOverrides, setCookingOverrides] = useState<string[]>([])
+  const [paymentRecords, setPaymentRecords] = useState<Record<string, { payerName: string; paymentConfirmedBy: string; paidAt: string }>>({})
   const paymentRequestIds = useRef(new Map<string, string>())
 
   useEffect(() => {
@@ -218,27 +220,24 @@ export function useStaffStations(): StaffStationsState {
   )
 
   const confirmPayment = useCallback(
-    (tableId: string, sessionId: string, expectedFinalAmount: number) => {
-      const resolve = () => setResolved((current) => [...current, `payment:${tableId}`])
-      if (!configured) {
-        resolve()
-        return
-      }
-      const clientRequestId = paymentRequestIds.current.get(sessionId) ?? crypto.randomUUID()
-      paymentRequestIds.current.set(sessionId, clientRequestId)
+    async (tableId: string, sessionId: string, expectedFinalAmount: number, payerName: string) => {
+      const requestKey = JSON.stringify([sessionId, expectedFinalAmount, payerName.trim()])
+      const clientRequestId = paymentRequestIds.current.get(requestKey) ?? crypto.randomUUID()
+      paymentRequestIds.current.set(requestKey, clientRequestId)
       setBusyId(tableId)
-      void confirmTablePayment(
-        tableId,
-        sessionId,
-        clientRequestId,
-        expectedFinalAmount,
-      )
-        .then(() => {
-          paymentRequestIds.current.delete(sessionId)
-          resolve()
-        })
-        .catch((caught: unknown) => setError(toApiError(caught)))
-        .finally(() => setBusyId(null))
+      try {
+        if (configured) await confirmTablePayment(tableId, sessionId, clientRequestId, expectedFinalAmount, payerName.trim())
+        paymentRequestIds.current.delete(requestKey)
+        setPaymentRecords((current) => ({ ...current, [sessionId]: {
+          payerName: payerName.trim(), paymentConfirmedBy: configured ? (readStaffSession()?.deviceLabel ?? '운영 기기') : '데모 운영자', paidAt: new Date().toISOString(),
+        } }))
+        setResolved((current) => [...current, `payment:${sessionId}`])
+        if (configured) setAttempt((value) => value + 1)
+      } catch (caught) {
+        throw toApiError(caught)
+      } finally {
+        setBusyId(null)
+      }
     },
     [configured],
   )
@@ -263,8 +262,8 @@ export function useStaffStations(): StaffStationsState {
       (order) => !resolved.includes(`serving:${order.orderId}`),
     )
     const payment = base.payment.map((row) =>
-      resolved.includes(`payment:${row.tableId}`)
-        ? { ...row, bill: { ...row.bill, paid: true } }
+      resolved.includes(`payment:${row.sessionId}`)
+        ? { ...row, ...paymentRecords[row.sessionId], bill: { ...row.bill, paid: true } }
         : row,
     )
     return {
@@ -283,7 +282,7 @@ export function useStaffStations(): StaffStationsState {
         payment: payment.filter((row) => !row.bill.paid).length,
       },
     }
-  }, [base, cookingOverrides, itemOverrides, resolved])
+  }, [base, cookingOverrides, itemOverrides, resolved, paymentRecords])
 
   return {
     kitchen: visible?.kitchen ?? [],

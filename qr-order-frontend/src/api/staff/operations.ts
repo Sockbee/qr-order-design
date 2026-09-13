@@ -71,11 +71,12 @@ export function confirmTablePayment(
   expectedSessionId: string,
   clientRequestId: string,
   expectedFinalAmount: number,
+  payerName: string,
   signal?: AbortSignal,
 ): Promise<void> {
   return callStaffApi<void>(
     'tables/confirm-payment',
-    { tableId, expectedSessionId, clientRequestId, expectedFinalAmount },
+    { tableId, expectedSessionId, clientRequestId, expectedFinalAmount, payerName },
     signal,
   )
 }

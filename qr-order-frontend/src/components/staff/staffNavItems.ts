@@ -37,6 +37,7 @@ export function staffNavItems(
      * loads the catalog. The count lives in that screen's own header.
      */
     { label: '품절', to: '/staff/availability', count: null },
+    { label: '판매 통계', to: '/staff/sales', count: null },
     { label: '설정', to: '/staff/settings', count: null },
   ]
 }
