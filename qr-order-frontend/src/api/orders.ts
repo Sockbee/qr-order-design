@@ -1,4 +1,4 @@
-import { callAppsScript } from './client'
+import { callApi } from './client'
 import type { CartLine } from '../types/menu'
 import type { ItemPreparationStatus, OrderKind, OrderStatus, PlacedOrder } from '../types/order'
 import type { TableCredentials } from '../types/session'
@@ -40,7 +40,7 @@ export function createOrder(
   clientRequestId: string,
   signal?: AbortSignal,
 ): Promise<CreateOrderResponse> {
-  return callAppsScript<CreateOrderResponse>(
+  return callApi<CreateOrderResponse>(
     'orders/create',
     {
       tableId: credentials.tableId,
@@ -121,7 +121,7 @@ export function listOrders(
   credentials: TableCredentials,
   signal?: AbortSignal,
 ): Promise<OrderListResponse> {
-  return callAppsScript<OrderListResponse>(
+  return callApi<OrderListResponse>(
     'orders/list',
     {
       tableId: credentials.tableId,

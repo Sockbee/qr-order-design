@@ -4,9 +4,9 @@
 
 ```mermaid
 flowchart LR
-    QR[테이블 QR] --> NETLIFY[React / Netlify]
-    STAFF[운영 iPad] --> NETLIFY
-    NETLIFY -->|JSON + SSE| RUN[Spring Boot / Cloud Run]
+    QR[테이블 QR] --> HOSTING[React / Firebase Hosting]
+    STAFF[운영 iPad] --> HOSTING
+    HOSTING -->|JSON + SSE| RUN[Spring Boot / Cloud Run]
     RUN -->|JDBC connector| SQL[(Cloud SQL PostgreSQL)]
     RUN --> SECRET[Secret Manager]
     BUILD[Cloud Build] --> AR[Artifact Registry]

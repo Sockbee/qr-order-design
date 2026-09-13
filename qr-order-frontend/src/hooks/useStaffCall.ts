@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { hasAppsScriptApi } from '../api/client'
+import { hasApi } from '../api/client'
 import { cancelCall, createCall } from '../api/calls'
 import { readStored, sessionScopedKey, writeStored } from '../utils/storage'
 import type { ActiveCall, CallReason } from '../types/call'
@@ -89,7 +89,7 @@ export function useStaffCall(
 
       // Without a configured API the app runs on mock data; keep the flow
       // demoable rather than dead-ending on a network error.
-      if (!credentials || !hasAppsScriptApi()) {
+      if (!credentials || !hasApi()) {
         setActiveCall({
           callId: `local-${newRequestId()}`,
           reason,
@@ -126,7 +126,7 @@ export function useStaffCall(
     if (!activeCall) return
     setError(null)
 
-    if (!credentials || !hasAppsScriptApi() || activeCall.callId.startsWith('local-')) {
+    if (!credentials || !hasApi() || activeCall.callId.startsWith('local-')) {
       setActiveCall(null)
       setPhase('idle')
       return

@@ -44,14 +44,10 @@ pnpm-debug.log*
 .claude/skills/
 skills-lock.json
 
-# Google Apps Script 로컬 연결 및 인증 정보
+# 사용 종료한 Google Apps Script 코드·테스트·로컬 인증 정보
+/apps-script/
 **/.clasp.json
 **/.clasprc.json
-apps-script/script-properties.json
-apps-script/.script-properties.json
-apps-script/credentials*.json
-apps-script/client_secret*.json
-apps-script/service-account*.json
 
 # Spring / Gradle
 **/.gradle/
@@ -68,5 +64,6 @@ apps-script/service-account*.json
 infra/terraform.tfvars
 infra/*.auto.tfvars
 
-# Local Netlify folder
-.netlify
+# 사용 종료한 Netlify 배포 설정 및 로컬 캐시
+/netlify.toml
+.netlify/

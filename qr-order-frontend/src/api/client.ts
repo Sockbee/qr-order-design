@@ -92,8 +92,3 @@ export async function callApi<T>(
   }
   return envelope.data
 }
-
-/** @deprecated Remove after all downstream imports have moved to callApi. */
-export const callAppsScript = callApi
-/** @deprecated Remove after all downstream imports have moved to hasApi. */
-export const hasAppsScriptApi = hasApi

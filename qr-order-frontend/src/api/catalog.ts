@@ -1,4 +1,4 @@
-import { callAppsScript } from './client'
+import { callApi } from './client'
 import type { MenuCategory, MenuItemDetail } from '../types/menu'
 import type { TableCredentials, TableSession } from '../types/session'
 
@@ -69,7 +69,7 @@ export async function fetchStorefront(
     tableId: credentials.tableId,
     tableToken: credentials.tableToken,
   }
-  const bootstrap = await callAppsScript<ResolveTableResponse & MenuResponse>(
+  const bootstrap = await callApi<ResolveTableResponse & MenuResponse>(
     'bootstrap',
     payload,
     signal,
