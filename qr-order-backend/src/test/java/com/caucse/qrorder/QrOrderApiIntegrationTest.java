@@ -67,6 +67,7 @@ class QrOrderApiIntegrationTest {
     @Autowired ObjectMapper mapper;
     @Autowired CustomerOrderService orders;
     @Autowired StaffOperationsService staffOperations;
+    @Autowired com.caucse.qrorder.sse.DomainEventService events;
 
     @BeforeEach
     void table() {
@@ -304,6 +305,104 @@ class QrOrderApiIntegrationTest {
         staffOperations.confirmPayment("T03", 2_400, staff);
         assertEquals("CLOSED", jdbc.queryForObject(
                 "SELECT status FROM table_sessions WHERE origin_table_id='T01' ORDER BY opened_at DESC LIMIT 1", String.class));
+    }
+
+    @Test
+    void mergedCustomersShareCurrentOrdersAndEventsThenSplitByOriginSession() {
+        for (int i = 2; i <= 4; i++) {
+            jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES(?,?,?,?)",
+                    "T0" + i, "테이블 " + i, StaffTokenService.sha256Hex(PEPPER + ":" + String.valueOf(i).repeat(64)), i);
+        }
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        Map<String, Object> old = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        staffOperations.confirmPayment("T01", 1500, staff);
+        Map<String, Object> a = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        Map<String, Object> b = orders.create(customerOrder("T02", "2".repeat(64), "cider"), false);
+        orders.create(customerOrder("T03", "3".repeat(64), "cola"), false);
+        Map<String, Object> outside = orders.create(customerOrder("T04", "4".repeat(64), "cola"), false);
+        staffOperations.merge("T01", "T02", staff);
+        // A third four-seat table joins the same flat group through any member.
+        staffOperations.merge("T02", "T03", staff);
+        assertThrows(ApiException.class, () -> staffOperations.merge("T01", "T02", staff));
+        Map<String, Object> c = orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        var request = Map.<String, Object>of("tableId", "T01", "tableToken", TABLE_TOKEN);
+        var shared = orders.list(request);
+        assertEquals(List.of("T01", "T02", "T03"), shared.get("groupTableIds"));
+        assertEquals(6000, shared.get("sessionTotalAmount"));
+        assertEquals(shared.get("orders"), orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("orders"));
+        assertEquals(shared.get("orders"), orders.list(Map.of("tableId", "T03", "tableToken", "3".repeat(64))).get("orders"));
+        assertEquals(staffOperations.tableDetail("T01").get("items"), staffOperations.tableDetail("T03").get("items"));
+        assertEquals(4, staffOperations.tableDetail("T02").get("orderCount"));
+        assertEquals(b.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", b.get("orderId"))).get("orderId"));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", old.get("orderId"))));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "displayCode", outside.get("displayCode"))));
+        assertEquals(List.of("T01", "T02", "T03"), jdbc.queryForList(
+                "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
+                String.class, c.get("orderId").toString()));
+        var memberTotals = (List<?>) staffOperations.tableDetail("T02").get("mergeMembers");
+        assertEquals(List.of(1500, 3000, 1500), memberTotals.stream().map(Map.class::cast).map(m -> m.get("amount")).toList());
+        staffOperations.split("T03", staff);
+        assertEquals(1500, orders.list(request).get("sessionTotalAmount"));
+        assertEquals(3000, orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("sessionTotalAmount"));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", c.get("orderId"))));
+        assertEquals(a.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "displayCode", a.get("displayCode"))).get("orderId"));
+        Map<String, Object> after = orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        assertEquals(List.of("T02"), jdbc.queryForList(
+                "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
+                String.class, after.get("orderId").toString()));
+        staffOperations.confirmPayment("T02", 4500, staff);
+        assertEquals(List.of(), orders.list(Map.of("tableId", "T02", "tableToken", "2".repeat(64))).get("orders"));
+        assertEquals(7, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+    }
+
+    @Test
+    void mergedOrderChangesAndServiceOrdersNotifyEveryGroupMemberForReplay() {
+        jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES('T02','테이블 2',?,2)",
+                StaffTokenService.sha256Hex(PEPPER + ":" + "c".repeat(64)));
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        var other = orders.create(customerOrder("T02", "c".repeat(64), "cola"), false);
+        staffOperations.merge("T01", "T02", staff);
+        String itemId = jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?::uuid", String.class, other.get("orderId"));
+        long before = events.latestId();
+        staffOperations.updateOrder(Map.of("operation", "quantity", "itemId", itemId, "quantity", 2), staff);
+        staffOperations.updateItemPreparation(itemId, true, staff);
+        assertEquals(4500, orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("sessionTotalAmount"));
+        assertEquals(List.of("order.updated", "order.item.updated"), events.after(before, "T01", 100).stream().map(e -> e.type()).toList());
+        assertEquals(List.of("order.updated", "order.item.updated"), events.after(before, "T02", 100).stream().map(e -> e.type()).toList());
+        var service = orders.createService(Map.of("tableId", "T02", "clientRequestId", UUID.randomUUID().toString(),
+                "chargedStaffId", "S-001", "serviceMessage", "함께 드세요",
+                "items", List.of(Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))), "S-001", 20, "카운터");
+        assertEquals(service.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", service.get("orderId"))).get("orderId"));
+        staffOperations.updateItemPreparation(itemId, false, staff);
+        staffOperations.updateOrder(Map.of("operation", "cancel-item", "itemId", itemId), staff);
+        assertEquals(1500, orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("sessionTotalAmount"));
+        assertEquals(orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("orders"),
+                orders.list(Map.of("tableId", "T02", "tableToken", "c".repeat(64))).get("orders"));
+    }
+
+    @Test
+    void movedQrSharesGroupAndReceivesSplitAndPaymentEvents() {
+        for (int i = 2; i <= 3; i++) jdbc.update(
+                "INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES(?,?,?,?)",
+                "T0" + i, "테이블 " + i, StaffTokenService.sha256Hex(PEPPER + ":" + String.valueOf(i).repeat(64)), i);
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        staffOperations.move("T01", "T03", staff);
+        orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        staffOperations.merge("T03", "T02", staff);
+        assertEquals(List.of("T02", "T03"), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("groupTableIds"));
+        var added = orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        assertEquals(List.of("T01", "T02", "T03"), jdbc.queryForList(
+                "SELECT table_id FROM domain_events WHERE event_type='order.created' AND entity_id=? ORDER BY table_id",
+                String.class, added.get("orderId").toString()));
+        staffOperations.split("T02", staff);
+        assertEquals(List.of("T03"), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("groupTableIds"));
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM domain_events WHERE table_id='T01' AND payload->>'operation'='split'", Integer.class));
+        assertThrows(ApiException.class, () -> orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", added.get("orderId"))));
+        staffOperations.confirmPayment("T03", 1500, staff);
+        assertEquals(List.of(), orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("orders"));
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM domain_events WHERE table_id='T01' AND event_type='payment.confirmed'", Integer.class));
     }
 
     @Test

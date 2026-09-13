@@ -142,7 +142,6 @@ export function StaffTableOperationRoute({
         <MergeTablesDialog
           primary={table}
           tables={tables}
-          orderCount={orderCount}
           submitting={operations.submitting}
           onConfirm={(secondary) =>
             operations.merge(tableId, secondary, close)
@@ -150,22 +149,12 @@ export function StaffTableOperationRoute({
           onCancel={close}
         />
       )}
-      {table && operation === 'split' && (
+      {table && operation === 'split' && detail.detail && (
         <SplitTablesDialog
           groupLabel={table.mergeLabel?.replace(' 합석', '') ?? tableId}
           total={table.amount}
           totalOrderCount={orderCount}
-          members={(table.mergeLabel?.replace(' 합석', '').split('+') ?? [
-            tableId,
-          ]).map((member) => ({
-            tableId: member,
-            amount:
-              tables.find((candidate) => candidate.tableId === member)
-                ?.amount ?? 0,
-            orderCount:
-              tables.find((candidate) => candidate.tableId === member)
-                ?.pendingItemCount ?? 0,
-          }))}
+          members={detail.detail?.mergeMembers ?? []}
           submitting={operations.submitting}
           onConfirm={() => operations.split(tableId, close)}
           onCancel={close}

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DialogSummary, ImpactNote, StaffDialog } from './StaffDialog'
-import { TableChoice } from './TableChoice'
+import { TableFloorPlan } from './TableFloorPlan'
 import './OperationDialogs.css'
 import { formatStaffAmount } from '../../utils/price'
 import type { StaffTableSummary } from '../../types/staff'
@@ -25,17 +25,18 @@ export function MoveTableDialog({
 }: MoveTableDialogProps) {
   const [destination, setDestination] = useState<string | null>(null)
 
-  const candidates = tables.filter(
-    (table) => table.tableId !== source.tableId,
+  const validDestination = tables.find((table) =>
+    table.tableId === destination && !table.occupied && table.tableId !== source.tableId,
   )
 
   return (
     <StaffDialog
+      size="floor"
       title="테이블 이동"
       confirmLabel={destination ? `${destination}로 이동` : '이동'}
-      confirmDisabled={!destination}
+      confirmDisabled={!validDestination}
       submitting={submitting}
-      onConfirm={() => destination && onConfirm(destination)}
+      onConfirm={() => validDestination && onConfirm(validDestination.tableId)}
       onCancel={onCancel}
     >
       <DialogSummary
@@ -47,18 +48,15 @@ export function MoveTableDialog({
         ↓
       </p>
       <p className="operation-dialog__label">이동할 테이블 선택</p>
-      <div className="operation-dialog__choices">
-        {candidates.map((table) => (
-          <TableChoice
-            key={table.tableId}
-            tableId={table.tableId}
-            caption={table.occupied ? '사용 중' : '비어 있음'}
-            /* An occupied destination is a merge, not a move (§4.14). */
-            disabled={table.occupied}
-            selected={table.tableId === destination}
-            onSelect={setDestination}
-          />
-        ))}
+      <div className="operation-dialog__floor">
+        <TableFloorPlan
+          tables={tables}
+          selectedTableIds={[source.tableId, ...(destination ? [destination] : [])]}
+          onSelect={setDestination}
+          disabledReason={(table) =>
+            table.tableId === source.tableId ? '현재 테이블' : table.occupied ? '사용 중' : undefined
+          }
+        />
       </div>
       <ImpactNote title="이동하면 이렇게 됩니다">
         {destination

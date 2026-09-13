@@ -79,6 +79,7 @@ export function mapCreatedOrder(
 }
 
 export interface OrderListItem {
+  tableId?: string
   orderId: string
   displayCode: string
   status: string
@@ -100,6 +101,7 @@ export interface OrderListItem {
 export interface OrderListResponse {
   table: { tableId: string; displayName: string }
   orders: OrderListItem[]
+  groupTableIds?: string[]
   latestPublicStatus: Exclude<OrderStatus, 'cancelled'> | null
   sessionTotalAmount: number
   activeCall: {
@@ -133,7 +135,8 @@ export function mapRemoteOrders(
     .map((order) => ({
       id: order.orderId,
       number: order.displayCode,
-      tableNumber,
+      tableNumber: order.tableId ? Number(order.tableId.replace(/^T/, '')) : tableNumber,
+      originTableId: order.tableId,
       lines: order.items.map((item, index) => ({
         itemId: `${order.orderId}:${index + 1}`,
         nameSnapshot: item.name,

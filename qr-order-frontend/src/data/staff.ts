@@ -29,7 +29,7 @@ const SEEDS: Seed[] = [
   { n: 1, amount: 42_000, minutes: 18, pending: 3 },
   { n: 2, amount: 28_000, minutes: 7, pending: 1 },
   { n: 3, amount: 64_000, minutes: 38, pending: 3, call: true, discount: '20% 할인' },
-  { n: 4, amount: 81_000, minutes: 22, pending: 2, merge: 'T01+T02 합석', discount: '20% 할인' },
+  { n: 4, amount: 81_000, minutes: 22, pending: 2, discount: '20% 할인' },
   { n: 5, amount: 15_000, minutes: 3, pending: 2 },
   { n: 6, amount: 37_000, minutes: 12, pending: 0 },
   { n: 7, amount: 52_000, minutes: 16, pending: 4 },
@@ -40,7 +40,7 @@ const SEEDS: Seed[] = [
   { n: 12, amount: 19_000, minutes: 5, pending: 0, paid: true },
   { n: 13 },
   { n: 14, amount: 33_000, minutes: 14, pending: 2 },
-  { n: 15 },
+  ...Array.from({ length: 10 }, (_, index) => ({ n: index + 15 })),
 ]
 
 export const staffTables: StaffTableSummary[] = SEEDS.map((seed) => {

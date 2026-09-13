@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -28,13 +29,15 @@ public class CustomerOrderService {
     private final TableCatalogService catalog;
     private final DomainEventService events;
     private final ObjectMapper mapper;
+    private final TableOrderScope orderScope;
 
     public CustomerOrderService(JdbcTemplate jdbc, TableCatalogService catalog,
-                                DomainEventService events, ObjectMapper mapper) {
+                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope) {
         this.jdbc = jdbc;
         this.catalog = catalog;
         this.events = events;
         this.mapper = mapper;
+        this.orderScope = orderScope;
     }
 
     @Transactional
@@ -116,7 +119,7 @@ public class CustomerOrderService {
 
         insertLines(orderId, lines);
         audit(staff ? "STAFF" : "CLIENT", staff ? "STAFF" : tableId, "ORDER_CREATED", "ORDER", orderId.toString(), null, displayCode);
-        events.publish("order.created", orderId.toString(), tableId, Map.of("displayCode", displayCode));
+        events.publishOrder("order.created", orderId.toString(), orderId, Map.of("displayCode", displayCode));
         return hydrateCreated(orderId, false);
     }
 
@@ -197,52 +200,52 @@ public class CustomerOrderService {
                 INSERT INTO audit_logs(log_id,actor_type,actor_id,action,entity_type,entity_id,detail_json)
                 VALUES(?,'STAFF',?,'SERVICE_ORDER_CREATED','ORDER',?,CAST(? AS jsonb))
                 """, UUID.randomUUID(), actorId, orderId.toString(), detailJson);
-        events.publish("order.created", orderId.toString(), tableId,
+        events.publishOrder("order.created", orderId.toString(), orderId,
                 Map.of("displayCode", displayCode, "orderKind", "SERVICE"));
 
         return hydrateServiceCreated(orderId, false);
     }
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public Map<String, Object> get(Map<String, Object> request) {
         String tableId = string(request, "tableId");
         catalog.requireTable(tableId, string(request, "tableToken"), false);
         String orderId = nullableString(request.get("orderId"));
         String displayCode = nullableString(request.get("displayCode"));
         if ((orderId == null) == (displayCode == null)) throw ApiException.invalid("orderId 또는 displayCode 중 하나가 필요합니다.");
+        String sessions = orderScope.sessionIds(orderScope.forTable(tableId));
         UUID id = jdbc.query(orderId != null
-                        ? "SELECT order_id FROM orders WHERE order_id::text=? AND table_id=?"
-                        : "SELECT order_id FROM orders WHERE display_code=? AND table_id=?",
+                        ? "SELECT order_id FROM orders WHERE order_id::text=? AND session_id = ANY(?::uuid[])"
+                        : "SELECT order_id FROM orders WHERE display_code=? AND session_id = ANY(?::uuid[])",
                 rs -> rs.next() ? UUID.fromString(rs.getString(1)) : null,
-                orderId != null ? orderId : displayCode, tableId);
+                orderId != null ? orderId : displayCode, sessions);
         if (id == null) throw ApiException.notFound("ORDER_NOT_FOUND", "주문 정보를 찾을 수 없습니다.");
         return hydrateCreated(id, true);
     }
 
+    @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     public Map<String, Object> list(Map<String, Object> request) {
         String tableId = string(request, "tableId");
         TableCatalogService.TableRow table = catalog.requireTable(tableId, string(request, "tableToken"), false);
-        UUID sessionId = jdbc.query("""
-                SELECT session_id FROM table_sessions
-                WHERE status='OPEN' AND (table_id=? OR origin_table_id=?)
-                ORDER BY CASE WHEN table_id=? THEN 0 ELSE 1 END, opened_at DESC
-                LIMIT 1
-                """, rs -> rs.next() ? rs.getObject(1, UUID.class) : null, tableId, tableId, tableId);
-        if (sessionId == null) {
+        List<TableOrderScope.Session> sessions = orderScope.forTable(tableId);
+        String sessionIds = orderScope.sessionIds(sessions);
+        if (sessions.isEmpty()) {
             return ApiEnvelope.map(
                     "table", ApiEnvelope.map("tableId", table.tableId(), "displayName", table.displayName()),
-                    "orders", List.of(), "latestPublicStatus", null, "sessionTotalAmount", 0,
+                    "orders", List.of(), "groupTableIds", List.of(), "latestPublicStatus", null, "sessionTotalAmount", 0,
                     "activeCall", pendingCall(tableId));
         }
         List<Map<String, Object>> orders = jdbc.query("""
                 SELECT o.order_id, o.display_code, o.status, o.public_status, o.total_amount,
-                       o.order_kind, o.service_message, sm.name AS charged_staff_name, o.created_at
+                       o.order_kind, o.service_message, sm.name AS charged_staff_name, o.created_at, o.table_id
                 FROM orders o
                 LEFT JOIN staff_members sm ON sm.staff_id=o.charged_staff_id
-                WHERE o.session_id=? ORDER BY o.created_at DESC
+                WHERE o.session_id = ANY(?::uuid[]) ORDER BY o.created_at DESC,o.display_number DESC
                 """, (rs, index) -> {
             UUID orderId = rs.getObject("order_id", UUID.class);
             Map<String, Object> row = ApiEnvelope.map(
                     "orderId", orderId.toString(), "displayCode", rs.getString("display_code"),
+                    "tableId", rs.getString("table_id"),
                     "status", rs.getString("status"), "publicStatus", rs.getString("public_status"),
                     "totalAmount", rs.getInt("total_amount"), "orderKind", rs.getString("order_kind"),
                     "createdAt", rs.getObject("created_at", OffsetDateTime.class).toInstant().toString(),
@@ -252,16 +255,17 @@ public class CustomerOrderService {
                 row.put("chargedStaffName", rs.getString("charged_staff_name"));
             }
             return row;
-        }, sessionId);
+        }, sessionIds);
         String latest = orders.stream().filter(row -> !"cancelled".equals(row.get("publicStatus")))
                 .map(row -> String.valueOf(row.get("publicStatus"))).findFirst().orElse(null);
         Integer total = jdbc.queryForObject("""
                 SELECT COALESCE(sum(total_amount),0)::integer FROM orders
-                WHERE session_id=? AND status <> 'CANCELLED'
-                """, Integer.class, sessionId);
+                WHERE session_id = ANY(?::uuid[]) AND status <> 'CANCELLED'
+                """, Integer.class, sessionIds);
         return ApiEnvelope.map(
                 "table", ApiEnvelope.map("tableId", table.tableId(), "displayName", table.displayName()),
-                "orders", orders, "latestPublicStatus", latest, "sessionTotalAmount", total == null ? 0 : total,
+                "orders", orders, "groupTableIds", sessions.stream().map(TableOrderScope.Session::tableId).toList(),
+                "latestPublicStatus", latest, "sessionTotalAmount", total == null ? 0 : total,
                 "activeCall", pendingCall(tableId));
     }
 

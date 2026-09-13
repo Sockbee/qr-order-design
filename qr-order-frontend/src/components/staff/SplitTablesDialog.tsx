@@ -54,7 +54,7 @@ export function SplitTablesDialog({
         ))}
       </div>
       <ImpactNote title="분리하면 이렇게 됩니다">
-        합석이 해제되고 각 주문은 원래 테이블로 돌아갑니다. 금액도 각자 정산됩니다.
+        주문내역 공유가 종료됩니다. 합석 중 추가한 주문도 접수한 테이블에 남고, 각 테이블의 QR에서는 해당 방문의 주문만 보입니다. 금액도 각자 정산됩니다.
         1인별 분할 계산은 하지 않습니다.
       </ImpactNote>
     </StaffDialog>

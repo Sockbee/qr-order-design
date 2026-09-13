@@ -6,7 +6,7 @@ import { StaffEmptyState } from '../../components/staff/StaffEmptyState'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
 import { staffNavItems } from '../../components/staff/staffNavItems'
-import { TableCard } from '../../components/staff/TableCard'
+import { TableFloorPlan } from '../../components/staff/TableFloorPlan'
 import { TableCardSkeleton } from '../../components/staff/TableCardSkeleton'
 import type { StaffTableHomeData } from '../../types/staff'
 
@@ -29,7 +29,7 @@ interface StaffTableHomePageProps {
   selectedTableId?: string | null
 }
 
-const SKELETON_COUNT = 15
+const SKELETON_COUNT = 24
 
 /**
  * One clock for the whole screen: the header time and every row's elapsed
@@ -152,22 +152,9 @@ export function StaffTableHomePage({
               <TableCardSkeleton key={index} />
             ))}
 
-          {!loading &&
-            data?.tables.map((table) => (
-              <TableCard
-                key={table.tableId}
-                table={table}
-                selected={table.tableId === selectedTableId}
-                onSelect={onSelectTable}
-              />
-            ))}
-
-          {!loading && data?.tables.length === 0 && (
-            <StaffEmptyState
-              title="아직 열린 테이블이 없어요"
-              body="손님이 QR을 스캔해 주문하면 여기에 테이블이 나타납니다"
-            />
-          )}
+          {!loading && data && <TableFloorPlan tables={data.tables}
+            selectedTableIds={selectedTableId ? [selectedTableId] : []}
+            onSelect={onSelectTable} />}
 
           {/*
             * Not drawn in Figma: a first load that fails leaves nothing to
