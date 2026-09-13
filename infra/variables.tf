@@ -31,7 +31,7 @@ variable "bootstrap_mode" {
 }
 
 variable "allowed_origins" {
-  description = "Comma-separated Netlify production and preview origins."
+  description = "Comma-separated frontend production and preview origins."
   type        = string
   default     = "https://caucse.shop"
 }
