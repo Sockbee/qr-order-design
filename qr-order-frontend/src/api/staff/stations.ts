@@ -38,6 +38,7 @@ export interface StaffQueueResponse {
     servingNote: string | null
   }>
   payment: Array<{
+    sessionId: string
     tableId: string
     subtotalAmount: number
     discountRate: number
@@ -144,6 +145,7 @@ export function mapPaymentQueue(
   now: number = Date.now(),
 ): StaffPaymentOrder[] {
   return response.payment.map((row) => ({
+    sessionId: row.sessionId,
     tableId: row.tableId,
     bill: {
       subtotalAmount: row.subtotalAmount,

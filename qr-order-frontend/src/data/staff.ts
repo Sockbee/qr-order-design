@@ -228,6 +228,7 @@ export function staffPaymentQueue(): StaffPaymentOrder[] {
   return staffQueues.payment.map((row) => {
     const discountAmount = Math.floor((row.subtotal * 20) / 100)
     return {
+      sessionId: `mock-session-${row.tableId}`,
       tableId: row.tableId,
       bill: {
         subtotalAmount: row.subtotal,

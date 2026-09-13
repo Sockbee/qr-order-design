@@ -95,6 +95,7 @@ export const SERVICE_MESSAGE_MAX_LENGTH = 100
  */
 export function createServiceOrder(
   tableId: string,
+  clientRequestId: string,
   chargedStaffId: string,
   serviceMessage: string | null,
   lines: StaffServiceOrderLine[],
@@ -102,7 +103,7 @@ export function createServiceOrder(
 ): Promise<StaffServiceOrderResponse> {
   return callStaffApi<StaffServiceOrderResponse>(
     'orders/service',
-    { tableId, chargedStaffId, serviceMessage, items: lines },
+    { tableId, clientRequestId, chargedStaffId, serviceMessage, items: lines },
     signal,
   )
 }
