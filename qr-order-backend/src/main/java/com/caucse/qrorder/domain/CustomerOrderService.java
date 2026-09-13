@@ -41,7 +41,7 @@ public class CustomerOrderService {
     public Map<String, Object> create(Map<String, Object> request, boolean staff) {
         rejectUnexpected(request, staff
                 ? Set.of("apiVersion", "tableId", "clientRequestId", "note", "items")
-                : Set.of("apiVersion", "tableId", "tableToken", "clientRequestId", "note", "items"), "request");
+                : Set.of("apiVersion", "tableId", "tableToken", "clientRequestId", "expectedTotalAmount", "note", "items"), "request");
         String tableId = string(request, "tableId");
         TableCatalogService.TableRow table;
         if (staff) {
@@ -51,9 +51,6 @@ public class CustomerOrderService {
             if (table == null) throw ApiException.notFound("TABLE_NOT_FOUND", "테이블을 찾을 수 없습니다.");
         } else {
             table = catalog.requireTable(tableId, string(request, "tableToken"), true);
-            if (!Boolean.parseBoolean(setting("EVENT_OPEN"))) {
-                throw new ApiException(HttpStatus.CONFLICT, "EVENT_CLOSED", "현재 주문을 받고 있지 않습니다.", false);
-            }
         }
 
         List<Map<String, Object>> inputItems = mapList(request.get("items"));
@@ -69,12 +66,20 @@ public class CustomerOrderService {
         String clientRequest = nullableString(request.get("clientRequestId"));
         UUID clientRequestId = clientRequest == null ? UUID.randomUUID() : parseUuid(clientRequest, "clientRequestId");
         String key = (staff ? "staff:" : "customer:") + tableId + ":" + clientRequestId;
-        String fingerprint = fingerprint(tableId, inputItems, note);
+        Integer expectedTotal = staff ? null : integer(request, "expectedTotalAmount");
+        if (expectedTotal != null && expectedTotal < 0) {
+            throw ApiException.invalid("expectedTotalAmount 값을 확인해 주세요.");
+        }
+        String fingerprint = fingerprint(tableId, inputItems, note, expectedTotal);
         // The same table row also guards first-session creation and concurrent
         // replays of an idempotency key.
         jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
         Map<String, Object> replay = existingOrder(key, fingerprint);
         if (replay != null) return replay;
+
+        if (!staff && !Boolean.parseBoolean(setting("EVENT_OPEN"))) {
+            throw new ApiException(HttpStatus.CONFLICT, "EVENT_CLOSED", "현재 주문을 받고 있지 않습니다.", false);
+        }
 
         UUID sessionId = openOrCreateSession(tableId);
         List<ValidatedLine> lines = new ArrayList<>();
@@ -83,6 +88,19 @@ public class CustomerOrderService {
             ValidatedLine line = validateLine(inputItems.get(index), index + 1);
             lines.add(line);
             total = Math.addExact(total, line.lineTotal());
+        }
+        if (!staff) {
+            if (expectedTotal != total) {
+                throw new ApiException(HttpStatus.CONFLICT, "ORDER_PRICE_CHANGED",
+                        "메뉴 가격이 변경되었습니다. 변경된 금액을 다시 확인해 주세요.", false,
+                        ApiEnvelope.map(
+                                "expectedTotalAmount", expectedTotal,
+                                "actualTotalAmount", total,
+                                "items", lines.stream().map(line -> ApiEnvelope.map(
+                                        "lineNo", line.lineNo(),
+                                        "unitPrice", line.unitPrice(),
+                                        "lineTotal", line.lineTotal())).toList()));
+            }
         }
 
         long displayNumber = nextDisplayNumber();
@@ -104,9 +122,9 @@ public class CustomerOrderService {
 
     @Transactional
     public Map<String, Object> createService(Map<String, Object> request, String chargedStaffId,
-                                             String chargedStaffName, int discountRate, String actorId) {
+                                             int discountRate, String actorId) {
         rejectUnexpected(request,
-                Set.of("apiVersion", "tableId", "chargedStaffId", "serviceMessage", "items"), "request");
+                Set.of("apiVersion", "tableId", "clientRequestId", "chargedStaffId", "serviceMessage", "items"), "request");
         String tableId = string(request, "tableId");
         TableCatalogService.TableRow table = jdbc.query("""
                 SELECT table_id,display_name,token_hash,active,sort_order
@@ -130,7 +148,13 @@ public class CustomerOrderService {
             throw new IllegalStateException("STAFF_DISCOUNT_RATE must be between 0 and 100");
         }
 
+        UUID clientRequestId = parseUuid(string(request, "clientRequestId"), "clientRequestId");
+        String key = "service:" + tableId + ":" + clientRequestId;
+        String fingerprint = serviceFingerprint(tableId, chargedStaffId, inputItems, serviceMessage);
+
         jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
+        Map<String, Object> replay = existingServiceOrder(key, fingerprint);
+        if (replay != null) return replay;
         UUID sessionId = openOrCreateSession(tableId);
         String sessionPaymentStatus = jdbc.queryForObject(
                 "SELECT payment_status FROM table_sessions WHERE session_id=?", String.class, sessionId);
@@ -151,18 +175,15 @@ public class CustomerOrderService {
         long displayNumber = nextDisplayNumber();
         String displayCode = setting("ORDER_PREFIX") + displayNumber;
         UUID orderId = UUID.randomUUID();
-        UUID internalRequestId = UUID.randomUUID();
-        String key = "service:" + tableId + ":" + internalRequestId;
-        String fingerprint = fingerprint(tableId, inputItems, serviceMessage);
         jdbc.update("""
                 INSERT INTO orders(order_id, display_number, display_code, client_request_id,
                   idempotency_key, request_fingerprint, table_id, session_id, status, public_status,
                   payment_status, total_amount, note, note_audience, order_kind, service_message,
-                  charged_staff_id, staff_charge_amount)
+                  charged_staff_id, staff_charge_amount, staff_discount_rate)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', 'accepted', 'WAIVED', 0, NULL, 'GENERAL',
-                  'SERVICE', ?, ?, ?)
-                """, orderId, displayNumber, displayCode, internalRequestId, key, fingerprint,
-                tableId, sessionId, serviceMessage, chargedStaffId, chargeAmount);
+                  'SERVICE', ?, ?, ?, ?)
+                """, orderId, displayNumber, displayCode, clientRequestId, key, fingerprint,
+                tableId, sessionId, serviceMessage, chargedStaffId, chargeAmount, discountRate);
 
         insertLines(orderId, lines);
         String detailJson;
@@ -179,13 +200,7 @@ public class CustomerOrderService {
         events.publish("order.created", orderId.toString(), tableId,
                 Map.of("displayCode", displayCode, "orderKind", "SERVICE"));
 
-        Map<String, Object> response = new java.util.LinkedHashMap<>(hydrateCreated(orderId, false));
-        response.put("serviceGrossAmount", grossAmount);
-        response.put("staffDiscountRate", discountRate);
-        response.put("staffChargeAmount", chargeAmount);
-        response.put("chargedStaff", ApiEnvelope.map("staffId", chargedStaffId, "name", chargedStaffName));
-        response.put("serviceMessage", serviceMessage);
-        return response;
+        return hydrateServiceCreated(orderId, false);
     }
 
     public Map<String, Object> get(Map<String, Object> request) {
@@ -215,7 +230,8 @@ public class CustomerOrderService {
         if (sessionId == null) {
             return ApiEnvelope.map(
                     "table", ApiEnvelope.map("tableId", table.tableId(), "displayName", table.displayName()),
-                    "orders", List.of(), "latestPublicStatus", null, "sessionTotalAmount", 0);
+                    "orders", List.of(), "latestPublicStatus", null, "sessionTotalAmount", 0,
+                    "activeCall", pendingCall(tableId));
         }
         List<Map<String, Object>> orders = jdbc.query("""
                 SELECT o.order_id, o.display_code, o.status, o.public_status, o.total_amount,
@@ -245,7 +261,8 @@ public class CustomerOrderService {
                 """, Integer.class, sessionId);
         return ApiEnvelope.map(
                 "table", ApiEnvelope.map("tableId", table.tableId(), "displayName", table.displayName()),
-                "orders", orders, "latestPublicStatus", latest, "sessionTotalAmount", total == null ? 0 : total);
+                "orders", orders, "latestPublicStatus", latest, "sessionTotalAmount", total == null ? 0 : total,
+                "activeCall", pendingCall(tableId));
     }
 
     @Transactional
@@ -312,6 +329,52 @@ public class CustomerOrderService {
                     }
                     return hydrateCreated(rs.getObject("order_id", UUID.class), true);
                 }, key);
+    }
+
+    private Map<String, Object> existingServiceOrder(String key, String fingerprint) {
+        return jdbc.query("SELECT order_id,request_fingerprint FROM orders WHERE idempotency_key=?",
+                rs -> {
+                    if (!rs.next()) return null;
+                    if (!fingerprint.equals(rs.getString("request_fingerprint"))) {
+                        throw ApiException.conflict("IDEMPOTENCY_CONFLICT", "동일 요청 ID에 다른 서비스 정보가 사용되었습니다.");
+                    }
+                    return hydrateServiceCreated(rs.getObject("order_id", UUID.class), true);
+                }, key);
+    }
+
+    private Map<String, Object> hydrateServiceCreated(UUID orderId, boolean replay) {
+        Map<String, Object> response = new java.util.LinkedHashMap<>(hydrateCreated(orderId, replay));
+        Map<String, Object> service = jdbc.query("""
+                SELECT o.service_message,o.staff_charge_amount,o.staff_discount_rate,
+                       sm.staff_id,sm.name,
+                       COALESCE(sum(i.line_total) FILTER (WHERE i.status='ACTIVE'),0)::integer AS gross_amount
+                FROM orders o
+                JOIN staff_members sm ON sm.staff_id=o.charged_staff_id
+                LEFT JOIN order_items i ON i.order_id=o.order_id
+                WHERE o.order_id=? AND o.order_kind='SERVICE'
+                GROUP BY o.order_id,o.service_message,o.staff_charge_amount,o.staff_discount_rate,sm.staff_id,sm.name
+                """, rs -> rs.next() ? ApiEnvelope.map(
+                "serviceMessage", rs.getString("service_message"),
+                "staffChargeAmount", rs.getInt("staff_charge_amount"),
+                "staffDiscountRate", rs.getInt("staff_discount_rate"),
+                "serviceGrossAmount", rs.getInt("gross_amount"),
+                "chargedStaff", ApiEnvelope.map("staffId", rs.getString("staff_id"), "name", rs.getString("name"))) : null,
+                orderId);
+        if (service == null) throw ApiException.notFound("ORDER_NOT_FOUND", "서비스 주문 정보를 찾을 수 없습니다.");
+        response.putAll(service);
+        return response;
+    }
+
+    private Map<String, Object> pendingCall(String tableId) {
+        return jdbc.query("""
+                SELECT call_id,reason,created_at FROM calls
+                WHERE table_id=? AND status='PENDING'
+                ORDER BY created_at DESC LIMIT 1
+                """, rs -> rs.next() ? ApiEnvelope.map(
+                "callId", rs.getString("call_id"),
+                "reason", rs.getString("reason"),
+                "createdAt", rs.getObject("created_at", OffsetDateTime.class).toInstant().toString()) : null,
+                tableId);
     }
 
     private UUID openOrCreateSession(String tableId) {
@@ -454,7 +517,8 @@ public class CustomerOrderService {
         return value;
     }
 
-    private String fingerprint(String tableId, List<Map<String, Object>> items, String note) {
+    private String fingerprint(String tableId, List<Map<String, Object>> items, String note,
+                               Integer expectedTotalAmount) {
         try {
             var canonicalItems = items.stream().map(item -> ApiEnvelope.map(
                     "menuId", string(item, "menuId"),
@@ -462,7 +526,32 @@ public class CustomerOrderService {
                     "selectedOptionIds", stringList(item.get("selectedOptionIds")).stream().sorted().toList()
             )).toList();
             return StaffTokenService.sha256Hex(mapper.writeValueAsString(ApiEnvelope.map(
-                    "tableId", tableId, "note", note == null ? "" : note, "items", canonicalItems)));
+                    "tableId", tableId,
+                    "expectedTotalAmount", expectedTotalAmount,
+                    "note", note == null ? "" : note,
+                    "items", canonicalItems)));
+        } catch (ApiException error) {
+            throw error;
+        } catch (Exception error) {
+            throw new IllegalStateException(error);
+        }
+    }
+
+    private String serviceFingerprint(String tableId, String chargedStaffId,
+                                      List<Map<String, Object>> items, String serviceMessage) {
+        try {
+            var canonicalItems = items.stream().map(item -> ApiEnvelope.map(
+                    "menuId", string(item, "menuId"),
+                    "quantity", integer(item, "quantity"),
+                    "selectedOptionIds", stringList(item.get("selectedOptionIds")).stream().sorted().toList()
+            )).toList();
+            return StaffTokenService.sha256Hex(mapper.writeValueAsString(ApiEnvelope.map(
+                    "tableId", tableId,
+                    "chargedStaffId", chargedStaffId,
+                    "serviceMessage", serviceMessage == null ? "" : serviceMessage,
+                    "items", canonicalItems)));
+        } catch (ApiException error) {
+            throw error;
         } catch (Exception error) {
             throw new IllegalStateException(error);
         }

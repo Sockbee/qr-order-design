@@ -173,7 +173,7 @@ export function StaffPaymentRoute() {
           },
           cards: pending.map((order) => (
             <PaymentOrderCard
-              key={order.tableId}
+              key={order.sessionId}
               order={order}
               busy={stations.busyId === order.tableId}
               onConfirm={stations.confirmPayment}
@@ -186,7 +186,7 @@ export function StaffPaymentRoute() {
           count: done.length,
           cards: done.map((order) => (
             <PaymentOrderCard
-              key={order.tableId}
+              key={order.sessionId}
               order={order}
               busy={false}
               onConfirm={stations.confirmPayment}

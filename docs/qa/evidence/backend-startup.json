@@ -1,0 +1,18 @@
+[
+  {
+    "timestamp": "2026-09-13T14:26:37.134979Z",
+    "message": "Successfully validated 4 migrations (execution time 00:00.009s)"
+  },
+  {
+    "timestamp": "2026-09-13T14:26:37.295879Z",
+    "message": "Successfully applied 4 migrations to schema \"public\", now at version v4 (execution time 00:00.059s)"
+  },
+  {
+    "timestamp": "2026-09-13T14:26:38.284236Z",
+    "message": "Tomcat started on port 18080 (http) with context path '/'"
+  },
+  {
+    "timestamp": "2026-09-13T14:26:38.289644Z",
+    "message": "Started QrOrderApplication in 2.501 seconds (process running for 2.861)"
+  }
+]

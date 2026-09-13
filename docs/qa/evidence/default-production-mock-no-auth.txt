@@ -1,0 +1,119 @@
+- navigation "운영 메뉴":
+  - list:
+    - link "테이블 4":
+      - /url: /staff/tables
+      - generic: 테이블
+      - generic: "4"
+    - link "주방 6":
+      - /url: /staff/kitchen
+      - generic: 주방
+      - generic: "6"
+    - link "서빙 4":
+      - /url: /staff/serving
+      - generic: 서빙
+      - generic: "4"
+    - link "결제 3":
+      - /url: /staff/payment
+      - generic: 결제
+      - generic: "3"
+    - link "서비스":
+      - /url: /staff/service
+      - generic: 서비스
+    - link "품절":
+      - /url: /staff/availability
+      - generic: 품절
+    - link "설정":
+      - /url: /staff/settings
+      - generic: 설정
+- main:
+  - heading "테이블" [level=1]
+  - paragraph: 활성 11 · 호출 2 · 미처리 20 · 지연 2
+  - paragraph: 23:45
+  - region "직원 호출":
+    - heading "직원 호출" [level=2]
+    - generic: "2"
+    - list:
+      - generic: T03
+      - generic: 3회
+      - generic: 물 · 결제 요청
+      - generic: 4분 전 첫 호출 · 방금 재호출
+      - button "테이블 3 호출 확인":
+        - generic: 확인
+      - generic: T09
+      - generic: 결제 요청
+      - generic: 1분 전 호출
+      - button "테이블 9 호출 확인":
+        - generic: 확인
+  - region "테이블 목록":
+    - button "테이블 1, 18분 · 미처리 3 · 미결제":
+      - generic: T01
+      - generic: 조리 중
+      - generic: ₩42,000
+      - generic: 18분 · 미처리 3 · 미결제
+    - button "테이블 2, 7분 · 미처리 1 · 미결제":
+      - generic: T02
+      - generic: 조리 중
+      - generic: ₩28,000
+      - generic: 7분 · 미처리 1 · 미결제
+    - button "테이블 3, 38분 지연 · 미처리 3 · 미결제, 직원 호출":
+      - generic: T03
+      - generic: 호출
+      - generic: 조리 중
+      - generic: ₩64,000
+      - generic: 20% 할인
+      - generic: 38분 지연 · 미처리 3 · 미결제
+    - button "테이블 4, 22분 · 미처리 2 · 미결제":
+      - generic: T04
+      - generic: T01+T02 합석
+      - generic: ₩81,000
+      - generic: 20% 할인
+      - generic: 22분 · 미처리 2 · 미결제
+    - button "테이블 5, 3분 · 미처리 2 · 미결제":
+      - generic: T05
+      - generic: 조리 중
+      - generic: ₩15,000
+      - generic: 3분 · 미처리 2 · 미결제
+    - button "테이블 6, 12분 · 미처리 0 · 미결제":
+      - generic: T06
+      - generic: 조리 중
+      - generic: ₩37,000
+      - generic: 12분 · 미처리 0 · 미결제
+    - button "테이블 7, 16분 · 미처리 4 · 미결제":
+      - generic: T07
+      - generic: 조리 중
+      - generic: ₩52,000
+      - generic: 16분 · 미처리 4 · 미결제
+    - button "테이블 8, 비어 있음":
+      - generic: T08
+      - generic: 비어 있음
+    - button "테이블 9, 9분 · 미처리 1 · 미결제, 직원 호출":
+      - generic: T09
+      - generic: 호출
+      - generic: 조리 중
+      - generic: ₩23,000
+      - generic: 9분 · 미처리 1 · 미결제
+    - button "테이블 10, 41분 지연 · 미처리 2 · 미결제":
+      - generic: T10
+      - generic: 조리 중
+      - generic: ₩46,000
+      - generic: 20% 할인
+      - generic: 41분 지연 · 미처리 2 · 미결제
+    - button "테이블 11, 비어 있음":
+      - generic: T11
+      - generic: 비어 있음
+    - button "테이블 12, 5분 · 미처리 0 · 결제 완료":
+      - generic: T12
+      - generic: 조리 중
+      - generic: ₩19,000
+      - generic: 5분 · 미처리 0 · 결제 완료
+    - button "테이블 13, 비어 있음":
+      - generic: T13
+      - generic: 비어 있음
+    - button "테이블 14, 14분 · 미처리 2 · 미결제":
+      - generic: T14
+      - generic: 조리 중
+      - generic: ₩33,000
+      - generic: 14분 · 미처리 2 · 미결제
+    - button "테이블 15, 비어 있음":
+      - generic: T15
+      - generic: 비어 있음

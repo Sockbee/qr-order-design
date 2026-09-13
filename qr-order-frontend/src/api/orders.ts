@@ -2,6 +2,7 @@ import { callAppsScript } from './client'
 import type { CartLine } from '../types/menu'
 import type { OrderKind, OrderStatus, PlacedOrder } from '../types/order'
 import type { TableCredentials } from '../types/session'
+import { calculateCartTotal } from '../utils/cart'
 
 export interface CreateOrderResponse {
   orderId: string
@@ -43,6 +44,7 @@ export function createOrder(
       tableId: credentials.tableId,
       tableToken: credentials.tableToken,
       clientRequestId,
+      expectedTotalAmount: calculateCartTotal(cart),
       note: '',
       items: cart.map((line) => ({
         menuId: line.itemId,
@@ -100,6 +102,11 @@ export interface OrderListResponse {
   orders: OrderListItem[]
   latestPublicStatus: Exclude<OrderStatus, 'cancelled'> | null
   sessionTotalAmount: number
+  activeCall: {
+    callId: string
+    reason: import('../types/call').CallReason
+    createdAt: string
+  } | null
 }
 
 export function listOrders(

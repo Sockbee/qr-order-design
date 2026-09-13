@@ -1,0 +1,10 @@
+{
+  "status": 401,
+  "error": {
+    "code": "STAFF_TOKEN_EXPIRED",
+    "message": "인증이 만료되었습니다. 다시 로그인해 주세요.",
+    "retryable": false,
+    "details": null
+  },
+  "pass": true
+}

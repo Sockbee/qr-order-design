@@ -53,6 +53,8 @@ export interface CartLine {
   /** Immutable server snapshot used when the current catalog has changed. */
   nameSnapshot?: string
   quantity: number
+  /** Menu cap frozen when the line is added, used to keep the cart submittable. */
+  maxQuantitySnapshot?: number
   /** Unit price at the time the line was added, selected options included. */
   unitPrice: number
   selectedOptionIds?: MenuOption['id'][]

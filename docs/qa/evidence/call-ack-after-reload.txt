@@ -1,0 +1,31 @@
+- banner:
+  - button "뒤로 가기":
+  - heading "주문 내역" [level=1]
+  - button "직원 호출"
+- main:
+  - list "주문 진행 상태":
+    - generic: 접수됨
+    - generic: 조리 중
+    - generic: 서빙 완료
+    - generic: 완료
+  - paragraph: 1차 주문 · 오후 11:31
+  - generic: 접수됨
+  - paragraph: 닭발 × 2
+  - paragraph: 20,000원
+  - paragraph: 현재까지 합계
+  - paragraph: 20,000원
+- button "추가 주문":
+  - generic: 추가 주문
+- button "직원 호출":
+  - generic: 직원 호출
+- button "닫기"
+- dialog "직원을 불렀어요" [active]:
+  - heading "직원을 불렀어요" [level=2]
+  - paragraph:
+    - text: 테이블 90 · 직원 호출
+    - text: 잠시만 기다려 주세요
+  - paragraph: 방금 호출됨
+  - button "확인":
+    - generic: 확인
+  - button "호출 취소":
+    - generic: 호출 취소

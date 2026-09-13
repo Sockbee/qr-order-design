@@ -62,19 +62,21 @@ export function splitTable(
 }
 
 /**
- * §4.17. `expectedFinalAmount` is mandatory: if an order lands while the
- * operator is reading the dialog, the server rejects with
- * `BILL_AMOUNT_CHANGED` rather than letting them confirm an amount they never
- * saw. The app records that a bank transfer was seen — it processes no payment.
+ * §4.17. `expectedSessionId` binds the action to the visit on screen,
+ * `clientRequestId` makes response-loss retries idempotent, and
+ * `expectedFinalAmount` rejects a bill changed while the operator was reading.
+ * The app records that a bank transfer was seen — it processes no payment.
  */
 export function confirmTablePayment(
   tableId: string,
+  expectedSessionId: string,
+  clientRequestId: string,
   expectedFinalAmount: number,
   signal?: AbortSignal,
 ): Promise<void> {
   return callStaffApi<void>(
     'tables/confirm-payment',
-    { tableId, expectedFinalAmount },
+    { tableId, expectedSessionId, clientRequestId, expectedFinalAmount },
     signal,
   )
 }

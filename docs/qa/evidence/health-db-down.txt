@@ -1,0 +1,2 @@
+{"groups":["liveness","readiness"],"status":"DOWN"}
+HTTP 503

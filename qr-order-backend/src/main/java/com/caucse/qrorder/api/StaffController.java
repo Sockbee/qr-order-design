@@ -104,7 +104,12 @@ public class StaffController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
                     content = @Content(schema = @Schema(implementation = OpenApiRequests.PaymentConfirm.class))))
     @PostMapping("/tables/confirm-payment") ApiEnvelope<Void> payment(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
-        return ApiEnvelope.ok(service.confirmPayment(required(body, "tableId"), number(body, "expectedFinalAmount"), staff));
+        return ApiEnvelope.ok(service.confirmPayment(
+                required(body, "tableId"),
+                required(body, "expectedSessionId"),
+                required(body, "clientRequestId"),
+                number(body, "expectedFinalAmount"),
+                staff));
     }
     @Operation(summary = "주문 상태 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.OrderStatus.class))))

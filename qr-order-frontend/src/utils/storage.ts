@@ -34,6 +34,14 @@ export function writeStored(key: string, value: unknown): void {
   }
 }
 
+export function removeStored(key: string): void {
+  try {
+    window.localStorage.removeItem(key)
+  } catch {
+    // See writeStored.
+  }
+}
+
 export function readStoredString(key: string): string | null {
   try {
     return window.localStorage.getItem(key)

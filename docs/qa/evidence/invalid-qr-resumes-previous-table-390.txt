@@ -1,0 +1,10 @@
+- img "솥가마"
+- heading "행복식당 본점" [level=1]
+- main:
+  - paragraph: 지금 앉아 계신 자리
+  - paragraph:
+    - generic: "91"
+    - generic: 번 테이블
+  - paragraph: 주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요.
+- button "메뉴 보기":
+  - generic: 메뉴 보기

@@ -1,0 +1,12 @@
+
+> qr-order-frontend@0.0.0 test
+> vitest run
+
+
+ RUN  v4.1.11 /Users/samso/Desktop/qr-order-design/qr-order-frontend
+
+
+ Test Files  1 passed (1)
+      Tests  2 passed (2)
+   Start at  23:24:47
+   Duration  147ms (transform 28ms, setup 0ms, import 35ms, tests 22ms, environment 0ms)

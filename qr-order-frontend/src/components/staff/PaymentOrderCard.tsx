@@ -7,7 +7,11 @@ import type { StaffPaymentOrder } from '../../types/staff'
 interface PaymentOrderCardProps {
   order: StaffPaymentOrder
   busy: boolean
-  onConfirm: (tableId: string, expectedFinalAmount: number) => void
+  onConfirm: (
+    tableId: string,
+    sessionId: string,
+    expectedFinalAmount: number,
+  ) => void
 }
 
 /**
@@ -58,7 +62,7 @@ export function PaymentOrderCard({
         variant={bill.paid ? 'secondary' : 'primary'}
         disabled={bill.paid}
         loading={busy}
-        onClick={() => onConfirm(order.tableId, bill.finalAmount)}
+        onClick={() => onConfirm(order.tableId, order.sessionId, bill.finalAmount)}
       >
         {bill.paid ? '결제 완료' : busy ? '확인 중' : '입금 확인'}
       </OperationalButton>

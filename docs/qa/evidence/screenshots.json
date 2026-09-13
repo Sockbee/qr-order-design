@@ -1,0 +1,107 @@
+[
+  {
+    "file": "call-ack-after-reload.jpg",
+    "format": "JPEG",
+    "actualWidth": 1024,
+    "actualHeight": 768,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "call-ack-stale-1024.jpg",
+    "format": "JPEG",
+    "actualWidth": 1024,
+    "actualHeight": 768,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "cart-exceeds-menu-limit-390.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "customer-confirm-390.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "customer-order-390.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "default-production-mock-no-auth.jpg",
+    "format": "JPEG",
+    "actualWidth": 1280,
+    "actualHeight": 720,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "http503-recovery-ui.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "invalid-qr-resumes-previous-table-390.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "payment-history-empty-1024.jpg",
+    "format": "JPEG",
+    "actualWidth": 1024,
+    "actualHeight": 768,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "price-changed-charged-new-390.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "price-changed-confirm-old-390.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "response-lost-error-1280.jpg",
+    "format": "JPEG",
+    "actualWidth": 1280,
+    "actualHeight": 720,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "single-option-cannot-change-mobile.jpg",
+    "format": "JPEG",
+    "actualWidth": 375,
+    "actualHeight": 812,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "slow-order-no-timeout.jpg",
+    "format": "JPEG",
+    "actualWidth": 390,
+    "actualHeight": 844,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  },
+  {
+    "file": "staff-table-detail-1024.jpg",
+    "format": "JPEG",
+    "actualWidth": 1024,
+    "actualHeight": 768,
+    "note": "Viewport emulation, not a physical device; preserve raw capture dimensions."
+  }
+]

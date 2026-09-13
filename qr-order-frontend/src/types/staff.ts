@@ -169,6 +169,7 @@ export interface StaffStationOrder {
 
 /** One card in the payment queue (staff/PaymentOrderCard). */
 export interface StaffPaymentOrder {
+  sessionId: string
   tableId: string
   bill: StaffBill
   /** "서빙 완료 후 12분" — how long the table has been waiting to settle. */
