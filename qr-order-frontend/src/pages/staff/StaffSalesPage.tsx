@@ -24,6 +24,7 @@ export function StaffSalesPage() {
   const categories = [...new Map(sales.rows.map((row) => [row.categoryId, row.categoryLabel])).entries()]
   const quantity = groups.reduce((sum, group) => sum + group.quantity, 0)
   const amount = groups.reduce((sum, group) => sum + group.amount, 0)
+  const coins = saleBreakdown(groups.flatMap((group) => group.rows), 'COIN')
   const service = groups.reduce((sum, group) => sum + saleBreakdown(group.rows, 'SERVICE').quantity, 0)
   const selectPeriod = (days: number) => {
     const today = koreaDate()
@@ -56,7 +57,7 @@ export function StaffSalesPage() {
           <div className="sales-summary" aria-label="조회 결과 합계">
             <div><span>총 판매량</span><strong>{quantity.toLocaleString()}개</strong><small>서비스 {service.toLocaleString()}개 포함</small></div>
             <div><span>판매금액 합계</span><strong>{formatStaffAmount(amount)}</strong><small>할인 반영 · 미결제 일반가 포함</small></div>
-            <div><span>판매 메뉴</span><strong>{groups.length}종</strong><small>주문 접수 시점부터 집계</small></div>
+            <div><span>엽전 사용량</span><strong>{coins.receivedCoins}개</strong><small>미수령 {coins.pendingCoins}개 · 원화 매출 별도</small></div>
           </div>
           <section className="sales-list" aria-label="메뉴별 판매 현황">
             <div className="sales-list__head"><h2>메뉴별 판매 현황</h2><p>메뉴를 누르면 유형별 내역을 볼 수 있어요</p></div>
@@ -69,19 +70,19 @@ export function StaffSalesPage() {
                   return <Fragment key={group.menuId}>
                     <tbody><tr className={open ? 'sales-table__selected' : ''}>
                       <th scope="row"><button className="sales-menu-toggle" aria-expanded={open} aria-controls={detailId} onClick={() => toggle(group.menuId)}><span aria-hidden="true">{open ? '⌄' : '›'}</span>{group.name}</button></th>
-                      <td>{group.quantity.toLocaleString()}개</td><td>{formatStaffAmount(group.amount)}</td><td>일반 · 납부자 · 서비스 합계</td>
+                      <td>{group.quantity.toLocaleString()}개</td><td>{formatStaffAmount(group.amount)}<br /><small>엽전 {saleBreakdown(group.rows, 'COIN').receivedCoins}개 수령 · {saleBreakdown(group.rows, 'COIN').pendingCoins}개 미수령</small></td><td>일반 · 납부자 · 서비스 · 엽전 합계</td>
                     </tr></tbody>
                     <tbody id={detailId} hidden={!open}>{SALE_TYPES.map((type) => {
                       const part = saleBreakdown(group.rows, type)
                       const rates = part.rates.map((rate) => `${rate}%`).join(' · ')
-                      return <tr key={type} className="sales-table__detail"><th scope="row">{SALE_LABELS[type]}</th><td>{part.quantity.toLocaleString()}개</td><td>{formatStaffAmount(part.amount)}</td>
-                        <td>{type === 'GENERAL' ? `일반가${part.unpaidQuantity ? ` · 미결제 ${part.unpaidQuantity}개 포함` : ''}` : rates ? `적용 할인율 ${rates}${type === 'SERVICE' ? ' · 별도 정책' : ''}` : type === 'MEMBER' ? '할인 결제 완료 후 분류' : '서비스 주문 없음'}</td></tr>
+                      return <tr key={type} className="sales-table__detail"><th scope="row">{SALE_LABELS[type]}</th><td>{part.quantity.toLocaleString()}개</td><td>{type === 'COIN' ? `엽전 ${part.receivedCoins}개` : formatStaffAmount(part.amount)}</td>
+                        <td>{type === 'COIN' ? `미수령 ${part.pendingCoins}개 · 할인 제외` : type === 'GENERAL' ? `일반가${part.unpaidQuantity ? ` · 미결제 ${part.unpaidQuantity}개 포함` : ''}` : rates ? `적용 할인율 ${rates}${type === 'SERVICE' ? ' · 별도 정책' : ''}` : type === 'MEMBER' ? '할인 결제 완료 후 분류' : '서비스 주문 없음'}</td></tr>
                     })}</tbody>
                   </Fragment>
                 })}
               </table></div>}
           </section>
-          <p className="sales-policy">미결제 주문은 일반가로 집계합니다. 할인 결제 완료 시 납부자로 이동하고 할인된 금액을 반영합니다.<br />서비스는 주문 당시 서비스 할인율을 적용해 별도로 집계하며, 메뉴 합계에 포함됩니다. 취소·환불 주문은 제외합니다.</p>
+          <p className="sales-policy">미결제 주문은 일반가로 집계합니다. 할인 결제 완료 시 납부자로 이동하고 할인된 금액을 반영합니다.<br />서비스는 주문 당시 서비스 할인율을 적용해 별도로 집계하며, 메뉴 합계에 포함됩니다. 엽전은 수령 확인한 사용량과 미수령 수량을 분리하고 원화에 합산하지 않습니다. 취소·환불 주문은 제외합니다.</p>
         </>}
       </div>
     </main>

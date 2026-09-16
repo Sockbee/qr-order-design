@@ -2,11 +2,12 @@ import { OrderStatusChip } from './OrderStatusChip'
 import { formatPrice } from '../utils/price'
 
 interface OrderLineProps {
-  status?: 'preparing' | 'served' | 'cancelled'
+  status?: 'accepted' | 'preparing' | 'served' | 'cancelled'
   name: string
   quantity: number
   /** Line total: unit price including options, times quantity. */
   amount: number
+  coin?: boolean
   /**
    * A comped line. `amount` stays the list price and is struck through, with
    * 0원 beside it — the diner should see what the round was worth, not a
@@ -15,7 +16,7 @@ interface OrderLineProps {
   comped?: boolean
 }
 
-export function OrderLine({ name, quantity, amount, status, comped = false }: OrderLineProps) {
+export function OrderLine({ name, quantity, amount, status, coin = false, comped = false }: OrderLineProps) {
   return (
     <div className="flex flex-col gap-1.5 w-full">
       <div className="flex items-center gap-2 w-full">
@@ -28,7 +29,7 @@ export function OrderLine({ name, quantity, amount, status, comped = false }: Or
           </p>
         )}
         <p className="flex-none font-bold text-base leading-6 text-strong whitespace-nowrap">
-          {comped ? formatPrice(0) : formatPrice(amount)}
+          {coin ? `엽전 ${amount}개` : comped ? formatPrice(0) : formatPrice(amount)}
         </p>
       </div>
       {status && <div><OrderStatusChip status={status} /></div>}

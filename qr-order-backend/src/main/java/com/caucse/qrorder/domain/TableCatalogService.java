@@ -83,38 +83,6 @@ public class TableCatalogService {
                 "label", rs.getString("label"),
                 "heading", rs.getString("heading")));
 
-        List<Map<String, Object>> groups = jdbc.query("""
-                SELECT option_group_id, menu_id, label, selection_type, required,
-                       min_select, max_select, sort_order
-                FROM option_groups WHERE active = true ORDER BY sort_order, option_group_id
-                """, (rs, index) -> {
-            List<Map<String, Object>> options = jdbc.query("""
-                    SELECT option_id, name, price_delta, available, default_selected, sort_order
-                    FROM options WHERE option_group_id = ? ORDER BY sort_order, option_id
-                    """, (ors, oi) -> ApiEnvelope.map(
-                    "optionId", ors.getString("option_id"),
-                    "name", ors.getString("name"),
-                    "priceDelta", ors.getInt("price_delta"),
-                    "available", ors.getBoolean("available"),
-                    "defaultSelected", ors.getBoolean("default_selected"),
-                    "sortOrder", ors.getInt("sort_order")), rs.getString("option_group_id"));
-            List<String> defaults = jdbc.queryForList("""
-                    SELECT option_id FROM options WHERE option_group_id = ? AND default_selected = true
-                    ORDER BY sort_order, option_id
-                    """, String.class, rs.getString("option_group_id"));
-            return ApiEnvelope.map(
-                    "optionGroupId", rs.getString("option_group_id"),
-                    "menuId", rs.getString("menu_id"),
-                    "label", rs.getString("label"),
-                    "required", rs.getBoolean("required"),
-                    "selectionType", "SINGLE".equals(rs.getString("selection_type")) ? "single" : "multiple",
-                    "minSelections", rs.getInt("min_select"),
-                    "maxSelections", rs.getInt("max_select"),
-                    "sortOrder", rs.getInt("sort_order"),
-                    "defaultSelectedOptionIds", defaults,
-                    "options", options);
-        });
-
         List<Map<String, Object>> items = jdbc.query("""
                 SELECT m.* FROM menus m JOIN categories c ON c.category_id = m.category_id
                 WHERE c.active = true ORDER BY c.sort_order, m.sort_order, m.menu_id
@@ -133,12 +101,8 @@ public class TableCatalogService {
                     "allergens", sqlArray(rs, "allergens"),
                     "origin", rs.getString("origin"),
                     "badgeTags", sqlArray(rs, "badge_tags"),
-                    "optionGroups", groups.stream().filter(group -> menuId.equals(group.get("menuId")))
-                            .map(group -> {
-                                var copy = new LinkedHashMap<>(group);
-                                copy.remove("menuId");
-                                return (Map<String, Object>) copy;
-                            }).toList());
+                    "coinPrice", rs.getObject("coin_price"),
+                    "preparationStation", rs.getString("preparation_station"));
         });
         return ApiEnvelope.map("categories", categories, "items", items, "generatedAt", Instant.now().toString());
     }

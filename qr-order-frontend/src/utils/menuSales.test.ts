@@ -27,3 +27,9 @@ describe('menu sales', () => {
     expect(koreaDate(new Date('2026-09-13T15:00:00Z'))).toBe('2026-09-14')
   })
 })
+
+it('counts coin units separately while keeping all sold quantities', () => {
+  const rows = [row('GENERAL', 2, 9000), { ...row('COIN', 3, 0), receivedCoins: 18, pendingCoins: 9 }]
+  expect(groupMenuSales(rows)[0]).toMatchObject({ quantity: 5, amount: 9000 })
+  expect(saleBreakdown(rows, 'COIN')).toMatchObject({ quantity: 3, amount: 0, receivedCoins: 18, pendingCoins: 9 })
+})

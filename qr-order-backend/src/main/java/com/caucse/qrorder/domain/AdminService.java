@@ -88,40 +88,8 @@ public class AdminService {
                 """, id, required(body, "categoryId"), required(body, "name"), String.valueOf(body.getOrDefault("description", "")),
                 price, imageUrl, bool(body, "available", true), min, max,
                 nullable(body.get("origin")), number(body, "sortOrder", 0));
+        jdbc.update("UPDATE menus SET preparation_station=CASE WHEN category_id IN ('alcohol','beverage') THEN 'SERVING' ELSE 'KITCHEN' END WHERE menu_id=?",id);
         changed(staff, "MENU_SAVED", "MENU", id, "menu.updated"); return null;
-    }
-
-    @Transactional
-    public Void saveOptionGroup(String id, Map<String, Object> body, StaffPrincipal staff) {
-        validateId(id); String type = required(body, "selectionType").toUpperCase();
-        if (!Set.of("SINGLE", "MULTIPLE").contains(type)) throw ApiException.invalid("옵션 선택 방식을 확인해 주세요.");
-        int min = number(body, "minSelections", 0);
-        int max = number(body, "maxSelections", 1);
-        boolean required = bool(body, "required", false);
-        if (min < 0 || max < min || ("SINGLE".equals(type) && max > 1) || (required && min < 1)) {
-            throw ApiException.invalid("옵션 선택 개수를 확인해 주세요.");
-        }
-        jdbc.update("""
-                INSERT INTO option_groups(option_group_id,menu_id,label,selection_type,required,min_select,max_select,sort_order,active,updated_at)
-                VALUES(?,?,?,?,?,?,?,?,?,now()) ON CONFLICT(option_group_id) DO UPDATE SET menu_id=excluded.menu_id,label=excluded.label,
-                 selection_type=excluded.selection_type,required=excluded.required,min_select=excluded.min_select,max_select=excluded.max_select,
-                 sort_order=excluded.sort_order,active=excluded.active,updated_at=now()
-                """, id, required(body, "menuId"), required(body, "label"), type, required,
-                min, max, number(body, "sortOrder", 0), bool(body, "active", true));
-        changed(staff, "OPTION_GROUP_SAVED", "OPTION_GROUP", id, "catalog.updated"); return null;
-    }
-
-    @Transactional
-    public Void saveOption(String id, Map<String, Object> body, StaffPrincipal staff) {
-        validateId(id);
-        jdbc.update("""
-                INSERT INTO options(option_id,option_group_id,menu_id,name,price_delta,available,default_selected,sort_order,updated_at)
-                VALUES(?,?,?,?,?,?,?,?,now()) ON CONFLICT(option_id) DO UPDATE SET option_group_id=excluded.option_group_id,
-                 menu_id=excluded.menu_id,name=excluded.name,price_delta=excluded.price_delta,available=excluded.available,
-                 default_selected=excluded.default_selected,sort_order=excluded.sort_order,updated_at=now()
-                """, id, required(body, "optionGroupId"), required(body, "menuId"), required(body, "name"),
-                number(body, "priceDelta", 0), bool(body, "available", true), bool(body, "defaultSelected", false), number(body, "sortOrder", 0));
-        changed(staff, "OPTION_SAVED", "OPTION", id, "catalog.updated"); return null;
     }
 
     @Transactional

@@ -27,6 +27,7 @@ interface MenuPageProps {
   onSelectItem: (id: MenuItemSummary['id']) => void
   onOpenCart: () => void
   onViewOrders: () => void
+  onEventOrder?: () => void
   onCallStaff: () => void
 }
 
@@ -43,6 +44,7 @@ export function MenuPage({
   onOpenCart,
   onViewOrders,
   onCallStaff,
+  onEventOrder,
 }: MenuPageProps) {
   const [requestedCategoryId, setRequestedCategoryId] = useState<string | null>(null)
 
@@ -77,6 +79,10 @@ export function MenuPage({
         ]}
       />
 
+      <nav className="flex border-b border-border-default" aria-label="주문 유형">
+        <button type="button" className="flex-1 p-4 font-bold border-b-2" aria-current="page">일반 주문</button>
+        <button type="button" className="flex-1 p-4" onClick={onEventOrder}>이벤트 주문</button>
+      </nav>
       {categories.length > 0 && (
         <CategoryTabs
           categories={categories}

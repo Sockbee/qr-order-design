@@ -24,11 +24,15 @@ export type OrderKind = 'GUEST' | 'SERVICE'
 export type ItemPreparationStatus = 'pending' | 'ready' | 'served'
 
 export interface PlacedOrderLine extends CartLine {
+  preparationStation?: 'KITCHEN' | 'SERVING'
   preparationStatus?: ItemPreparationStatus
   cancelled?: boolean
 }
 
 export interface PlacedOrder {
+  paymentMethod?: 'KRW' | 'COIN'
+  coinTotal?: number
+  coinReceived?: boolean
   originTableId?: string
   /** Server UUID when this order came from the API. */
   id?: string

@@ -12,10 +12,15 @@ export interface CreateOrderResponse {
   status: string
   publicStatus: OrderStatus
   paymentStatus: string
+  paymentMethod?: 'KRW' | 'COIN'
+  coinTotal?: number
+  coinReceived?: boolean
   totalAmount: number
   createdAt: string
   idempotentReplay: boolean
   items: Array<{
+    coinUnitPrice?: number
+    preparationStation?: 'KITCHEN' | 'SERVING'
     preparationStatus?: 'PENDING' | 'READY' | 'SERVED'
     status?: string
     lineNo: number
@@ -25,12 +30,7 @@ export interface CreateOrderResponse {
     unitPrice: number
     quantity: number
     lineTotal: number
-    selectedOptions: Array<{
-      optionId: string
-      groupName: string
-      name: string
-      priceDelta: number
-    }>
+
   }>
 }
 
@@ -39,6 +39,7 @@ export function createOrder(
   cart: CartLine[],
   clientRequestId: string,
   signal?: AbortSignal,
+  paymentMethod: 'KRW' | 'COIN' = 'KRW',
 ): Promise<CreateOrderResponse> {
   return callApi<CreateOrderResponse>(
     'orders/create',
@@ -46,12 +47,12 @@ export function createOrder(
       tableId: credentials.tableId,
       tableToken: credentials.tableToken,
       clientRequestId,
+      paymentMethod,
       expectedTotalAmount: calculateCartTotal(cart),
       note: '',
       items: cart.map((line) => ({
         menuId: line.itemId,
         quantity: line.quantity,
-        selectedOptionIds: line.selectedOptionIds ?? [],
       })),
     },
     signal,
@@ -72,10 +73,10 @@ export function mapCreatedOrder(
       cancelled: item.status === 'CANCELLED',
       nameSnapshot: item.name,
       quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      selectedOptionIds: item.selectedOptions.map((option) => option.optionId),
-      selectedOptionNames: item.selectedOptions.map((option) => option.name),
+      unitPrice: response.paymentMethod === 'COIN' ? (item.coinUnitPrice ?? 0) : item.unitPrice,
+      preparationStation: item.preparationStation,
     })),
+    paymentMethod: response.paymentMethod, coinTotal: response.coinTotal, coinReceived: response.coinReceived,
     total: response.totalAmount,
     placedAt: response.createdAt,
     status: mapCustomerStatus(response.status, response.publicStatus),
@@ -88,6 +89,9 @@ export interface OrderListItem {
   displayCode: string
   status: string
   publicStatus: OrderStatus
+  paymentMethod?: 'KRW' | 'COIN'
+  coinTotal?: number
+  coinReceived?: boolean
   totalAmount: number
   /** Absent on rows written before the column existed — read as GUEST. */
   orderKind?: OrderKind
@@ -98,9 +102,10 @@ export interface OrderListItem {
     preparationStatus?: 'PENDING' | 'READY' | 'SERVED'
     status?: string
     name: string
+    coinUnitPrice?: number
+    preparationStation?: 'KITCHEN' | 'SERVING'
     quantity: number
     lineTotal: number
-    selectedOptions: string[]
   }>
 }
 
@@ -149,9 +154,10 @@ export function mapRemoteOrders(
         cancelled: item.status === 'CANCELLED',
         nameSnapshot: item.name,
         quantity: item.quantity,
-        unitPrice: item.lineTotal / item.quantity,
-        selectedOptionNames: item.selectedOptions,
+        unitPrice: order.paymentMethod === 'COIN' ? (item.coinUnitPrice ?? 0) : item.lineTotal / item.quantity,
+        preparationStation: item.preparationStation,
       })),
+      paymentMethod: order.paymentMethod, coinTotal: order.coinTotal, coinReceived: order.coinReceived,
       total: order.totalAmount,
       placedAt: order.createdAt,
       status: mapCustomerStatus(order.status, order.publicStatus),

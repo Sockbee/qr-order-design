@@ -12,6 +12,8 @@ export interface MenuItemSummary {
   description: string
   /** Base price in KRW, minor units are not used by the domain. */
   price: number
+  coinPrice?: number | null
+  preparationStation?: 'KITCHEN' | 'SERVING'
   soldOut: boolean
   imageUrl?: string
   minQuantity?: number
@@ -19,33 +21,9 @@ export interface MenuItemSummary {
   badgeTags?: string[]
 }
 
-export interface MenuOption {
-  id: string
-  label: string
-  /** Signed delta against the item's base price. Always rendered, even at 0. */
-  priceDelta: number
-  soldOut?: boolean
-}
-
-export interface MenuOptionGroup {
-  id: string
-  label: string
-  /** Required groups must have a selection before the item can be added. */
-  required: boolean
-  /** Radio and check differ only by control glyph (UX-STRUCTURE §4.3). */
-  type: 'radio' | 'check'
-  options: MenuOption[]
-  /** Pre-selected option ids when the detail screen opens. */
-  defaultOptionIds?: string[]
-  minSelections?: number
-  /** Cap on simultaneous selections for a `check` group. */
-  maxSelections?: number
-}
-
 export interface MenuItemDetail extends MenuItemSummary {
   allergens?: string[]
   origin?: string
-  optionGroups: MenuOptionGroup[]
 }
 
 export interface CartLine {
@@ -55,9 +33,6 @@ export interface CartLine {
   quantity: number
   /** Menu cap frozen when the line is added, used to keep the cart submittable. */
   maxQuantitySnapshot?: number
-  /** Unit price at the time the line was added, selected options included. */
+  /** Unit price at the time the line was added. */
   unitPrice: number
-  selectedOptionIds?: MenuOption['id'][]
-  /** Immutable option labels returned by order history. */
-  selectedOptionNames?: string[]
 }

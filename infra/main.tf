@@ -117,17 +117,18 @@ resource "google_cloud_run_v2_service" "api" {
 
   scaling {
     min_instance_count = 1
-    max_instance_count = 3
+    max_instance_count = 5
   }
 
   template {
-    service_account                  = google_service_account.runtime.email
-    timeout                          = "1800s"
-    max_instance_request_concurrency = 50
+    service_account = google_service_account.runtime.email
+    timeout         = "1800s"
+    # Long-lived SSE connections share capacity with regular API requests.
+    max_instance_request_concurrency = 100
 
     scaling {
       min_instance_count = 0
-      max_instance_count = 3
+      max_instance_count = 5
     }
 
     containers {

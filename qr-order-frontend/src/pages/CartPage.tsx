@@ -6,7 +6,7 @@ import { CartLine } from '../components/CartLine'
 import { Dialog } from '../components/Dialog'
 import { PriceBreakdown } from '../components/PriceBreakdown'
 import { usePresence } from '../hooks/usePresence'
-import { calculateCartTotal, describeCartLineOptions } from '../utils/cart'
+import { calculateCartTotal } from '../utils/cart'
 import { objectParticle } from '../utils/korean'
 import type { CartLine as CartLineModel, MenuItemDetail } from '../types/menu'
 
@@ -72,14 +72,11 @@ export function CartPage({
               )
               const name = line.nameSnapshot ?? item?.name
               if (!name) return null
-              const options = line.selectedOptionNames?.join(' · ') ??
-                (item ? describeCartLineOptions(item, line) : '')
 
               return (
                 <CartLine
                   key={`${line.itemId}-${index}`}
                   name={name}
-                  options={options}
                   lineTotal={line.unitPrice * line.quantity}
                   quantity={line.quantity}
                   maxQuantity={line.maxQuantitySnapshot ?? item?.maxQuantity ?? 99}

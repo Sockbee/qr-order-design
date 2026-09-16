@@ -26,12 +26,14 @@ public class StaffOperationsService {
     private final CustomerOrderService customerOrders;
     private final DomainEventService events;
     private final TableOrderScope orderScope;
+    private final TableVisitService visits;
 
-    public StaffOperationsService(JdbcTemplate jdbc, CustomerOrderService customerOrders, DomainEventService events, TableOrderScope orderScope) {
+    public StaffOperationsService(JdbcTemplate jdbc, CustomerOrderService customerOrders, DomainEventService events, TableOrderScope orderScope, TableVisitService visits) {
         this.jdbc = jdbc;
         this.customerOrders = customerOrders;
         this.events = events;
         this.orderScope = orderScope;
+        this.visits = visits;
     }
 
     public Map<String, Object> listCalls() {
@@ -84,16 +86,14 @@ public class StaffOperationsService {
         }
         List<Map<String, Object>> items = jdbc.query("""
                 SELECT i.order_item_id,i.menu_name_snapshot,i.quantity,i.line_total,i.status,i.preparation_status,
-                       o.note,o.note_audience,o.created_at,o.table_id
+                       o.note,o.note_audience,o.created_at,o.table_id,o.payment_method,o.coin_received_at,i.coin_unit_price,i.preparation_station
                 FROM order_items i JOIN orders o ON o.order_id=i.order_id
                 WHERE o.session_id = ANY(?::uuid[]) ORDER BY o.created_at,i.line_no
                 """, (rs, index) -> ApiEnvelope.map(
                 "tableId", rs.getString("table_id"), "itemId", rs.getString("order_item_id"), "name", rs.getString("menu_name_snapshot"),
-                "selectedOptions", jdbc.queryForList("SELECT option_name_snapshot FROM order_item_options WHERE order_item_id=? ORDER BY sort_order",
-                        String.class, rs.getObject("order_item_id", UUID.class)),
                 "quantity", rs.getInt("quantity"), "lineTotal", rs.getInt("line_total"),
                 "status", rs.getString("status"), "preparationStatus", rs.getString("preparation_status"),
-                "note", rs.getString("note")), (Object) uuidArray(bill.sessionIds()));
+                "note", rs.getString("note"), "paymentMethod",rs.getString("payment_method"),"coinAmount",rs.getInt("coin_unit_price")*rs.getInt("quantity"), "coinReceived",rs.getObject("coin_received_at")!=null,"preparationStation",rs.getString("preparation_station")), (Object) uuidArray(bill.sessionIds()));
         String tableNote = jdbc.query("""
                 SELECT table_note FROM table_sessions
                 WHERE session_id = ANY(?::uuid[]) AND table_note IS NOT NULL AND table_note<>''
@@ -119,7 +119,7 @@ public class StaffOperationsService {
         return ApiEnvelope.map(
                 "sessionId", bill.primarySessionId().toString(), "tableId", tableId, "displayName", displayName,
                 "orderStatus", aggregateOrderStatus(bill.sessionIds()),
-                "openedAt", bill.openedAt().toString(), "mergedTableIds", merged,
+                "openedAt", (bill.openedAt()==null ? null : bill.openedAt().toString()), "departureAt",departure(bill.primarySessionId()), "mergedTableIds", merged,
                 "originTableId", merged.isEmpty() ? null : bill.primaryTableId(),
                 "subtotalAmount", bill.subtotal(), "discountRate", bill.discountRate(),
                 "discountAmount", bill.discountAmount(), "finalAmount", bill.finalAmount(),
@@ -184,7 +184,7 @@ public class StaffOperationsService {
         lockTables(from, to);
         Bill source = requireBill(from);
         if (source.sessionIds().size() > 1) throw ApiException.conflict("MERGED_SESSION_MOVE_NOT_ALLOWED", "합석을 먼저 분리해 주세요.");
-        Boolean destinationOccupied = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM table_sessions WHERE table_id=? AND status='OPEN')",
+        Boolean destinationOccupied = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM table_sessions WHERE table_id=? AND status IN ('OPEN','PREPARED'))",
                 Boolean.class, to);
         Boolean destinationActive = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM tables WHERE table_id=? AND active=true)", Boolean.class, to);
         if (!Boolean.TRUE.equals(destinationActive)) throw ApiException.notFound("TABLE_NOT_FOUND", "이동할 테이블을 찾을 수 없습니다.");
@@ -201,6 +201,7 @@ public class StaffOperationsService {
     public Void merge(String primaryTable, String secondaryTable, StaffPrincipal staff) {
         if (primaryTable.equals(secondaryTable)) throw ApiException.invalid("서로 다른 테이블을 선택해 주세요.");
         lockTables(primaryTable, secondaryTable);
+        visits.prepare(primaryTable); visits.prepare(secondaryTable);
         Bill primary = requireBill(primaryTable);
         Bill secondary = requireBill(secondaryTable);
         assertUnpaid(primary); assertUnpaid(secondary);
@@ -209,8 +210,10 @@ public class StaffOperationsService {
         }
         jdbc.update("UPDATE table_sessions SET merged_into_session_id=?,updated_at=now() WHERE session_id=?",
                 primary.primarySessionId(), secondary.primarySessionId());
+        if(primary.openedAt()!=null || secondary.openedAt()!=null) visits.activate(primaryTable);
+        jdbc.update("UPDATE table_sessions SET departure_at=(SELECT departure_at FROM table_sessions WHERE session_id=?) WHERE session_id=?",primary.primarySessionId(),secondary.primarySessionId());
         audit(staff, "TABLES_MERGED", "TABLE_SESSION", primary.primarySessionId().toString(), secondaryTable, primaryTable);
-        for (String member : orderScope.audience(primary.primarySessionId())) {
+        for (String member : java.util.stream.Stream.concat(orderScope.audience(primary.primarySessionId()).stream(),java.util.stream.Stream.concat(primary.members().stream(),secondary.members().stream())).distinct().toList()) {
             events.publish("table.updated", primary.primarySessionId().toString(), member, Map.of("operation", "merge"));
         }
         return null;
@@ -220,7 +223,7 @@ public class StaffOperationsService {
     public Void split(String tableId, StaffPrincipal staff) {
         Bill bill = requireBill(tableId);
         if (bill.sessionIds().size() < 2) throw ApiException.conflict("TABLE_NOT_MERGED", "합석 상태가 아닙니다.");
-        List<String> audience = orderScope.audience(bill.primarySessionId());
+        List<String> audience = java.util.stream.Stream.concat(orderScope.audience(bill.primarySessionId()).stream(),bill.members().stream()).distinct().toList();
         jdbc.update("UPDATE table_sessions SET merged_into_session_id=NULL,updated_at=now() WHERE merged_into_session_id=?",
                 bill.primarySessionId());
         audit(staff, "TABLES_SPLIT", "TABLE_SESSION", bill.primarySessionId().toString(), "MERGED", "SPLIT");
@@ -246,6 +249,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void resetTable(String tableId, String expectedSessionId, StaffPrincipal staff) {
+        visits.lock();
         UUID expected = uuid(expectedSessionId);
         jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", Object.class, expected.toString());
         Map<String, Object> expectedRow = jdbc.query("""
@@ -277,6 +281,7 @@ public class StaffOperationsService {
             throw ApiException.conflict("TABLE_SESSION_CHANGED", "방문 정보가 변경되었습니다. 테이블을 다시 확인해 주세요.");
         }
 
+        assertNoReceivedCoins(bill);
         jdbc.update("""
                 UPDATE order_items SET status='CANCELLED',updated_at=now()
                 WHERE order_id IN (
@@ -314,10 +319,11 @@ public class StaffOperationsService {
 
     @Transactional
     public Void updateItemPreparation(String itemIdValue, boolean ready, StaffPrincipal staff) {
+        visits.lock();
         UUID itemId = uuid(itemIdValue);
         Map<String, Object> target = jdbc.query("""
                 SELECT oi.order_item_id,oi.order_id,oi.preparation_status,o.table_id,o.status AS order_status,
-                       o.payment_status,ts.status AS session_status
+                       o.payment_status,oi.preparation_station,ts.status AS session_status
                 FROM order_items oi
                 JOIN orders o ON o.order_id=oi.order_id
                 JOIN table_sessions ts ON ts.session_id=o.session_id
@@ -326,13 +332,14 @@ public class StaffOperationsService {
                 """, rs -> rs.next() ? ApiEnvelope.map(
                 "orderId", rs.getObject("order_id", UUID.class),
                 "preparationStatus", rs.getString("preparation_status"),
-                "tableId", rs.getString("table_id"),
+                "station",rs.getString("preparation_station"), "tableId", rs.getString("table_id"),
                 "paymentStatus", rs.getString("payment_status"),
                 "sessionStatus", rs.getString("session_status")) : null, itemId);
         if (target == null) throw ApiException.notFound("ORDER_ITEM_NOT_FOUND", "주문 항목을 찾을 수 없습니다.");
         if (!"OPEN".equals(target.get("sessionStatus")) || "PAID".equals(target.get("paymentStatus"))) {
             throw ApiException.conflict("ORDER_ITEM_NOT_EDITABLE", "종료된 방문의 조리 상태는 변경할 수 없습니다.");
         }
+        if ("SERVING".equals(target.get("station"))) throw ApiException.invalid("음료는 서빙 화면에서 처리해 주세요.");
         String current = (String) target.get("preparationStatus");
         String next = ready ? "READY" : "PENDING";
         if ("SERVED".equals(current)) {
@@ -383,6 +390,8 @@ public class StaffOperationsService {
         if (bill.finalAmount() != expected) throw new ApiException(HttpStatus.CONFLICT, "BILL_AMOUNT_CHANGED",
                 "결제 금액이 변경되었습니다. 다시 확인해 주세요.", false,
                 Map.of("expectedFinalAmount", expected, "actualFinalAmount", bill.finalAmount()));
+        if(Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM orders WHERE session_id=ANY(?::uuid[]) AND payment_method='COIN' AND status<>'CANCELLED' AND coin_received_at IS NULL)",Boolean.class,(Object)uuidArray(bill.sessionIds()))))
+            throw ApiException.conflict("COINS_NOT_RECEIVED","미수령 엽전 주문을 먼저 확인해 주세요.");
         List<String> audience = orderScope.audience(bill.primarySessionId());
         jdbc.update("""
                 UPDATE table_sessions SET payment_status='PAID',subtotal_amount=?,discount_amount=?,final_amount=?,
@@ -392,7 +401,7 @@ public class StaffOperationsService {
                 """, bill.subtotal(), bill.discountAmount(), bill.finalAmount(), payerName, staff.deviceLabel(), (Object) uuidArray(bill.sessionIds()));
         jdbc.update("""
                 UPDATE orders SET payment_status='PAID',paid_at=now(),updated_at=now(),paid_discount_rate=?
-                WHERE session_id = ANY(?::uuid[]) AND order_kind='GUEST' AND status<>'CANCELLED'
+                WHERE session_id = ANY(?::uuid[]) AND order_kind='GUEST' AND payment_method='KRW' AND status<>'CANCELLED'
                 """,
                 bill.discountRate(), (Object) uuidArray(bill.sessionIds()));
         jdbc.update("UPDATE table_sessions SET payment_request_id=? WHERE session_id=?",
@@ -416,11 +425,17 @@ public class StaffOperationsService {
 
     @Transactional
     public Void updateStatus(Map<String, Object> request, StaffPrincipal staff) {
+        visits.lock();
         String remote = string(request, "status");
         String status = REMOTE_STATUS.get(remote);
         if (status == null) throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_ORDER_STATUS_TRANSITION", "주문 상태를 변경할 수 없습니다.", false);
         String tableId = optional(request, "tableId");
         String orderId = optional(request, "orderId");
+        if ("SERVED".equals(remote)) {
+            boolean missing=Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM orders o JOIN table_sessions s ON s.session_id=o.session_id WHERE o.payment_method='COIN' AND o.coin_received_at IS NULL AND o.status<>'CANCELLED' AND ((?::text IS NOT NULL AND o.order_id::text=?) OR (?::text IS NOT NULL AND s.session_id=ANY(?::uuid[]))))",Boolean.class,orderId,orderId,tableId,tableId==null?"{}":uuidArray(requireBill(tableId).sessionIds())));
+            if(missing)throw ApiException.conflict("COINS_NOT_RECEIVED","엽전을 먼저 수령해 주세요.");
+        }
+
         if ((tableId == null) == (orderId == null)) throw ApiException.invalid("tableId 또는 orderId 중 하나가 필요합니다.");
         int updated;
         List<String> affectedTables;
@@ -448,6 +463,8 @@ public class StaffOperationsService {
         } else {
             affectedTables = jdbc.queryForList("SELECT table_id FROM orders WHERE order_id::text=?", String.class, orderId);
             UUID parsedOrderId = uuid(orderId);
+            Boolean active = jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM orders o JOIN table_sessions s ON s.session_id=o.session_id WHERE o.order_id=? AND s.status='OPEN' AND o.status<>'CANCELLED' AND o.payment_status<>'PAID')",Boolean.class,parsedOrderId);
+            if (!Boolean.TRUE.equals(active)) throw ApiException.conflict("ORDER_NOT_ACTIVE", "진행 중인 주문이 아닙니다.");
             if ("READY".equals(remote)) {
                 jdbc.update("""
                         UPDATE order_items SET preparation_status='READY',prepared_at=COALESCE(prepared_at,now()),updated_at=now()
@@ -479,7 +496,7 @@ public class StaffOperationsService {
                 FROM orders o JOIN table_sessions s ON s.session_id=o.session_id
                 WHERE s.status='OPEN' AND o.status NOT IN ('COMPLETED','CANCELLED') AND o.payment_status<>'PAID'
                   AND EXISTS (SELECT 1 FROM order_items i WHERE i.order_id=o.order_id AND i.status='ACTIVE'
-                    AND i.preparation_status='PENDING')
+                    AND i.preparation_station='KITCHEN' AND i.preparation_status='PENDING')
                 ORDER BY o.created_at
                 """, (rs, index) -> ApiEnvelope.map(
                 "orderId", rs.getString("order_id"), "tableId", rs.getString("table_id"),
@@ -488,7 +505,7 @@ public class StaffOperationsService {
                 "createdAt", instant(rs, "created_at"), "items", queueItems(rs.getObject("order_id", UUID.class), null),
                 "kitchenNote", noteFor(rs.getString("note"), rs.getString("note_audience"), "KITCHEN")));
         List<Map<String, Object>> serving = jdbc.query("""
-                SELECT o.order_id,s.table_id,o.order_kind,min(i.prepared_at) FILTER (WHERE i.preparation_status='READY') AS ready_at,
+                SELECT o.order_id,s.table_id,o.order_kind,o.payment_method,o.coin_total,o.coin_received_at,min(i.prepared_at) FILTER (WHERE i.preparation_status='READY') AS ready_at,
                        o.note,o.note_audience,
                        count(*) FILTER (WHERE i.preparation_status='PENDING')::integer AS remaining_kitchen_items
                 FROM orders o JOIN table_sessions s ON s.session_id=o.session_id
@@ -501,6 +518,7 @@ public class StaffOperationsService {
                 """, (rs, index) -> ApiEnvelope.map(
                 "orderId", rs.getString("order_id"), "tableId", rs.getString("table_id"),
                 "orderKind", rs.getString("order_kind"),
+                "paymentMethod",rs.getString("payment_method"),"coinTotal",rs.getInt("coin_total"),"coinReceived",rs.getObject("coin_received_at")!=null,
                 "readyAt", instant(rs, "ready_at"), "items", queueItems(rs.getObject("order_id", UUID.class), "READY"),
                 "remainingKitchenItemCount", rs.getInt("remaining_kitchen_items"),
                 "servingNote", noteFor(rs.getString("note"), rs.getString("note_audience"), "SERVING")));
@@ -509,7 +527,7 @@ public class StaffOperationsService {
                 SELECT table_id FROM table_sessions WHERE status='OPEN' AND merged_into_session_id IS NULL ORDER BY opened_at
                 """, String.class)) {
             Bill bill = bill(tableId, false);
-            if (bill == null || bill.subtotal() == 0 || !"UNPAID".equals(bill.paymentStatus())) continue;
+            if (bill == null || !"UNPAID".equals(bill.paymentStatus())) continue;
             String servedAt = jdbc.query("""
                     SELECT max(status_updated_at) FROM orders WHERE session_id = ANY(?::uuid[]) AND status='COMPLETED'
                     """, rs -> rs.next() && rs.getObject(1) != null ? rs.getObject(1, OffsetDateTime.class).toInstant().toString() : null,
@@ -574,8 +592,7 @@ public class StaffOperationsService {
             if (!(raw instanceof Map<?, ?> item)) throw ApiException.invalid("items 값을 확인해 주세요.");
             return ApiEnvelope.map(
                     "menuId", item.get("itemId"),
-                    "quantity", item.get("quantity"),
-                    "selectedOptionIds", item.containsKey("selectedOptionIds") ? item.get("selectedOptionIds") : List.of());
+                    "quantity", item.get("quantity"));
         }).toList());
         Map<String, Object> result = customerOrders.create(mutable, true);
         return ApiEnvelope.map("orderId", result.get("orderId"), "displayCode", result.get("displayCode"));
@@ -629,7 +646,7 @@ public class StaffOperationsService {
 
     private Map<String, Object> orderItemTarget(UUID itemId) {
         Map<String, Object> target = jdbc.query("""
-                SELECT oi.order_id, ts.table_id, o.order_kind,oi.preparation_status,ts.status AS session_status
+                SELECT oi.order_id, ts.table_id, o.order_kind,o.payment_method,o.coin_received_at,oi.preparation_status,oi.preparation_station,ts.status AS session_status
                 FROM order_items oi
                 JOIN orders o ON o.order_id = oi.order_id
                 JOIN table_sessions ts ON ts.session_id = o.session_id
@@ -638,7 +655,7 @@ public class StaffOperationsService {
                 """, rs -> rs.next() ? Map.of(
                 "orderId", rs.getObject("order_id", UUID.class),
                 "tableId", rs.getString("table_id"),
-                "orderKind", rs.getString("order_kind"),
+                "orderKind", rs.getString("order_kind"), "paymentMethod",rs.getString("payment_method"),"coinReceived",rs.getObject("coin_received_at")!=null,"station",rs.getString("preparation_station"),
                 "preparationStatus", rs.getString("preparation_status"),
                 "sessionStatus", rs.getString("session_status")) : null, itemId);
         if (target == null) throw ApiException.notFound("ORDER_ITEM_NOT_FOUND", "주문 항목을 찾을 수 없습니다.");
@@ -650,14 +667,15 @@ public class StaffOperationsService {
             throw new ApiException(HttpStatus.CONFLICT, "SERVICE_ORDER_NOT_EDITABLE",
                     "서비스 주문은 수정할 수 없습니다. 취소 후 다시 지급해 주세요.", false);
         }
-        if (!"OPEN".equals(target.get("sessionStatus")) || !"PENDING".equals(target.get("preparationStatus"))) {
+        if (Boolean.TRUE.equals(target.get("coinReceived"))) throw ApiException.conflict("COINS_ALREADY_RECEIVED","엽전 수령 후에는 주문을 변경할 수 없습니다.");
+        if (!"OPEN".equals(target.get("sessionStatus")) || "SERVED".equals(target.get("preparationStatus")) || (!"SERVING".equals(target.get("station")) && !"PENDING".equals(target.get("preparationStatus")))) {
             throw ApiException.conflict("ORDER_ITEM_NOT_EDITABLE", "조리를 시작한 품목은 수량 변경이나 취소를 할 수 없습니다.");
         }
     }
 
     @Transactional
     public Void cancelOrders(String tableId, StaffPrincipal staff) {
-        Bill bill = requireBill(tableId); assertUnpaid(bill);
+        Bill bill = requireBill(tableId); assertUnpaid(bill); assertNoReceivedCoins(bill);
         jdbc.update("""
                 UPDATE order_items SET status='CANCELLED',updated_at=now()
                 WHERE order_id IN (SELECT order_id FROM orders WHERE session_id = ANY(?::uuid[]) AND status<>'CANCELLED')
@@ -686,8 +704,8 @@ public class StaffOperationsService {
                   AND o.status NOT IN ('COMPLETED','CANCELLED')
                 """, Integer.class, (Object) uuidArray(bill.sessionIds()));
         return ApiEnvelope.map("tableId", tableId, "displayName", displayName,
-                "sessionStatus", "OPEN", "orderStatus", status, "paymentStatus", bill.paymentStatus(),
-                "totalAmount", bill.finalAmount(), "openedAt", bill.openedAt().toString(),
+                "sessionStatus", bill.openedAt()==null ? "PREPARED" : "OPEN", "orderStatus", status, "paymentStatus", bill.paymentStatus(),
+                "totalAmount", bill.finalAmount(), "openedAt", (bill.openedAt()==null ? null : bill.openedAt().toString()), "departureAt",departure(bill.primarySessionId()),
                 "pendingItemCount", pending == null ? 0 : pending, "hasPendingCall", hasPendingCall(tableId),
                 "mergeGroupLabel", bill.members().size() > 1 ? String.join("+", bill.members()) : null,
                 "discountLabel", bill.discountRate() > 0 ? bill.discountRate() + "% 할인" : null);
@@ -700,22 +718,23 @@ public class StaffOperationsService {
     }
 
     private Bill bill(String tableId, boolean lock) {
+        if(lock) visits.lock();
         String suffix = lock ? " FOR UPDATE" : "";
         Session selected = jdbc.query("""
                 SELECT session_id,table_id,merged_into_session_id,discount_rate,payment_status,opened_at
-                FROM table_sessions WHERE table_id=? AND status='OPEN'
+                FROM table_sessions WHERE table_id=? AND status IN ('OPEN','PREPARED')
                 """ + suffix, rs -> rs.next() ? new Session(rs.getObject(1, UUID.class), rs.getString(2),
                 rs.getObject(3, UUID.class), rs.getInt(4), rs.getString(5),
-                rs.getObject(6, OffsetDateTime.class).toInstant()) : null, tableId);
+                (rs.getObject(6)==null ? null : rs.getObject(6, OffsetDateTime.class).toInstant())) : null, tableId);
         if (selected == null) return null;
         UUID primaryId = selected.mergedInto() == null ? selected.id() : selected.mergedInto();
         List<Session> sessions = jdbc.query("""
                 SELECT session_id,table_id,merged_into_session_id,discount_rate,payment_status,opened_at
-                FROM table_sessions WHERE status='OPEN' AND (session_id=? OR merged_into_session_id=?)
+                FROM table_sessions WHERE status IN ('OPEN','PREPARED') AND (session_id=? OR merged_into_session_id=?)
                 ORDER BY opened_at
                 """ + suffix, (rs, index) -> new Session(rs.getObject(1, UUID.class), rs.getString(2),
                 rs.getObject(3, UUID.class), rs.getInt(4), rs.getString(5),
-                rs.getObject(6, OffsetDateTime.class).toInstant()), primaryId, primaryId);
+                (rs.getObject(6)==null ? null : rs.getObject(6, OffsetDateTime.class).toInstant())), primaryId, primaryId);
         Session primary = sessions.stream().filter(row -> row.id().equals(primaryId)).findFirst().orElseThrow();
         List<UUID> ids = sessions.stream().map(Session::id).toList();
         Integer subtotal = jdbc.queryForObject("""
@@ -726,6 +745,11 @@ public class StaffOperationsService {
         int discount = safeSubtotal * primary.discountRate() / 100;
         return new Bill(primary.id(), primary.tableId(), ids, sessions.stream().map(Session::tableId).toList(),
                 primary.openedAt(), primary.discountRate(), primary.paymentStatus(), safeSubtotal, discount, safeSubtotal - discount);
+    }
+
+    private void assertNoReceivedCoins(Bill bill) {
+        if (Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM orders WHERE session_id=ANY(?::uuid[]) AND status<>'CANCELLED' AND coin_received_at IS NOT NULL)", Boolean.class, (Object)uuidArray(bill.sessionIds()))))
+            throw ApiException.conflict("COINS_ALREADY_RECEIVED", "이미 수령한 엽전 주문이 있습니다. 서빙과 결제 완료로 방문을 종료해 주세요.");
     }
 
     private void assertUnpaid(Bill bill) {
@@ -748,7 +772,7 @@ public class StaffOperationsService {
                 SELECT count(*)::integer FROM orders o JOIN table_sessions s ON s.session_id=o.session_id
                 WHERE s.status='OPEN' AND o.status NOT IN ('COMPLETED','CANCELLED') AND o.payment_status<>'PAID'
                   AND EXISTS (SELECT 1 FROM order_items i WHERE i.order_id=o.order_id AND i.status='ACTIVE'
-                    AND i.preparation_status='PENDING')
+                    AND i.preparation_station='KITCHEN' AND i.preparation_status='PENDING')
                 """, Integer.class);
         Integer serving = jdbc.queryForObject("""
                 SELECT count(*)::integer FROM orders o JOIN table_sessions s ON s.session_id=o.session_id
@@ -779,7 +803,7 @@ public class StaffOperationsService {
     }
 
     private List<Map<String, Object>> queueItems(UUID orderId, String preparationStatus) {
-        String filter = preparationStatus == null ? "" : " AND preparation_status='" + preparationStatus + "'";
+        String filter = preparationStatus == null ? " AND preparation_station='KITCHEN'" : " AND preparation_status='" + preparationStatus + "'";
         return jdbc.query("""
                         SELECT order_item_id,menu_name_snapshot,quantity,preparation_status
                         FROM order_items WHERE order_id=? AND status='ACTIVE'
@@ -793,9 +817,10 @@ public class StaffOperationsService {
 
     private void recalculateOrder(UUID orderId) {
         jdbc.update("""
-                UPDATE orders SET total_amount=(SELECT COALESCE(sum(line_total),0) FROM order_items WHERE order_id=? AND status='ACTIVE'),updated_at=now()
+                UPDATE orders SET coin_total=CASE WHEN payment_method='COIN' THEN (SELECT COALESCE(sum(coin_unit_price*quantity),0) FROM order_items WHERE order_id=orders.order_id AND status='ACTIVE') ELSE 0 END,total_amount=(SELECT COALESCE(sum(line_total),0) FROM order_items WHERE order_id=? AND status='ACTIVE'),updated_at=now()
                 WHERE order_id=?
                 """, orderId, orderId);
+        jdbc.update("UPDATE orders SET status='CANCELLED',public_status='cancelled',cancelled_at=now(),cancel_reason='모든 항목 취소',status_updated_at=now() WHERE order_id=? AND NOT EXISTS(SELECT 1 FROM order_items WHERE order_id=? AND status='ACTIVE')",orderId,orderId);
     }
 
     private void recalculatePreparationOrder(UUID orderId) {
@@ -817,6 +842,23 @@ public class StaffOperationsService {
                 status, CustomerOrderStatus.fromInternal(status), orderId);
     }
 
+    private String departure(UUID id) { return jdbc.query("SELECT departure_at FROM table_sessions WHERE session_id=?",rs->rs.next() && rs.getObject(1)!=null?rs.getObject(1,OffsetDateTime.class).toInstant().toString():null,id); }
+    @Transactional
+    public Void checkIn(String tableId,String sessionId,String departure,StaffPrincipal staff) { visits.checkIn(tableId,sessionId,departure,staff.deviceLabel()); return null; }
+    @Transactional
+    public Void receiveCoins(String orderId,int expected,StaffPrincipal staff) {
+        visits.lock();
+        Map<String,Object> order=jdbc.query("SELECT o.coin_total,o.coin_received_at,o.payment_method,o.status,s.status session_status FROM orders o JOIN table_sessions s ON s.session_id=o.session_id WHERE o.order_id=? FOR UPDATE OF o,s",rs->rs.next()?ApiEnvelope.map("total",rs.getInt(1),"received",rs.getObject(2)!=null,"method",rs.getString(3),"status",rs.getString(4),"session",rs.getString(5)):null,uuid(orderId));
+        if(order==null)throw ApiException.notFound("ORDER_NOT_FOUND","주문이 없습니다.");
+        if(!"COIN".equals(order.get("method")) || !"OPEN".equals(order.get("session")) || "CANCELLED".equals(order.get("status")))throw ApiException.conflict("COIN_ORDER_NOT_ACTIVE","수령 가능한 엽전 주문이 아닙니다.");
+        if(expected!=(Integer)order.get("total"))throw ApiException.conflict("COIN_AMOUNT_CHANGED","엽전 수량이 변경되었습니다. 다시 확인해 주세요.");
+        if(Boolean.TRUE.equals(order.get("received")))return null;
+        jdbc.update("UPDATE orders SET coin_received_at=now(),coin_received_by=?,updated_at=now() WHERE order_id=?",staff.deviceLabel(),uuid(orderId));
+        audit(staff,"COINS_RECEIVED","ORDER",orderId,null,String.valueOf(expected));
+        events.publishOrder("order.updated",orderId,uuid(orderId),Map.of("operation","coins-received"));
+        return null;
+    }
+
     private void audit(StaffPrincipal staff, String action, String entityType, String entityId, String from, String to) {
         jdbc.update("""
                 INSERT INTO audit_logs(log_id,actor_type,actor_id,action,entity_type,entity_id,from_value,to_value)
@@ -836,6 +878,7 @@ public class StaffOperationsService {
     }
 
     private void lockTables(String first, String second) {
+        visits.lock();
         java.util.stream.Stream.of(first, second).distinct().sorted().forEach(tableId ->
                 jdbc.query("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", rs -> null, tableId));
     }

@@ -1,6 +1,6 @@
 import { callStaffApi } from './client'
 
-export type SaleType = 'GENERAL' | 'MEMBER' | 'SERVICE'
+export type SaleType = 'GENERAL' | 'MEMBER' | 'SERVICE' | 'COIN'
 export interface MenuSaleRow {
   menuId: string
   name: string
@@ -10,6 +10,8 @@ export interface MenuSaleRow {
   discountRate: number
   quantity: number
   amount: number
+  receivedCoins?: number
+  pendingCoins?: number
   unpaidQuantity: number
 }
 export interface MenuSalesReport { startDate: string; endDate: string; timeZone: string; rows: MenuSaleRow[] }

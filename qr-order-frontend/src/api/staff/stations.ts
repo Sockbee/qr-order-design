@@ -29,6 +29,9 @@ export interface StaffQueueResponse {
     kitchenNote: string | null
   }>
   serving: Array<{
+    paymentMethod: 'KRW' | 'COIN'
+    coinTotal: number
+    coinReceived: boolean
     orderId: string
     tableId: string
     readyAt: string
@@ -139,6 +142,7 @@ export function mapServingQueue(
     items: mapItems(order.items),
     remainingKitchenItemCount: order.remainingKitchenItemCount,
     note: order.servingNote,
+    paymentMethod: order.paymentMethod, coinTotal: order.coinTotal, coinReceived: order.coinReceived,
   }))
 }
 
@@ -163,3 +167,6 @@ export function mapPaymentQueue(
     confirming: false,
   }))
 }
+
+export const receiveOrderCoins = (orderId: string, expectedCoinTotal: number): Promise<void> =>
+  callStaffApi<void>('orders/coins/receive', { orderId, expectedCoinTotal })

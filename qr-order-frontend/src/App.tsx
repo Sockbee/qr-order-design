@@ -8,6 +8,7 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom'
+import { EventOrderPage } from './pages/EventOrderPage'
 import { CartPage } from './pages/CartPage'
 import { MenuDetailPage } from './pages/MenuDetailPage'
 import { MenuPage } from './pages/MenuPage'
@@ -66,7 +67,6 @@ function orderCartSignature(cart: CartLine[]): string {
   return JSON.stringify(cart.map((line) => ({
     itemId: line.itemId,
     quantity: line.quantity,
-    selectedOptionIds: [...(line.selectedOptionIds ?? [])].sort(),
     unitPrice: line.unitPrice,
   })))
 }
@@ -162,6 +162,7 @@ function MenuRoute({
       onSelectItem={(id) => navigate(`/menu/${id}`)}
       onOpenCart={() => navigate('/cart')}
       onViewOrders={() => navigate('/orders')}
+      onEventOrder={() => navigate('/event')}
       onCallStaff={onCallStaff}
     />
   )
@@ -399,6 +400,7 @@ function App() {
     Number(credentials?.tableId.slice(1)) || tableSession.tableNumber,
     storefront.configured,
   )
+  const coinSession = useOrderSession(credentials?.tableToken ?? tableSession.token, Number(credentials?.tableId.slice(1)) || tableSession.tableNumber, storefront.configured, 'COIN')
   const remote = useOrderPolling(credentials)
   /*
    * 직원 호출 lives above the router so the "직원을 불렀어요" state survives
@@ -478,7 +480,7 @@ function App() {
           path="/orders"
           element={(
             <OrderStatusRoute
-              session={session}
+              session={{ ...session, orders: [...session.orders, ...coinSession.orders].sort((a,b) => a.placedAt.localeCompare(b.placedAt)) }}
               remote={remote}
               onCallStaff={() => setCallSheetOpen(true)}
             />
@@ -488,6 +490,7 @@ function App() {
           path="/orders/:orderNumber/done"
           element={<OrderCompleteRoute session={session} />}
         />
+        <Route path="/event" element={<EventOrderPage session={coinSession} menuItems={menuItems} tableNumber={tableNumber} credentials={credentials} liveMode={storefront.configured} loading={storefront.loading} catalogError={storefront.error?.message} onRetry={storefront.retry} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 

@@ -28,7 +28,7 @@ export function MergeTablesDialog({
   const [secondaryId, setSecondaryId] = useState<string | null>(null)
   const secondary = tables.find((table) =>
     table.tableId === secondaryId && table.tableId !== primary.tableId &&
-    table.occupied && !table.mergeLabel && !table.paid,
+    !table.mergeLabel && !table.paid,
   ) ?? null
 
   const total = primary.amount + (secondary?.amount ?? 0)
@@ -75,14 +75,13 @@ export function MergeTablesDialog({
           disabledReason={(table) => {
             if (table.tableId === primary.tableId) return '현재 테이블'
             if (table.mergeLabel) return '이미 합석'
-            if (!table.occupied) return '비어 있음'
             if (table.paid) return '결제 완료'
           }}
         />
       </div>
 
       <ImpactNote title="합치면 이렇게 됩니다">
-        합석한 모든 테이블에서 현재 방문의 기존 주문과 추가 주문내역을 함께 봅니다.
+        빈 테이블은 입장 전 미리 합칠 수 있으며, 입장 시간은 시작하지 않습니다. 합석한 모든 테이블에서 현재 방문의 기존 주문과 추가 주문내역을 함께 봅니다.
         현재 테이블의 할인율로 결제 금액을 합산합니다. 분리하면 각 테이블에서 접수한 주문만 남습니다.
       </ImpactNote>
     </StaffDialog>

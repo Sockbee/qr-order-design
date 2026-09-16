@@ -3,9 +3,7 @@ import { formatPrice } from '../utils/price'
 
 interface CartLineProps {
   name: string
-  /** " · "-joined selected option labels. Omitted when empty. */
-  options?: string
-  /** Line total: unit price including options, times quantity. */
+  /** Line total: unit price times quantity. */
   lineTotal: number
   quantity: number
   maxQuantity?: number
@@ -15,7 +13,6 @@ interface CartLineProps {
 
 export function CartLine({
   name,
-  options,
   lineTotal,
   quantity,
   maxQuantity,
@@ -30,9 +27,6 @@ export function CartLine({
 
       <div className="flex flex-1 min-w-0 flex-col gap-1">
         <p className="font-bold text-base leading-6 text-strong truncate">{name}</p>
-        {options && (
-          <p className="w-full text-[13px] leading-[19px] font-normal text-body">{options}</p>
-        )}
         <div className="flex items-center gap-2 w-full mt-0.5">
           <p className="flex-1 min-w-0 font-bold text-base leading-6 text-strong">
             {formatPrice(lineTotal)}

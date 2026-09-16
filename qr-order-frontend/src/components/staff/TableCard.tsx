@@ -1,3 +1,4 @@
+import { visitElapsed, departureLabel } from '../../utils/tableVisit'
 import './TableCard.css'
 import { TableStatusBadge } from './TableStatusBadge'
 import { formatStaffAmount } from '../../utils/price'
@@ -12,6 +13,7 @@ interface TableCardProps {
    */
   onSelect?: (tableId: string) => void
   /** True while this table's detail panel is open. */
+  now?: number
   selected?: boolean
 }
 
@@ -31,6 +33,7 @@ export function TableCard({
   table,
   onSelect,
   selected = false,
+  now,
 }: TableCardProps) {
   const delayed =
     table.occupied &&
@@ -92,7 +95,8 @@ export function TableCard({
           </span>
         )}
 
-        {meta && <span className="table-card__meta">{meta}</span>}
+        {table.occupied && now !== undefined && <span className="table-card__meta">{visitElapsed(table.openedAt, now)}<br />{departureLabel(table.departureAt, now)}</span>}
+        {meta && now === undefined && <span className="table-card__meta">{meta}</span>}
       </span>
     </>
   )

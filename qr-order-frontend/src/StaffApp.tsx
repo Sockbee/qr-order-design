@@ -108,6 +108,7 @@ function StaffTableHomeRoute({ auth }: { auth: StaffAuth }) {
                 onNote={() => navigate(`/staff/tables/${tableId}/note`)}
                 onEditOrder={() => navigate(`/staff/tables/${tableId}/edit`)}
                 onCancelOrder={() => navigate(`/staff/tables/${tableId}/cancel`)}
+                onCheckIn={() => navigate(`/staff/tables/${tableId}/check-in`)}
                 onReset={() => navigate(`/staff/tables/${tableId}/reset`)}
               />
             )
@@ -149,7 +150,7 @@ function StaffApp() {
             </RequireStaffAuth>
           )}
         />
-        {(['move', 'merge', 'split', 'discount', 'edit', 'cancel', 'note', 'reset'] as StaffOperation[]).map(
+        {(['check-in', 'move', 'merge', 'split', 'discount', 'edit', 'cancel', 'note', 'reset'] as StaffOperation[]).map(
           (operation) => (
             <Route
               key={operation}

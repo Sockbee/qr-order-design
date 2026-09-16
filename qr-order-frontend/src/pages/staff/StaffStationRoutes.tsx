@@ -125,18 +125,18 @@ export function StaffServingRoute() {
           count: stations.serving.length,
           empty: {
             title: '서빙할 주문이 없어요',
-            body: '조리가 끝나면 여기에 바로 표시됩니다',
+            body: '음료는 접수 즉시, 음식은 조리 완료 후 표시됩니다',
           },
           cards: stations.serving.map((order) => (
             <StationOrderCard
               key={order.orderId}
               order={order}
-              actionLabel="서빙 완료"
+              actionLabel={order.paymentMethod === 'COIN' && !order.coinReceived ? '엽전 수령 확인' : '서빙 완료'}
               mode="serving"
               elapsedSuffix="대기"
               thresholds={SERVING_ELAPSED}
               busy={stations.busyId === order.orderId}
-              onAction={stations.serveReady}
+              onAction={order.paymentMethod === 'COIN' && !order.coinReceived ? (id) => stations.receiveCoins(id, order.coinTotal ?? 0) : stations.serveReady}
             />
           )),
         },

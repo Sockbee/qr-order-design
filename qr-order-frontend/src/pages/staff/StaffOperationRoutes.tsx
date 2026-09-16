@@ -1,3 +1,5 @@
+import { TableCheckInDialog } from '../../components/staff/TableCheckInDialog'
+import { checkInTable } from '../../api/staff/operations'
 import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { StaffTableHomePage } from './StaffTableHomePage'
@@ -21,6 +23,7 @@ import { formatStaffAmount } from '../../utils/price'
  * call strip are one instance rather than six.
  */
 export type StaffOperation =
+  | 'check-in'
   | 'move'
   | 'merge'
   | 'split'
@@ -128,7 +131,8 @@ export function StaffTableOperationRoute({
           />
         </div>
       )}
-      {table && operation === 'move' && (
+      {table && operation === 'check-in' && detail.detail && <TableCheckInDialog detail={detail.detail} submitting={operations.submitting} onConfirm={(departureAt) => operations.run(() => checkInTable(tableId, detail.detail!.sessionId, departureAt), close)} onCancel={close} />}
+      {table && operation === 'move'  && (
         <MoveTableDialog
           source={table}
           orderCount={orderCount}

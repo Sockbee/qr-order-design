@@ -37,12 +37,6 @@ public class AdminController {
     @Operation(summary = "메뉴 추가 또는 수정", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.AdminMenu.class))))
     @PutMapping("/menus/{id}") ApiEnvelope<Void> menu(@PathVariable String id,@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff){return ApiEnvelope.ok(admin.saveMenu(id,body,staff));}
-    @Operation(summary = "옵션 그룹 추가 또는 수정", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.AdminOptionGroup.class))))
-    @PutMapping("/option-groups/{id}") ApiEnvelope<Void> group(@PathVariable String id,@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff){return ApiEnvelope.ok(admin.saveOptionGroup(id,body,staff));}
-    @Operation(summary = "옵션 추가 또는 수정", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.AdminOption.class))))
-    @PutMapping("/options/{id}") ApiEnvelope<Void> option(@PathVariable String id,@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff){return ApiEnvelope.ok(admin.saveOption(id,body,staff));}
     @Operation(summary = "매장 설정 변경", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.AdminSetting.class))))
     @PutMapping("/settings/{key}") ApiEnvelope<Void> setting(@PathVariable String key,@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff){return ApiEnvelope.ok(admin.saveSetting(key,String.valueOf(body.getOrDefault("value","")),staff));}
