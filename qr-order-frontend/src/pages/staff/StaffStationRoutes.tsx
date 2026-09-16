@@ -11,6 +11,7 @@ import {
   SERVING_ELAPSED,
 } from '../../utils/elapsed'
 import type { ElapsedThresholds } from '../../utils/elapsed'
+import { stationCardId } from '../../utils/stationPreparation'
 import type { StaffStationOrder } from '../../types/staff'
 
 function useStations() {
@@ -62,12 +63,12 @@ export function StaffKitchenRoute() {
           },
           cards: fresh.map((order) => (
             <StationOrderCard
-              key={order.orderId}
+              key={stationCardId(order)}
               order={order}
-              actionLabel="조리 시작"
+              actionLabel="전체 조리 시작"
               mode="kitchen"
               thresholds={KITCHEN_ELAPSED}
-              busy={stations.busyId === order.orderId}
+              busy={stations.busyId !== null}
               busyItemId={stations.busyItemId}
               onToggleItem={stations.togglePreparation}
               onAction={stations.startCooking}
@@ -84,13 +85,13 @@ export function StaffKitchenRoute() {
           },
           cards: cooking.map((order) => (
             <StationOrderCard
-              key={order.orderId}
+              key={stationCardId(order)}
               order={order}
               actionLabel="전체 완료"
               actionVariant="secondary"
               mode="kitchen"
               thresholds={KITCHEN_ELAPSED}
-              busy={stations.busyId === order.orderId}
+              busy={stations.busyId !== null}
               busyItemId={stations.busyItemId}
               onToggleItem={stations.togglePreparation}
               onAction={stations.completeAll}
@@ -129,14 +130,14 @@ export function StaffServingRoute() {
           },
           cards: stations.serving.map((order) => (
             <StationOrderCard
-              key={order.orderId}
+              key={stationCardId(order)}
               order={order}
               actionLabel={order.paymentMethod === 'COIN' && !order.coinReceived ? '엽전 수령 확인' : '서빙 완료'}
               mode="serving"
               elapsedSuffix="대기"
               thresholds={SERVING_ELAPSED}
-              busy={stations.busyId === order.orderId}
-              onAction={order.paymentMethod === 'COIN' && !order.coinReceived ? (id) => stations.receiveCoins(id, order.coinTotal ?? 0) : stations.serveReady}
+              busy={stations.busyId !== null}
+              onAction={order.paymentMethod === 'COIN' && !order.coinReceived ? () => stations.receiveCoins(order.orderId, order.coinTotal ?? 0) : stations.serveReady}
             />
           )),
         },

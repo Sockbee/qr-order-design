@@ -3,13 +3,15 @@ import { ApiClientError } from '../api/client'
 import { hasStaffApi, isStaffAuthError, readStaffSession } from '../api/staff/client'
 import {
   receiveOrderCoins,
-  advanceStaffOrder,
+  transitionPreparation,
   getStaffQueues,
   mapKitchenQueue,
   mapPaymentQueue,
   mapServingQueue,
-  setStaffOrderItemPrepared,
+
 } from '../api/staff/stations'
+import type { PreparationAction } from '../api/staff/stations'
+import { demoKitchenUnits, preparationUnitIds, stationCardId, transitionDemoQueues } from '../utils/stationPreparation'
 import { confirmTablePayment } from '../api/staff/operations'
 import {
   staffKitchenQueue,
@@ -38,11 +40,11 @@ interface StaffStationsState {
   busyId: string | null
   busyItemId: string | null
   retry: () => void
-  startCooking: (orderId: string) => void
-  completeAll: (orderId: string) => void
+  startCooking: (order: StaffStationOrder) => void
+  completeAll: (order: StaffStationOrder) => void
   receiveCoins: (orderId: string, total: number) => void
-  serveReady: (orderId: string) => void
-  togglePreparation: (orderId: string, itemId: string, ready: boolean) => void
+  serveReady: (order: StaffStationOrder) => void
+  togglePreparation: (order: StaffStationOrder, itemId: string) => void
   confirmPayment: (
     tableId: string,
     sessionId: string,
@@ -81,8 +83,8 @@ export function useStaffStations(): StaffStationsState {
   /** Orders resolved locally, so a card leaves immediately on tap. */
   const [received, setReceived] = useState<string[]>([])
   const [resolved, setResolved] = useState<string[]>([])
-  const [itemOverrides, setItemOverrides] = useState<Record<string, boolean>>({})
-  const [cookingOverrides, setCookingOverrides] = useState<string[]>([])
+  const [demoQueues, setDemoQueues] = useState<{ kitchen: StaffStationOrder[]; serving: StaffStationOrder[] } | null>(null)
+  const actionInFlight = useRef(false)
   const [paymentRecords, setPaymentRecords] = useState<Record<string, { payerName: string; paymentConfirmedBy: string; paidAt: string }>>({})
   const paymentRequestIds = useRef(new Map<string, string>())
 
@@ -117,8 +119,6 @@ export function useStaffStations(): StaffStationsState {
           counts: response.counts,
         })
         setResolved([])
-        setItemOverrides({})
-        setCookingOverrides([])
         setError(null)
         schedule(eventsConnected ? SSE_RECONCILE_INTERVAL_MS : STAFF_POLL_INTERVAL_MS)
       } catch (caught) {
@@ -157,7 +157,7 @@ export function useStaffStations(): StaffStationsState {
   }, [attempt, configured, eventRevision, eventsConnected])
 
   const fallback = useMemo(() => {
-    const kitchen = staffKitchenQueue()
+    const kitchen = demoKitchenUnits(staffKitchenQueue())
     const serving = staffServingQueue()
     const payment = staffPaymentQueue()
     return {
@@ -175,51 +175,20 @@ export function useStaffStations(): StaffStationsState {
 
   const base = data ?? (configured ? null : fallback)
 
-  const advance = useCallback(
-    (
-      queue: 'kitchen' | 'serving',
-      orderId: string,
-      status: 'cooking' | 'ready' | 'served',
-      resolve: boolean,
-    ) => {
-      const done = () => {
-        if (resolve) {
-          setResolved((current) => [...current, `${queue}:${orderId}`])
-        } else {
-          setCookingOverrides((current) => [...current, orderId])
-        }
+  const transition = useCallback(
+    (order: StaffStationOrder, unitIds: string[], action: PreparationAction, itemId?: string) => {
+      if (actionInFlight.current) return
+      actionInFlight.current = true
+      setBusyId(stationCardId(order))
+      setBusyItemId(itemId ?? null)
+      setError(null)
+      const request = configured ? transitionPreparation(order.orderId, unitIds, action) : Promise.resolve()
+      void request.then(() => {
         if (configured) setAttempt((value) => value + 1)
-      }
-      if (!configured) {
-        done()
-        return
-      }
-      setBusyId(orderId)
-      void advanceStaffOrder(orderId, status)
-        .then(done)
-        .catch((caught: unknown) => setError(toApiError(caught)))
-        .finally(() => setBusyId(null))
-    },
-    [configured],
-  )
-
-  const togglePreparation = useCallback(
-    (_orderId: string, itemId: string, ready: boolean) => {
-      const done = () => {
-        setItemOverrides((current) => ({ ...current, [itemId]: ready }))
-        if (configured) setAttempt((value) => value + 1)
-      }
-      if (!configured) {
-        done()
-        return
-      }
-      setBusyItemId(itemId)
-      void setStaffOrderItemPrepared(itemId, ready)
-        .then(done)
-        .catch((caught: unknown) => setError(toApiError(caught)))
-        .finally(() => setBusyItemId(null))
-    },
-    [configured],
+        else setDemoQueues((current) => transitionDemoQueues(current ?? fallback, order, unitIds, action, crypto.randomUUID()))
+      }).catch((caught: unknown) => { setError(toApiError(caught)); setAttempt((value) => value + 1) })
+        .finally(() => { actionInFlight.current = false; setBusyId(null); setBusyItemId(null) })
+    }, [configured, fallback],
   )
 
   const confirmPayment = useCallback(
@@ -247,23 +216,9 @@ export function useStaffStations(): StaffStationsState {
 
   const visible = useMemo(() => {
     if (!base) return null
-    const kitchen = base.kitchen
-      .map((order) => ({
-        ...order,
-        status: cookingOverrides.includes(order.orderId) ? 'cooking' as const : order.status,
-        items: order.items.map((item) =>
-          itemOverrides[item.itemId] === undefined
-            ? item
-            : { ...item, preparationStatus: itemOverrides[item.itemId] ? 'ready' as const : 'pending' as const },
-        ),
-      }))
-      .filter((order) =>
-        !resolved.includes(`kitchen:${order.orderId}`) &&
-        order.items.some((item) => item.preparationStatus === 'pending'),
-      )
-    const serving = base.serving.map((order) => received.includes(order.orderId) ? { ...order, coinReceived: true } : order).filter(
-      (order) => !resolved.includes(`serving:${order.orderId}`),
-    )
+    const queues = configured ? base : (demoQueues ?? base)
+    const kitchen = queues.kitchen
+    const serving = queues.serving.map((order) => received.includes(order.orderId) ? { ...order, coinReceived: true } : order)
     const payment = base.payment.map((row) =>
       resolved.includes(`payment:${row.sessionId}`)
         ? { ...row, ...paymentRecords[row.sessionId], bill: { ...row.bill, paid: true } }
@@ -285,7 +240,7 @@ export function useStaffStations(): StaffStationsState {
         payment: payment.filter((row) => !row.bill.paid).length,
       },
     }
-  }, [base, cookingOverrides, itemOverrides, resolved, paymentRecords, received])
+  }, [base, configured, demoQueues, resolved, paymentRecords, received])
 
   return {
     kitchen: visible?.kitchen ?? [],
@@ -302,12 +257,12 @@ export function useStaffStations(): StaffStationsState {
       setAttempt((value) => value + 1)
     }, []),
     startCooking: useCallback(
-      (orderId) => advance('kitchen', orderId, 'cooking', false),
-      [advance],
+      (order) => transition(order, preparationUnitIds(order), 'START'),
+      [transition],
     ),
     completeAll: useCallback(
-      (orderId) => advance('kitchen', orderId, 'ready', true),
-      [advance],
+      (order) => transition(order, preparationUnitIds(order), 'COMPLETE'),
+      [transition],
     ),
     receiveCoins: useCallback((orderId, total) => {
       setBusyId(orderId)
@@ -316,10 +271,10 @@ export function useStaffStations(): StaffStationsState {
         .catch((caught: unknown) => setError(toApiError(caught))).finally(() => setBusyId(null))
     }, [configured]),
     serveReady: useCallback(
-      (orderId) => advance('serving', orderId, 'served', true),
-      [advance],
+      (order) => transition(order, preparationUnitIds(order), 'SERVE'),
+      [transition],
     ),
-    togglePreparation,
+    togglePreparation: useCallback((order, itemId) => transition(order, [itemId], order.status === 'new' ? 'START' : 'COMPLETE', itemId), [transition]),
     confirmPayment,
   }
 }

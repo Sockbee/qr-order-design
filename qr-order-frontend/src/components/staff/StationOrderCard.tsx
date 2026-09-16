@@ -14,8 +14,8 @@ interface StationOrderCardProps {
   thresholds?: ElapsedThresholds
   busy: boolean
   busyItemId?: string | null
-  onAction: (orderId: string) => void
-  onToggleItem?: (orderId: string, itemId: string, ready: boolean) => void
+  onAction: (order: StaffStationOrder) => void
+  onToggleItem?: (order: StaffStationOrder, itemId: string) => void
 }
 
 /**
@@ -40,9 +40,6 @@ export function StationOrderCard({
   onToggleItem,
 }: StationOrderCardProps) {
   const late = elapsedLevel(order.elapsedMinutes, thresholds) === 'delayed'
-  const completed = order.items.filter(
-    (item) => item.preparationStatus !== 'pending',
-  ).length
 
   return (
     <article
@@ -53,7 +50,7 @@ export function StationOrderCard({
         <h3 className="station-card__table">{order.tableId}</h3>
         {mode === 'kitchen' && (
           <span className="station-card__progress">
-            {`조리 ${completed}/${order.items.length}`}
+            {`${order.status === 'new' ? '대기' : '조리 중'} ${order.items.length}개`}
           </span>
         )}
         {mode === 'serving' && order.remainingKitchenItemCount > 0 && (
@@ -73,26 +70,18 @@ export function StationOrderCard({
         {order.items.map((item) => (
           <li
             key={item.itemId}
-            className={`station-card__item${mode === 'kitchen' && item.preparationStatus !== 'pending' ? ' station-card__item--done' : ''}`}
+            className="station-card__item"
           >
             {mode === 'kitchen' && (
               <button
                 type="button"
                 role="checkbox"
-                aria-checked={item.preparationStatus !== 'pending'}
-                aria-label={`${item.name} 조리 완료`}
+                aria-checked={false}
+                aria-label={`${item.name}${item.unitNumber ? ` ${item.unitNumber}번째` : ''} 1개 ${order.status === 'new' ? '조리 시작' : '조리 완료'}`}
                 className="station-card__check"
-                disabled={busyItemId === item.itemId || item.preparationStatus === 'served'}
-                onClick={() =>
-                  onToggleItem?.(
-                    order.orderId,
-                    item.itemId,
-                    item.preparationStatus === 'pending',
-                  )
-                }
-              >
-                {item.preparationStatus !== 'pending' ? '✓' : ''}
-              </button>
+                disabled={busy || busyItemId !== null}
+                onClick={() => onToggleItem?.(order, item.itemId)}
+              />
             )}
             <span className="station-card__item-name">{item.name}</span>
             <span className="station-card__item-qty">×{item.quantity}</span>
@@ -113,7 +102,7 @@ export function StationOrderCard({
         block
         variant={actionVariant}
         loading={busy}
-        onClick={() => onAction(order.orderId)}
+        onClick={() => onAction(order)}
       >
         {actionLabel}
       </OperationalButton>
