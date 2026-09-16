@@ -1,22 +1,19 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
 import { staffNavItems } from '../../components/staff/staffNavItems'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import {
   createAdminTable,
+  deleteAdminMenu,
   getAdminSnapshot,
   rotateAdminTableToken,
   saveAdminCategory,
   saveAdminMenu,
-  saveAdminOption,
-  saveAdminOptionGroup,
   saveAdminSetting,
   saveAdminTable,
 } from '../../api/staff/admin'
 import type {
   AdminSnapshot,
-  CatalogOption,
-  CatalogOptionGroup,
   TokenResponse,
 } from '../../api/staff/admin'
 import { useStaffEventState } from '../../hooks/useStaffEvents'
@@ -73,13 +70,6 @@ export function StaffSettingsPage() {
       if (timer !== undefined) window.clearTimeout(timer)
     }
   }, [eventRevision, eventsConnected, revision])
-
-  const optionRows = useMemo(
-    () => snapshot?.catalog.items.flatMap((item) =>
-      item.optionGroups.map((group) => ({ menuId: item.menuId, group })),
-    ) ?? [],
-    [snapshot],
-  )
 
   const perform = (key: string, action: () => Promise<unknown>) => {
     setSaving(key)
@@ -186,6 +176,7 @@ export function StaffSettingsPage() {
                     name,
                     description: '',
                     basePrice: 0,
+                    coinPrice: null,
                     imageUrl: null,
                     available: true,
                     minQuantity: 1,
@@ -195,52 +186,34 @@ export function StaffSettingsPage() {
                   }))
                 }}>메뉴 추가</button>
               </div>
+              <p className="staff-settings__menu-help">판매 중을 해제하면 품절로 표시됩니다. 메뉴 영구 삭제는 목록에서 제거하며, 기존 주문과 판매 통계는 유지됩니다.</p>
               <div className="staff-settings__rows">
                 {snapshot.menus.map((menu) => (
                   <div key={menu.menuId} className="staff-settings__row staff-settings__row--menu">
-                    <code>{menu.menuId}</code>
+                    <code className="staff-settings__menu-id">{menu.menuId}</code>
                     <input value={menu.name} aria-label={`${menu.menuId} 이름`} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, name: event.target.value } : item) })} />
                     <input value={menu.description} aria-label={`${menu.menuId} 설명`} placeholder="메뉴 설명" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, description: event.target.value } : item) })} />
                     <input type="url" value={menu.imageUrl ?? ''} aria-label={`${menu.menuId} 이미지 URL`} placeholder="https://… 이미지 URL" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, imageUrl: event.target.value || null } : item) })} />
                     <select value={menu.categoryId} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, categoryId: event.target.value } : item) })}>{snapshot.categories.map((category) => <option key={category.categoryId} value={category.categoryId}>{category.label}</option>)}</select>
                     <input type="number" value={menu.basePrice} aria-label="가격" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, basePrice: Number(event.target.value) } : item) })} />
                     <input type="number" value={menu.sortOrder} aria-label="정렬" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, sortOrder: Number(event.target.value) } : item) })} />
-                    <label><input type="checkbox" checked={menu.available} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, available: event.target.checked } : item) })} />판매</label>
-                    <button disabled={saving !== null} type="button" onClick={() => perform(menu.menuId, () => saveAdminMenu(menu))}>저장</button>
+                    <label><input type="checkbox" checked={menu.available} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, available: event.target.checked } : item) })} />판매 중</label>
+                    <label><input type="checkbox" checked={menu.coinPrice !== null} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, coinPrice: event.target.checked ? 1 : null } : item) })} />이벤트 주문 허용</label>
+                    <label className="staff-settings__coin-price">엽전 가격
+                      <input type="number" min={1} step={1} disabled={menu.coinPrice === null} value={menu.coinPrice ?? ''} aria-label={`${menu.name} 엽전 가격`} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, coinPrice: Number(event.target.value) } : item) })} />개
+                    </label>
+                    <div className="staff-settings__menu-actions">
+                      <button disabled={saving !== null || (menu.coinPrice !== null && (!Number.isInteger(menu.coinPrice) || menu.coinPrice < 1 || menu.coinPrice > 2147483647))} type="button" onClick={() => perform(menu.menuId, () => saveAdminMenu(menu))}>저장</button>
+                      <button className="staff-settings__danger" disabled={saving !== null} type="button" onClick={() => {
+                        if (!window.confirm(`“${menu.name}” 메뉴를 영구 삭제할까요?\n고객·POS 메뉴 목록에서 제거되며 복구할 수 없습니다.\n기존 주문과 판매 통계는 유지됩니다.`)) return
+                        perform(`delete-${menu.menuId}`, () => deleteAdminMenu(menu.menuId))
+                      }}>메뉴 영구 삭제</button>
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
 
-            <section>
-              <div className="staff-settings__section-head">
-                <h2>옵션</h2>
-                <button type="button" onClick={() => {
-                  const menuId = window.prompt('옵션 그룹을 연결할 메뉴 ID')?.trim()
-                  if (!menuId || !snapshot.menus.some((menu) => menu.menuId === menuId)) return
-                  const optionGroupId = window.prompt('새 옵션 그룹 ID')?.trim()
-                  if (!optionGroupId) return
-                  const label = window.prompt('옵션 그룹 이름')?.trim()
-                  if (!label) return
-                  perform(optionGroupId, () => saveAdminOptionGroup(menuId, {
-                    optionGroupId,
-                    label,
-                    required: false,
-                    selectionType: 'single',
-                    minSelections: 0,
-                    maxSelections: 1,
-                    sortOrder: optionRows.length * 10 + 10,
-                    options: [],
-                  }))
-                }}>옵션 그룹 추가</button>
-              </div>
-              <div className="staff-settings__rows">
-                {optionRows.map(({ menuId, group }) => (
-                  <OptionEditor key={`${group.optionGroupId}:${revision}`} menuId={menuId} group={group} saving={saving !== null} perform={perform} />
-                ))}
-                {optionRows.length === 0 && <p className="staff-settings__empty">등록된 옵션이 없습니다.</p>}
-              </div>
-            </section>
 
             <section>
               <div className="staff-settings__section-head">
@@ -273,58 +246,6 @@ export function StaffSettingsPage() {
           </div>
         )}
       </main>
-    </div>
-  )
-}
-
-function OptionEditor({ menuId, group, saving, perform }: {
-  menuId: string
-  group: CatalogOptionGroup
-  saving: boolean
-  perform: (key: string, action: () => Promise<unknown>) => void
-}) {
-  const [draft, setDraft] = useState(group)
-  const updateOption = (optionId: string, patch: Partial<CatalogOption>) => setDraft({
-    ...draft,
-    options: draft.options.map((option) => option.optionId === optionId ? { ...option, ...patch } : option),
-  })
-  return (
-    <div className="staff-settings__option-group">
-      <div className="staff-settings__row staff-settings__row--option">
-        <code>{draft.optionGroupId}</code>
-        <input value={draft.label} onChange={(event) => setDraft({ ...draft, label: event.target.value })} />
-        <select value={draft.selectionType} onChange={(event) => setDraft({ ...draft, selectionType: event.target.value as 'single' | 'multiple' })}><option value="single">하나 선택</option><option value="multiple">복수 선택</option></select>
-        <input type="number" aria-label="최소 선택 수" value={draft.minSelections} onChange={(event) => setDraft({ ...draft, minSelections: Number(event.target.value) })} />
-        <input type="number" aria-label="최대 선택 수" value={draft.maxSelections} onChange={(event) => setDraft({ ...draft, maxSelections: Number(event.target.value) })} />
-        <input type="number" aria-label="옵션 그룹 정렬" value={draft.sortOrder} onChange={(event) => setDraft({ ...draft, sortOrder: Number(event.target.value) })} />
-        <label><input type="checkbox" checked={draft.required} onChange={(event) => setDraft({ ...draft, required: event.target.checked, minSelections: event.target.checked ? Math.max(1, draft.minSelections) : draft.minSelections })} />필수</label>
-        <button disabled={saving} type="button" onClick={() => perform(draft.optionGroupId, () => saveAdminOptionGroup(menuId, draft))}>그룹 저장</button>
-        <button disabled={saving} type="button" onClick={() => {
-          const optionId = window.prompt('새 옵션 ID')?.trim()
-          if (!optionId) return
-          const name = window.prompt('옵션 이름')?.trim()
-          if (!name) return
-          perform(optionId, () => saveAdminOption(menuId, draft.optionGroupId, {
-            optionId,
-            name,
-            priceDelta: 0,
-            available: true,
-            defaultSelected: false,
-            sortOrder: draft.options.length * 10 + 10,
-          }))
-        }}>옵션 추가</button>
-      </div>
-      {draft.options.map((option) => (
-        <div key={option.optionId} className="staff-settings__row staff-settings__row--option-item">
-          <code>{option.optionId}</code>
-          <input value={option.name} onChange={(event) => updateOption(option.optionId, { name: event.target.value })} />
-          <input type="number" value={option.priceDelta} onChange={(event) => updateOption(option.optionId, { priceDelta: Number(event.target.value) })} />
-          <input type="number" aria-label="옵션 정렬" value={option.sortOrder} onChange={(event) => updateOption(option.optionId, { sortOrder: Number(event.target.value) })} />
-          <label><input type="checkbox" checked={option.available} onChange={(event) => updateOption(option.optionId, { available: event.target.checked })} />판매</label>
-          <label><input type="checkbox" checked={option.defaultSelected} onChange={(event) => updateOption(option.optionId, { defaultSelected: event.target.checked })} />기본</label>
-          <button disabled={saving} type="button" onClick={() => perform(option.optionId, () => saveAdminOption(menuId, draft.optionGroupId, option))}>옵션 저장</button>
-        </div>
-      ))}
     </div>
   )
 }

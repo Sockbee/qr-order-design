@@ -135,3 +135,6 @@ export function cancelStaffTableOrders(
 ): Promise<void> {
   return callStaffApi<void>('orders/cancel', { tableId }, signal)
 }
+
+export const checkInTable = (tableId: string, expectedSessionId: string | null, departureAt: string | null): Promise<void> =>
+  callStaffApi<void>('tables/check-in', { tableId, expectedSessionId, departureAt })

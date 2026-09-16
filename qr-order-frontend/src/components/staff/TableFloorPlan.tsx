@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { visitElapsed, departureLabel } from '../../utils/tableVisit'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { HANSHIN_LANDMARKS, HANSHIN_TABLES } from '../../data/hanshinFloorPlan'
 import { isDelayed } from '../../api/staff/tables'
@@ -25,6 +26,8 @@ export function TableFloorPlan({
   disabledReason,
   label = '테이블 배치도',
 }: TableFloorPlanProps) {
+  const [now, setNow] = useState(Date.now)
+  useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 15_000); return () => window.clearInterval(timer) }, [])
   const viewport = useRef<HTMLDivElement>(null)
   const [scale, setScale] = useState(0.64)
   useLayoutEffect(() => {
@@ -66,6 +69,7 @@ export function TableFloorPlan({
             const details = [
               table?.displayName ?? position.tableId, '4인',
               occupied ? formatStaffAmount(table?.amount ?? 0) : '비어 있음',
+              visitElapsed(table?.openedAt, now), table?.occupied ? departureLabel(table.departureAt, now) : '',
               table?.mergeLabel, table?.hasCall ? '직원 호출' : '',
               delayed ? `${table?.elapsedMinutes}분 지연` : '', reason,
             ].filter(Boolean).join(', ')
@@ -100,6 +104,8 @@ export function TableFloorPlan({
                 <span className="table-floor-plan__capacity">
                   {!table ? '미등록' : `4인${table.mergeLabel ? ' · 합석' : delayed ? ' · 지연' : ''}`}
                 </span>
+                {occupied && <span className="table-floor-plan__time">{visitElapsed(table?.openedAt, now) ?? `입장 ${table?.elapsedMinutes ?? 0}분 경과`}</span>}
+                {occupied && <span className="table-floor-plan__time">{departureLabel(table?.departureAt, now)}</span>}
                 {table?.hasCall && <span className="table-floor-plan__call">호출</span>}
               </button>
             )
@@ -107,7 +113,7 @@ export function TableFloorPlan({
         </div>
         {extras.length > 0 && <section className="table-floor-plan__extras" aria-label="배치도 외 테이블">
           <h3>배치도 외 테이블</h3>
-          {extras.map((table) => <TableCard key={table.tableId} table={table}
+          {extras.map((table) => <TableCard key={table.tableId} table={table} now={now}
             selected={selectedTableIds.includes(table.tableId)}
             onSelect={disabledReason?.(table) ? undefined : onSelect} />)}
         </section>}

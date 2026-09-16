@@ -16,10 +16,11 @@ import type { StaffCallGroup } from '../../types/staff'
 export interface StaffTableListItem {
   tableId: string
   displayName: string
-  sessionStatus: 'OPEN' | 'CLOSED' | 'EMPTY'
+  sessionStatus: 'OPEN' | 'PREPARED' | 'CLOSED' | 'EMPTY'
   orderStatus: string | null
   paymentStatus: string | null
   totalAmount: number
+  departureAt?: string | null
   openedAt: string | null
   pendingItemCount: number
   hasPendingCall: boolean
@@ -76,13 +77,14 @@ export function mapStaffTables(
       tableId: item.tableId,
       displayName: item.displayName,
       occupied,
+      openedAt: item.openedAt, departureAt: item.departureAt,
       status: occupied ? mapStatus(item) : null,
       amount: occupied ? item.totalAmount : 0,
       elapsedMinutes: occupied ? elapsedMinutes(item.openedAt, now) : null,
       pendingItemCount: occupied ? item.pendingItemCount : 0,
       paid: item.paymentStatus === 'PAID',
       hasCall: item.hasPendingCall,
-      mergeLabel: occupied ? item.mergeGroupLabel : null,
+      mergeLabel: item.mergeGroupLabel,
       discountLabel: occupied ? item.discountLabel : null,
     }
   })

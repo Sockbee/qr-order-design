@@ -11,27 +11,6 @@ export const categories: MenuCategory[] = [
   { id: 'drink', label: '음료', heading: '음료' },
 ]
 
-const SPICINESS_GROUP = {
-  id: 'spiciness',
-  label: '맵기 선택',
-  required: true,
-  type: 'radio' as const,
-  defaultOptionIds: ['normal'],
-  options: [
-    { id: 'mild', label: '순하게', priceDelta: 0 },
-    { id: 'normal', label: '보통', priceDelta: 0 },
-    { id: 'very-spicy', label: '아주 맵게', priceDelta: 0 },
-  ],
-}
-
-const RICE_EXTRA_GROUP = {
-  id: 'extras',
-  label: '추가 선택',
-  required: false,
-  type: 'check' as const,
-  options: [{ id: 'rice', label: '공기밥 추가', priceDelta: 1000 }],
-}
-
 export const menuItems: MenuItemDetail[] = [
   {
     id: 'kimchi-jjigae',
@@ -42,24 +21,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['대두', '밀'],
     origin: '국내산',
-    optionGroups: [
-      SPICINESS_GROUP,
-      {
-        id: 'extras',
-        label: '추가 선택',
-        required: false,
-        type: 'check',
-        options: [
-          { id: 'rice', label: '공기밥 추가', priceDelta: 1000 },
-          {
-            id: 'fried-egg',
-            label: '계란후라이',
-            priceDelta: 2000,
-            soldOut: true,
-          },
-        ],
-      },
-    ],
+
   },
   {
     id: 'jeyuk-bokkeum',
@@ -70,19 +32,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['대두', '돼지고기'],
     origin: '국내산',
-    optionGroups: [
-      SPICINESS_GROUP,
-      {
-        id: 'extras',
-        label: '추가 선택',
-        required: false,
-        type: 'check',
-        options: [
-          { id: 'rice', label: '공기밥 추가', priceDelta: 1000 },
-          { id: 'lettuce', label: '상추 추가', priceDelta: 2000 },
-        ],
-      },
-    ],
+
   },
   {
     id: 'haemul-pajeon',
@@ -93,7 +43,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: true,
     allergens: ['밀', '갑각류'],
     origin: '수입산',
-    optionGroups: [],
+
   },
   {
     id: 'golbaengi-muchim-rec',
@@ -104,7 +54,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '연체류'],
     origin: '수입산',
-    optionGroups: [],
+
   },
   {
     id: 'fried-chicken-rec',
@@ -115,21 +65,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '계란'],
     origin: '국내산',
-    optionGroups: [
-      {
-        id: 'sauce',
-        label: '소스 선택',
-        required: true,
-        type: 'radio',
-        defaultOptionIds: ['original'],
-        options: [
-          { id: 'original', label: '오리지널', priceDelta: 0 },
-          { id: 'yangnyeom', label: '양념', priceDelta: 1000 },
-          { id: 'ganjang', label: '간장', priceDelta: 1000 },
-          { id: 'half', label: '반반', priceDelta: 1500 },
-        ],
-      },
-    ],
+
   },
   {
     id: 'doenjang-jjigae',
@@ -140,7 +76,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['대두'],
     origin: '국내산',
-    optionGroups: [RICE_EXTRA_GROUP],
+
   },
   {
     id: 'bibimbap',
@@ -151,18 +87,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['대두', '계란'],
     origin: '국내산',
-    optionGroups: [
-      {
-        id: 'gochujang',
-        label: '고추장 선택',
-        required: true,
-        type: 'radio',
-        options: [
-          { id: 'with', label: '고추장 넣기', priceDelta: 0 },
-          { id: 'without', label: '고추장 빼기', priceDelta: 0 },
-        ],
-      },
-    ],
+
   },
   {
     id: 'sundubu-jjigae',
@@ -173,7 +98,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['대두', '계란'],
     origin: '국내산',
-    optionGroups: [SPICINESS_GROUP, RICE_EXTRA_GROUP],
+
   },
   {
     id: 'kimchi-fried-rice',
@@ -184,18 +109,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '돼지고기'],
     origin: '국내산',
-    optionGroups: [
-      {
-        id: 'topping',
-        label: '토핑 추가',
-        required: false,
-        type: 'check',
-        options: [
-          { id: 'cheese', label: '치즈 추가', priceDelta: 1000 },
-          { id: 'fried-egg', label: '계란후라이 추가', priceDelta: 1000 },
-        ],
-      },
-    ],
+
   },
   {
     id: 'naengmyeon',
@@ -206,7 +120,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: true,
     allergens: ['밀', '메밀'],
     origin: '국내산',
-    optionGroups: [],
+
   },
   {
     id: 'ramen',
@@ -217,15 +131,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '계란'],
     origin: '수입산',
-    optionGroups: [
-      {
-        id: 'noodle-extra',
-        label: '사리 추가',
-        required: false,
-        type: 'check',
-        options: [{ id: 'noodle', label: '면 사리 추가', priceDelta: 1500 }],
-      },
-    ],
+
   },
   {
     id: 'gyeranmari',
@@ -236,7 +142,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['계란'],
     origin: '국내산',
-    optionGroups: [],
+
   },
   {
     id: 'golbaengi-muchim',
@@ -247,7 +153,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '연체류'],
     origin: '수입산',
-    optionGroups: [],
+
   },
   {
     id: 'dubu-kimchi',
@@ -258,7 +164,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['대두', '돼지고기'],
     origin: '국내산',
-    optionGroups: [],
+
   },
   {
     id: 'fried-chicken',
@@ -269,21 +175,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '계란'],
     origin: '국내산',
-    optionGroups: [
-      {
-        id: 'sauce',
-        label: '소스 선택',
-        required: true,
-        type: 'radio',
-        defaultOptionIds: ['original'],
-        options: [
-          { id: 'original', label: '오리지널', priceDelta: 0 },
-          { id: 'yangnyeom', label: '양념', priceDelta: 1000 },
-          { id: 'ganjang', label: '간장', priceDelta: 1000 },
-          { id: 'half', label: '반반', priceDelta: 1500 },
-        ],
-      },
-    ],
+
   },
   {
     id: 'jokbal',
@@ -294,19 +186,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['돼지고기'],
     origin: '국내산',
-    optionGroups: [
-      {
-        id: 'sauce',
-        label: '소스 선택',
-        required: true,
-        type: 'radio',
-        defaultOptionIds: ['plain'],
-        options: [
-          { id: 'plain', label: '기본', priceDelta: 0 },
-          { id: 'maeun', label: '매운족발', priceDelta: 2000 },
-        ],
-      },
-    ],
+
   },
   {
     id: 'sundae',
@@ -317,7 +197,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: true,
     allergens: ['메밀'],
     origin: '국내산',
-    optionGroups: [],
+
   },
   {
     id: 'pajeon',
@@ -328,7 +208,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['밀', '계란', '돼지고기'],
     origin: '국내산',
-    optionGroups: [],
+
   },
   {
     id: 'ojingeo-bokkeum',
@@ -339,7 +219,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: ['갑각류', '연체류'],
     origin: '수입산',
-    optionGroups: [SPICINESS_GROUP],
+
   },
   {
     id: 'gamja-tuigim',
@@ -350,7 +230,7 @@ export const menuItems: MenuItemDetail[] = [
     soldOut: false,
     allergens: [],
     origin: '수입산',
-    optionGroups: [],
+
   },
   {
     id: 'cola',
@@ -359,7 +239,7 @@ export const menuItems: MenuItemDetail[] = [
     description: '500ml 병',
     price: 2000,
     soldOut: false,
-    optionGroups: [],
+
   },
   {
     id: 'cider',
@@ -368,38 +248,25 @@ export const menuItems: MenuItemDetail[] = [
     description: '500ml 병',
     price: 2000,
     soldOut: false,
-    optionGroups: [],
+
   },
   {
-    id: 'soju',
+    id: 'soju', coinPrice: 9, preparationStation: 'SERVING',
     categoryId: 'drink',
     name: '소주',
     description: '주문 시 신분증을 확인할 수 있습니다',
     price: 4000,
     soldOut: false,
-    optionGroups: [
-      {
-        id: 'brand',
-        label: '브랜드 선택',
-        required: false,
-        type: 'radio',
-        defaultOptionIds: ['default'],
-        options: [
-          { id: 'default', label: '매장 기본', priceDelta: 0 },
-          { id: 'chamisul', label: '참이슬', priceDelta: 0 },
-          { id: 'chum-churum', label: '처음처럼', priceDelta: 0 },
-        ],
-      },
-    ],
+
   },
   {
-    id: 'beer',
+    id: 'beer', coinPrice: 9, preparationStation: 'SERVING',
     categoryId: 'drink',
-    name: '생맥주 (500cc)',
+    name: '맥주',
     description: '시원하게 즉석에서 뽑아드립니다',
     price: 5000,
     soldOut: false,
-    optionGroups: [],
+
   },
   {
     id: 'makgeolli',
@@ -408,7 +275,7 @@ export const menuItems: MenuItemDetail[] = [
     description: '750ml 병, 흔들어서 드세요',
     price: 6000,
     soldOut: true,
-    optionGroups: [],
+
   },
   {
     id: 'highball',
@@ -417,34 +284,30 @@ export const menuItems: MenuItemDetail[] = [
     description: '위스키와 탄산수를 섞은 시그니처 하이볼',
     price: 9000,
     soldOut: false,
-    optionGroups: [
-      {
-        id: 'garnish',
-        label: '가니시 추가',
-        required: false,
-        type: 'check',
-        options: [{ id: 'lemon', label: '레몬 추가', priceDelta: 500 }],
-      },
-    ],
+
   },
+  ...[
+    { id: 'banana-milk-highball', name: '바나나우유 하이볼', coinPrice: 10, price: 5000 },
+    { id: 'mix-coffee-highball', name: '믹스커피 하이볼', coinPrice: 10, price: 5000 },
+    { id: 'frozen-sikhye', name: '식혜', coinPrice: 8, price: 4000 },
+    { id: 'eolbaksa', name: '얼박사', coinPrice: 8, price: 4000 },
+  ].map((item) => ({ ...item, categoryId: 'drink', description: '일반 주문 또는 엽전 주문 가능', soldOut: false, preparationStation: 'SERVING' as const })),
 ]
 
 /**
- * Seeded cart matching the S05 frame: 김치찌개 (보통 · 공기밥 추가) 10,000원 +
- * 제육볶음 (보통) 13,000원 = 총 23,000원 — which is also the figure the S02
+ * Seeded cart matching the S05 frame: 김치찌개 9,000원 +
+ * 제육볶음 13,000원 = 총 22,000원 — which is also the figure the S02
  * sticky bar draws.
  */
 export const initialCart: CartLine[] = [
   {
     itemId: 'kimchi-jjigae',
     quantity: 1,
-    unitPrice: 10000,
-    selectedOptionIds: ['normal', 'rice'],
+    unitPrice: 9000,
   },
   {
     itemId: 'jeyuk-bokkeum',
     quantity: 1,
     unitPrice: 13000,
-    selectedOptionIds: ['normal'],
   },
 ]

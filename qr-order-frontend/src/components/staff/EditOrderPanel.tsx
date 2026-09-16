@@ -53,27 +53,24 @@ export function EditOrderPanel({
                   <div className="edit-panel__item-info">
                     <span className="edit-panel__item-name">{item.name}</span>
                     <span className="edit-panel__item-amount">
-                      {formatStaffAmount(item.amount)}
+                      {item.paymentMethod === 'COIN' ? `엽전 ${item.coinAmount ?? 0}개` : formatStaffAmount(item.amount)}
                     </span>
                   </div>
                   <QuantitySelector
                     value={item.quantity}
                     ariaLabel={`${item.name} 수량`}
-                    disabled={item.preparationStatus !== 'pending'}
+                    disabled={item.coinReceived || item.preparationStatus === 'served' || (item.preparationStation !== 'SERVING' && item.preparationStatus !== 'pending')}
                     onChange={(next) => onQuantityChange(item.itemId, next)}
                   />
                 </div>
                 <div className="edit-panel__item-row">
-                  <span className="edit-panel__item-option">
-                    {`옵션 · ${item.optionSummary}`}
-                  </span>
                   <OperationalButton
                     variant="danger"
                     size="md"
-                    disabled={item.preparationStatus !== 'pending'}
+                    disabled={item.coinReceived || item.preparationStatus === 'served' || (item.preparationStation !== 'SERVING' && item.preparationStatus !== 'pending')}
                     onClick={() => onCancelItem(item.itemId)}
                   >
-                    {item.preparationStatus === 'pending' ? '항목 취소' : '조리 시작됨'}
+                    {'항목 취소'}
                   </OperationalButton>
                 </div>
               </li>

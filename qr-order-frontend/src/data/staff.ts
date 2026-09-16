@@ -53,6 +53,8 @@ export const staffTables: StaffTableSummary[] = SEEDS.map((seed) => {
     status: occupied ? 'cooking' : null,
     amount: seed.amount ?? 0,
     elapsedMinutes: seed.minutes ?? null,
+    openedAt: occupied ? new Date(Date.now() - (seed.minutes ?? 0) * 60_000).toISOString() : null,
+    departureAt: occupied && seed.n < 5 ? new Date(Date.now() + (seed.n === 3 ? -5 : 75) * 60_000).toISOString() : null,
     pendingItemCount: seed.pending ?? 0,
     paid: seed.paid ?? false,
     hasCall: seed.call ?? false,
@@ -101,6 +103,7 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
     displayName: table?.displayName ?? tableId,
     status: table?.status ?? null,
     elapsedMinutes: table?.elapsedMinutes ?? null,
+    openedAt: table?.openedAt, departureAt: table?.departureAt,
     bill: {
       subtotalAmount: subtotal,
       discountRate,
@@ -113,7 +116,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
       {
         itemId: `${tableId}-1`,
         name: '김치전',
-        optionSummary: '바삭하게',
         quantity: 2,
         amount: 18_000,
         cancelled: false,
@@ -123,7 +125,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
       {
         itemId: `${tableId}-2`,
         name: '떡볶이',
-        optionSummary: '기본',
         quantity: 1,
         amount: 9_000,
         cancelled: false,
@@ -133,7 +134,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
       {
         itemId: `${tableId}-3`,
         name: '소주',
-        optionSummary: '참이슬',
         quantity: 3,
         amount: 15_000,
         cancelled: false,
@@ -143,7 +143,6 @@ export function staffTableDetail(tableId: string): StaffTableDetail {
       {
         itemId: `${tableId}-4`,
         name: '해물파전',
-        optionSummary: '—',
         quantity: 1,
         amount: 15_000,
         cancelled: true,
@@ -206,21 +205,21 @@ export function staffKitchenQueue(): StaffStationOrder[] {
     tableId: order.tableId,
     status: order.status,
     elapsedMinutes: order.elapsedMinutes,
-    items: KITCHEN_ITEMS,
+    items: KITCHEN_ITEMS.filter((item) => item.name !== '소주'),
     remainingKitchenItemCount: 2,
     note: '김치전 먼저',
   }))
 }
 
 export function staffServingQueue(): StaffStationOrder[] {
-  return staffQueues.serving.map((order) => ({
-    orderId: order.orderId,
-    tableId: order.tableId,
-    status: 'ready' as const,
+  return staffQueues.serving.map((order, index) => ({
+    orderId: order.orderId, tableId: order.tableId, status: 'ready' as const,
     elapsedMinutes: order.elapsedMinutes,
-    items: SERVING_ITEMS,
-    remainingKitchenItemCount: 1,
-    note: '접시 추가 필요',
+    paymentMethod: index === 1 || index === 2 ? 'COIN' as const : 'KRW' as const,
+    coinTotal: index === 1 ? 29 : 18, coinReceived: index === 2,
+    items: index === 1 ? [{ itemId: 'coin-highball', name: '바나나우유 하이볼', quantity: 2, preparationStatus: 'ready' as const }, { itemId: 'coin-soju', name: '소주', quantity: 1, preparationStatus: 'ready' as const }] : index === 2 ? [{ itemId: 'coin-beer', name: '맥주', quantity: 2, preparationStatus: 'ready' as const }] : SERVING_ITEMS,
+    remainingKitchenItemCount: index > 0 ? 0 : 1,
+    note: index === 1 ? '실물 엽전 29개를 받고 확인해 주세요' : null,
   }))
 }
 

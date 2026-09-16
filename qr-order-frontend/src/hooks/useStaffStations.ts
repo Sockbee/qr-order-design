@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ApiClientError } from '../api/client'
 import { hasStaffApi, isStaffAuthError, readStaffSession } from '../api/staff/client'
 import {
+  receiveOrderCoins,
   advanceStaffOrder,
   getStaffQueues,
   mapKitchenQueue,
@@ -39,6 +40,7 @@ interface StaffStationsState {
   retry: () => void
   startCooking: (orderId: string) => void
   completeAll: (orderId: string) => void
+  receiveCoins: (orderId: string, total: number) => void
   serveReady: (orderId: string) => void
   togglePreparation: (orderId: string, itemId: string, ready: boolean) => void
   confirmPayment: (
@@ -77,6 +79,7 @@ export function useStaffStations(): StaffStationsState {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [busyItemId, setBusyItemId] = useState<string | null>(null)
   /** Orders resolved locally, so a card leaves immediately on tap. */
+  const [received, setReceived] = useState<string[]>([])
   const [resolved, setResolved] = useState<string[]>([])
   const [itemOverrides, setItemOverrides] = useState<Record<string, boolean>>({})
   const [cookingOverrides, setCookingOverrides] = useState<string[]>([])
@@ -258,7 +261,7 @@ export function useStaffStations(): StaffStationsState {
         !resolved.includes(`kitchen:${order.orderId}`) &&
         order.items.some((item) => item.preparationStatus === 'pending'),
       )
-    const serving = base.serving.filter(
+    const serving = base.serving.map((order) => received.includes(order.orderId) ? { ...order, coinReceived: true } : order).filter(
       (order) => !resolved.includes(`serving:${order.orderId}`),
     )
     const payment = base.payment.map((row) =>
@@ -282,7 +285,7 @@ export function useStaffStations(): StaffStationsState {
         payment: payment.filter((row) => !row.bill.paid).length,
       },
     }
-  }, [base, cookingOverrides, itemOverrides, resolved, paymentRecords])
+  }, [base, cookingOverrides, itemOverrides, resolved, paymentRecords, received])
 
   return {
     kitchen: visible?.kitchen ?? [],
@@ -306,6 +309,12 @@ export function useStaffStations(): StaffStationsState {
       (orderId) => advance('kitchen', orderId, 'ready', true),
       [advance],
     ),
+    receiveCoins: useCallback((orderId, total) => {
+      setBusyId(orderId)
+      const action = configured ? receiveOrderCoins(orderId, total) : Promise.resolve()
+      void action.then(() => { setReceived((current) => [...current, orderId]); setAttempt((value) => value + 1) })
+        .catch((caught: unknown) => setError(toApiError(caught))).finally(() => setBusyId(null))
+    }, [configured]),
     serveReady: useCallback(
       (orderId) => advance('serving', orderId, 'served', true),
       [advance],

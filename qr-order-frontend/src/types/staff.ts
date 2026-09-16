@@ -49,6 +49,8 @@ export interface StaffTableSummary {
   status: StaffOrderStatus | null
   amount: number
   /** Minutes since the session opened. Null while the table is empty. */
+  openedAt?: string | null
+  departureAt?: string | null
   elapsedMinutes: number | null
   pendingItemCount: number
   paid: boolean
@@ -91,11 +93,13 @@ export interface StaffTableHomeData {
 
 /** One line of the A02 order list (staff/StaffOrderItem, 87:68). */
 export interface StaffOrderItem {
+  paymentMethod?: 'KRW' | 'COIN'
+  coinAmount?: number
+  coinReceived?: boolean
+  preparationStation?: 'KITCHEN' | 'SERVING'
   originTableId?: string
   itemId: string
   name: string
-  /** Joined option summary, or `—` when there is none. */
-  optionSummary: string
   quantity: number
   amount: number
   /** Cancelled lines stay in the list, struck through — see the component. */
@@ -140,6 +144,8 @@ export interface StaffTableDetail {
   tableId: string
   displayName: string
   status: StaffOrderStatus | null
+  openedAt?: string | null
+  departureAt?: string | null
   elapsedMinutes: number | null
   bill: StaffBill
   orderCount: number
@@ -153,6 +159,9 @@ export interface StaffTableDetail {
 
 /** One card in the kitchen or serving queue (staff/KitchenOrderCard, 88:68). */
 export interface StaffStationOrder {
+  paymentMethod?: 'KRW' | 'COIN'
+  coinTotal?: number
+  coinReceived?: boolean
   orderId: string
   tableId: string
   status: StaffOrderStatus

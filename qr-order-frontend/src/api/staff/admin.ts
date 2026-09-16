@@ -21,6 +21,7 @@ export interface AdminMenu {
   categoryId: string
   name: string
   description: string
+  coinPrice: number | null
   basePrice: number
   imageUrl: string | null
   available: boolean
@@ -46,37 +47,16 @@ export interface AdminSetting {
   description: string
 }
 
-export interface CatalogOption {
-  optionId: string
-  name: string
-  priceDelta: number
-  available: boolean
-  defaultSelected: boolean
-  sortOrder: number
-}
-
-export interface CatalogOptionGroup {
-  optionGroupId: string
-  label: string
-  required: boolean
-  selectionType: 'single' | 'multiple'
-  minSelections: number
-  maxSelections: number
-  sortOrder: number
-  options: CatalogOption[]
-}
-
 export interface AdminSnapshot {
   tables: AdminTable[]
   categories: AdminCategory[]
   menus: AdminMenu[]
   settings: AdminSetting[]
-  catalog: { items: Array<{ menuId: string; optionGroups: CatalogOptionGroup[] }> }
 }
 
 async function adminApi<T>(
   path: string,
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'DELETE',
   payload: Record<string, unknown> = {},
   signal?: AbortSignal,
 ): Promise<T> {
@@ -119,6 +99,9 @@ export const saveAdminCategory = (category: AdminCategory) =>
 export const saveAdminMenu = (menu: AdminMenu) =>
   adminApi<void>(`menus/${encodeURIComponent(menu.menuId)}`, 'PUT', menu as unknown as Record<string, unknown>)
 
+export const deleteAdminMenu = (menuId: string) =>
+  adminApi<void>(`menus/${encodeURIComponent(menuId)}`, 'DELETE')
+
 export const saveAdminSetting = (key: string, value: string) =>
   adminApi<void>(`settings/${encodeURIComponent(key)}`, 'PUT', { value })
 
@@ -137,24 +120,3 @@ export interface TokenResponse {
   url: string
   qrSvg: string
 }
-
-export const saveAdminOptionGroup = (
-  menuId: string,
-  group: CatalogOptionGroup,
-) =>
-  adminApi<void>(
-    `option-groups/${encodeURIComponent(group.optionGroupId)}`,
-    'PUT',
-    { menuId, ...group },
-  )
-
-export const saveAdminOption = (
-  menuId: string,
-  optionGroupId: string,
-  option: CatalogOption,
-) =>
-  adminApi<void>(`options/${encodeURIComponent(option.optionId)}`, 'PUT', {
-    menuId,
-    optionGroupId,
-    ...option,
-  })

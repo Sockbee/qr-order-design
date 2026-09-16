@@ -1,4 +1,5 @@
 import { Badge } from './Badge'
+import { MenuImage } from './MenuImage'
 import { formatPrice } from '../utils/price'
 import type { MenuItemSummary } from '../types/menu'
 
@@ -17,13 +18,12 @@ export function MenuItem({ item, onSelect }: MenuItemProps) {
       disabled={soldOut}
       onClick={() => onSelect?.(item.id)}
     >
-      <span
+      <MenuImage
+        src={imageUrl}
         className={`flex-none size-[84px] rounded-btn-xl bg-surface overflow-hidden ${
           soldOut ? 'grayscale opacity-45' : ''
         }`}
-      >
-        {imageUrl && <img className="w-full h-full object-cover" src={imageUrl} alt="" />}
-      </span>
+      />
       <span className="flex flex-1 min-w-0 flex-col gap-1">
         <span className="flex items-center gap-2 w-full min-w-0">
           <span
