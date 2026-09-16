@@ -97,6 +97,7 @@ export interface StaffOrderItem {
   coinAmount?: number
   coinReceived?: boolean
   preparationStation?: 'KITCHEN' | 'SERVING'
+  preparationLocked?: boolean
   originTableId?: string
   itemId: string
   name: string
@@ -159,6 +160,7 @@ export interface StaffTableDetail {
 
 /** One card in the kitchen or serving queue (staff/KitchenOrderCard, 88:68). */
 export interface StaffStationOrder {
+  cardId?: string
   paymentMethod?: 'KRW' | 'COIN'
   coinTotal?: number
   coinReceived?: boolean
@@ -168,9 +170,11 @@ export interface StaffStationOrder {
   elapsedMinutes: number
   items: Array<{
     itemId: string
+    unitIds?: string[]
+    unitNumber?: number
     name: string
     quantity: number
-    preparationStatus: 'pending' | 'ready' | 'served'
+    preparationStatus: 'pending' | 'cooking' | 'ready' | 'served'
   }>
   /** Ready cards can coexist with an unfinished kitchen ticket. */
   remainingKitchenItemCount: number

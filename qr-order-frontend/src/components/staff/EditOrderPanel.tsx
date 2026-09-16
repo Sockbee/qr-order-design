@@ -59,7 +59,7 @@ export function EditOrderPanel({
                   <QuantitySelector
                     value={item.quantity}
                     ariaLabel={`${item.name} 수량`}
-                    disabled={item.coinReceived || item.preparationStatus === 'served' || (item.preparationStation !== 'SERVING' && item.preparationStatus !== 'pending')}
+                    disabled={item.preparationLocked || item.coinReceived || item.preparationStatus === 'served' || (item.preparationStation !== 'SERVING' && item.preparationStatus !== 'pending')}
                     onChange={(next) => onQuantityChange(item.itemId, next)}
                   />
                 </div>
@@ -67,7 +67,7 @@ export function EditOrderPanel({
                   <OperationalButton
                     variant="danger"
                     size="md"
-                    disabled={item.coinReceived || item.preparationStatus === 'served' || (item.preparationStation !== 'SERVING' && item.preparationStatus !== 'pending')}
+                    disabled={item.preparationLocked || item.coinReceived || item.preparationStatus === 'served' || (item.preparationStation !== 'SERVING' && item.preparationStatus !== 'pending')}
                     onClick={() => onCancelItem(item.itemId)}
                   >
                     {'항목 취소'}

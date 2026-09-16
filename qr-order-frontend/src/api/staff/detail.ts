@@ -36,6 +36,7 @@ export interface StaffTableDetailResponse {
     coinAmount?: number
     coinReceived?: boolean
     preparationStation?: 'KITCHEN' | 'SERVING'
+    preparationLocked?: boolean
     quantity: number
     lineTotal: number
     status: string
@@ -113,6 +114,7 @@ export function mapStaffTableDetail(
       originTableId: response.mergedTableIds.length > 0 ? item.tableId : undefined,
       name: item.name,
       paymentMethod: item.paymentMethod, coinAmount: item.coinAmount, coinReceived: item.coinReceived, preparationStation: item.preparationStation,
+      preparationLocked: item.preparationLocked,
       quantity: item.quantity,
       amount: item.lineTotal,
       cancelled: item.status === 'CANCELLED',

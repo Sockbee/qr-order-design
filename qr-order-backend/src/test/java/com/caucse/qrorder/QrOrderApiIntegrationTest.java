@@ -68,6 +68,7 @@ class QrOrderApiIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper mapper;
     @Autowired CustomerOrderService orders;
+    @Autowired com.caucse.qrorder.domain.PreparationService preparation;
     @Autowired StaffOperationsService staffOperations;
     @Autowired com.caucse.qrorder.domain.MenuSalesService sales;
     @Autowired com.caucse.qrorder.domain.StaffServiceService services;
@@ -123,7 +124,7 @@ class QrOrderApiIntegrationTest {
                         path.getKey() + " request schema must declare named properties");
             }
         }
-        assertEquals(39, documentedRequestBodies);
+        assertEquals(40, documentedRequestBodies);
 
         mvc.perform(get("/v3/api-docs/customer"))
                 .andExpect(status().isOk())
@@ -1091,6 +1092,7 @@ class QrOrderApiIntegrationTest {
         old.update("INSERT INTO table_sessions(session_id,table_id,origin_table_id,status,opened_at) VALUES(?,'T01','T01','OPEN',now())",session);
         old.update("INSERT INTO orders(order_id,display_number,display_code,client_request_id,idempotency_key,request_fingerprint,table_id,session_id,status,public_status,total_amount,payment_status) VALUES(?,1,'A1',?,'old-order',?,'T01',?,'COMPLETED','served',23000,'PAID')",order,UUID.randomUUID(),"0".repeat(64),session);
         old.update("INSERT INTO order_items(order_item_id,order_id,line_no,menu_id,menu_name_snapshot,base_price_snapshot,unit_price_snapshot,quantity,line_total) VALUES(?,?,1,'chicken-feet','닭발',10000,11500,2,23000)",item,order);
+        old.update("UPDATE order_items SET preparation_status='SERVED',prepared_at=now(),served_at=now() WHERE order_item_id=?",item);
         old.update("INSERT INTO option_groups(option_group_id,menu_id,label,selection_type) VALUES('old-group','chicken-feet','과거 옵션','SINGLE')");
         old.update("INSERT INTO options(option_id,option_group_id,menu_id,name,price_delta) VALUES('old-option','old-group','chicken-feet','추가',1500)");
         old.update("INSERT INTO order_item_options(order_item_option_id,order_item_id,order_id,option_group_id,option_group_name_snapshot,option_id,option_name_snapshot,price_delta_snapshot) VALUES(?,?,?,'old-group','과거 옵션','old-option','추가',1500)",UUID.randomUUID(),item,order);
@@ -1100,6 +1102,8 @@ class QrOrderApiIntegrationTest {
         assertEquals(23000,old.queryForObject("SELECT line_total FROM order_items WHERE order_item_id=?",Integer.class,item));
         assertEquals(11500,old.queryForObject("SELECT unit_price_snapshot FROM order_items WHERE order_item_id=?",Integer.class,item));
         assertEquals("main",old.queryForObject("SELECT category_id_snapshot FROM order_items WHERE order_item_id=?",String.class,item));
+        assertEquals(2,old.queryForObject("SELECT count(*) FROM order_preparation_units WHERE order_item_id=?",Integer.class,item));
+        assertEquals(2,old.queryForObject("SELECT count(*) FROM order_preparation_units WHERE order_item_id=? AND status='SERVED'",Integer.class,item));
         old.update("DELETE FROM menus WHERE menu_id='chicken-feet'");
         assertEquals(23000,old.queryForObject("SELECT line_total FROM order_items WHERE order_item_id=?",Integer.class,item));
         assertEquals(0,old.queryForObject("SELECT count(*) FROM information_schema.tables WHERE table_schema=? AND table_name IN ('options','option_groups','order_item_options')",Integer.class,schema));
@@ -1171,6 +1175,110 @@ class QrOrderApiIntegrationTest {
         mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
                 .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isBadRequest());
     }
+
+    @Test
+    void individualCookingAndCompletionBatchesPreserveMoneyAndServingBoundaries() {
+        StaffPrincipal staff=new StaffPrincipal("주방",Instant.now(),Instant.now().plusSeconds(3600),1);
+        var request=customerOrder("T01",TABLE_TOKEN,"chicken-feet");
+        request.put("items",List.of(Map.of("menuId","chicken-feet","quantity",3),Map.of("menuId","spicy-pork","quantity",1)));
+        request.put("expectedTotalAmount",39000);
+        String order=orders.create(request,false).get("orderId").toString();
+        var ids=preparationIds(order);
+        assertEquals(4,ids.size());
+        preparation.transition(order,List.of(ids.getFirst()),"START",staff);
+        assertEquals(2,preparation.kitchen().size());
+        assertEquals(0,preparation.serving().size());
+        assertEquals("COOKING",unitState(ids.getFirst()));
+        String line=jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=? AND line_no=1",String.class,UUID.fromString(order));
+        assertThrows(ApiException.class,()->staffOperations.updateOrder(Map.of("operation","quantity","itemId",line,"quantity",4),staff));
+        preparation.transition(order,List.of(ids.getFirst()),"COMPLETE",staff);
+        var firstCard=preparation.serving().getFirst().get("cardId");
+        preparation.transition(order,ids.subList(1,3),"START",staff);
+        preparation.transition(order,ids.subList(1,3),"COMPLETE",staff);
+        assertEquals(2,preparation.serving().size());
+        assertEquals(1L,jdbc.queryForObject("SELECT count(DISTINCT batch_id) FROM order_preparation_units WHERE unit_id IN (?::uuid,?::uuid)",Long.class,ids.get(1),ids.get(2)));
+        preparation.transition(order,List.of(ids.getFirst()),"SERVE",staff);
+        assertEquals(1,preparation.serving().size());
+        assertTrue(!firstCard.equals(preparation.serving().getFirst().get("cardId")));
+        assertEquals("READY",unitState(ids.get(1)));
+        assertEquals(39000L,salesAmount("GENERAL"));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM order_items WHERE order_id=?",Integer.class,UUID.fromString(order)));
+        assertEquals(3,jdbc.queryForObject("SELECT quantity FROM order_items WHERE order_item_id=?",Integer.class,UUID.fromString(line)));
+        preparation.transition(order,ids.subList(1,3),"SERVE",staff);
+        preparation.transition(order,List.of(ids.get(3)),"START",staff);
+        preparation.transition(order,List.of(ids.get(3)),"COMPLETE",staff);
+        preparation.transition(order,List.of(ids.get(3)),"SERVE",staff);
+        assertCustomerProgress(UUID.fromString(order),"served",List.of("SERVED","SERVED"));
+        assertEquals(List.of(),preparation.kitchen());assertEquals(List.of(),preparation.serving());
+    }
+
+    @Test
+    void duplicateAndStalePreparationRequestsDoNotConsumeOtherUnitsOrBatches() throws Exception {
+        StaffPrincipal staff=new StaffPrincipal("주방",Instant.now(),Instant.now().plusSeconds(3600),1);
+        var request=customerOrder("T01",TABLE_TOKEN,"chicken-feet");
+        request.put("items",List.of(Map.of("menuId","chicken-feet","quantity",3)));request.put("expectedTotalAmount",30000);
+        String order=orders.create(request,false).get("orderId").toString();
+        var ids=preparationIds(order);
+        assertThrows(ApiException.class,()->preparation.transition(order,ids,"COMPLETE",staff));
+        preparation.transition(order,ids,"START",staff);
+        try(var executor=Executors.newFixedThreadPool(2)) {
+            var one=executor.submit(()->preparation.transition(order,List.of(ids.get(0)),"COMPLETE",staff));
+            var two=executor.submit(()->preparation.transition(order,List.of(ids.get(0)),"COMPLETE",staff));
+            one.get();two.get();
+        }
+        assertEquals(1,preparation.serving().size());
+        assertEquals("PREPARATION_CHANGED",assertThrows(ApiException.class,()->preparation.transition(order,ids,"COMPLETE",staff)).code());
+        assertEquals("COOKING",unitState(ids.get(1))); // The stale bulk request is atomic.
+        preparation.transition(order,ids.subList(1,3),"COMPLETE",staff);
+        assertThrows(ApiException.class,()->preparation.transition(order,ids,"SERVE",staff)); // Two cards cannot be merged by the client.
+        preparation.transition(order,List.of(ids.get(0)),"SERVE",staff);
+        preparation.transition(order,List.of(ids.get(0)),"SERVE",staff);
+        assertEquals("READY",unitState(ids.get(1)));
+        assertEquals(1,preparation.serving().size());
+        String other=orders.create(customerOrder("T01",TABLE_TOKEN,"cola"),false).get("orderId").toString();
+        assertThrows(ApiException.class,()->preparation.transition(other,List.of(ids.get(1)),"SERVE",staff));
+        String token=staffToken();
+        String body=mapper.writeValueAsString(Map.of("orderId",order,"unitIds",ids.subList(1,3),"action","SERVE"));
+        mvc.perform(post("/api/v1/staff/orders/preparation/transition").contentType("application/json").content(body)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/v1/staff/orders/preparation/transition").header("Authorization","Bearer "+token)
+            .contentType("application/json").content(body)).andExpect(status().isOk());
+    }
+
+    @Test
+    void drinksStayImmediatelyReadyAndCoinReceiptStillGuardsServing() {
+        StaffPrincipal staff=new StaffPrincipal("서빙",Instant.now(),Instant.now().plusSeconds(3600),1);
+        var request=customerOrder("T01",TABLE_TOKEN,"soju");request.put("paymentMethod","COIN");request.put("expectedTotalAmount",18);
+        request.put("items",List.of(Map.of("menuId","soju","quantity",2)));
+        String order=orders.create(request,false).get("orderId").toString();var ids=preparationIds(order);
+        assertEquals(List.of(),preparation.kitchen());assertEquals(1,preparation.serving().size());
+        assertEquals("READY",unitState(ids.getFirst()));
+        assertThrows(ApiException.class,()->preparation.transition(order,ids,"START",staff));
+        assertEquals("COINS_NOT_RECEIVED",assertThrows(ApiException.class,()->preparation.transition(order,ids,"SERVE",staff)).code());
+        staffOperations.receiveCoins(order,18,staff);
+        preparation.transition(order,ids,"SERVE",staff);
+        assertEquals(0L,salesAmount("GENERAL"));
+        assertEquals(18L,salesRows().stream().mapToLong(row->((Number)row.get("receivedCoins")).longValue()).sum());
+        staffOperations.confirmPayment("T01",0,staff,"원화 결제 없음");
+        assertThrows(ApiException.class,()->preparation.transition(order,ids,"SERVE",staff));
+    }
+
+    @Test
+    void quantityChangesResizeOnlyUnstartedFulfilmentUnitsAndCancellationRemovesQueues() {
+        StaffPrincipal staff=new StaffPrincipal("카운터",Instant.now(),Instant.now().plusSeconds(3600),1);
+        String order=orders.create(customerOrder("T01",TABLE_TOKEN,"chicken-feet"),false).get("orderId").toString();
+        String item=jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?",String.class,UUID.fromString(order));
+        staffOperations.updateOrder(Map.of("operation","quantity","itemId",item,"quantity",3),staff);
+        assertEquals(3,preparationIds(order).size());
+        staffOperations.updateOrder(Map.of("operation","quantity","itemId",item,"quantity",2),staff);
+        assertEquals(2,preparationIds(order).size());
+        staffOperations.updateOrder(Map.of("operation","cancel-item","itemId",item),staff);
+        assertEquals(List.of(),preparation.kitchen());assertEquals(List.of(),preparation.serving());
+    }
+
+    private List<String> preparationIds(String order) {
+        return jdbc.queryForList("SELECT u.unit_id::text FROM order_preparation_units u JOIN order_items i USING(order_item_id) WHERE i.order_id=? ORDER BY i.line_no,u.unit_no",String.class,UUID.fromString(order));
+    }
+    private String unitState(String id) { return jdbc.queryForObject("SELECT status FROM order_preparation_units WHERE unit_id=?",String.class,UUID.fromString(id)); }
 
     private static Map<String, Object> customerOrder(String tableId, String token, String menuId) {
         Map<String, Object> request = new HashMap<>();

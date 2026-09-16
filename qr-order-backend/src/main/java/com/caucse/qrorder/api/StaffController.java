@@ -31,14 +31,16 @@ import java.util.Map;
 public class StaffController {
     private final StaffOperationsService service;
     private final StaffServiceService staffService;
+    private final com.caucse.qrorder.domain.PreparationService preparation;
     private final SseHub sse;
     private final com.caucse.qrorder.domain.MenuSalesService menuSales;
 
-    public StaffController(StaffOperationsService service, StaffServiceService staffService, SseHub sse, com.caucse.qrorder.domain.MenuSalesService menuSales) {
+    public StaffController(StaffOperationsService service, StaffServiceService staffService, SseHub sse, com.caucse.qrorder.domain.MenuSalesService menuSales, com.caucse.qrorder.domain.PreparationService preparation) {
         this.service = service;
         this.staffService = staffService;
         this.sse = sse;
         this.menuSales = menuSales;
+        this.preparation = preparation;
     }
 
     @PostMapping("/members/list")
@@ -122,6 +124,14 @@ public class StaffController {
             required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.OrderItemPreparation.class))))
     @PostMapping("/orders/items/preparation") ApiEnvelope<Void> preparation(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.updateItemPreparation(required(body, "itemId"), bool(body, "ready"), staff));
+    }
+    @PostMapping("/orders/preparation/transition")
+    @Operation(summary = "개별 메뉴 조리 시작·완료 및 서빙 카드 완료", requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+            required = true, content = @Content(schema = @Schema(implementation = OpenApiRequests.PreparationTransition.class))))
+    ApiEnvelope<Void> transition(@RequestBody Map<String,Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        if (!(body.get("unitIds") instanceof java.util.List<?> ids) || ids.stream().anyMatch(id -> !(id instanceof String)))
+            throw com.caucse.qrorder.api.ApiException.invalid("처리할 메뉴를 선택해 주세요.");
+        return ApiEnvelope.ok(preparation.transition(required(body,"orderId"), ids.stream().map(Object::toString).toList(), required(body,"action"), staff));
     }
     @PostMapping("/orders/queue")
     @Operation(summary = "조리 주문 큐 조회")

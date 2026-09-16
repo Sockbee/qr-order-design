@@ -31,15 +31,17 @@ public class CustomerOrderService {
     private final ObjectMapper mapper;
     private final TableOrderScope orderScope;
     private final TableVisitService visits;
+    private final PreparationService preparation;
 
     public CustomerOrderService(JdbcTemplate jdbc, TableCatalogService catalog,
-                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope, TableVisitService visits) {
+                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope, TableVisitService visits, PreparationService preparation) {
         this.jdbc = jdbc;
         this.catalog = catalog;
         this.events = events;
         this.mapper = mapper;
         this.orderScope = orderScope;
         this.visits = visits;
+        this.preparation = preparation;
     }
 
     @Transactional
@@ -420,6 +422,7 @@ public class CustomerOrderService {
             jdbc.update("UPDATE order_items SET preparation_station=?,coin_unit_price=?,preparation_status=?,prepared_at=CASE WHEN ?='SERVING' THEN now() END WHERE order_item_id=?",
                     line.station(), line.coins(), "SERVING".equals(line.station()) ? "READY" : "PENDING", line.station(), itemId);
         }
+        preparation.initialize(orderId);
     }
 
     private ValidatedLine validateLine(Map<String, Object> input, int lineNo) { return validateLine(input, lineNo, false); }
