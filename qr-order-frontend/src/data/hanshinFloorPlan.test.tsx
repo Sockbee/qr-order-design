@@ -45,9 +45,9 @@ describe('한신포차 배치와 합석 표시', () => {
       table: { tableId: 'T17', displayName: '테이블 17' }, groupTableIds: ['T17', 'T18'],
       latestPublicStatus: 'accepted', sessionTotalAmount: 3000, activeCall: null,
       orders: [{ orderId: 'second', tableId: 'T18', displayCode: 'A-2', status: 'RECEIVED', publicStatus: 'accepted',
-        totalAmount: 1500, createdAt: '2026-09-14T10:00:01Z', items: [{ name: '콜라', quantity: 1, lineTotal: 1500, selectedOptions: [] }] },
+        totalAmount: 1500, createdAt: '2026-09-14T10:00:01Z', items: [{ name: '콜라', quantity: 1, lineTotal: 1500, }] },
       { orderId: 'first', tableId: 'T17', displayCode: 'A-1', status: 'RECEIVED', publicStatus: 'accepted',
-        totalAmount: 1500, createdAt: '2026-09-14T10:00:00Z', items: [{ name: '콜라', quantity: 1, lineTotal: 1500, selectedOptions: [] }] }],
+        totalAmount: 1500, createdAt: '2026-09-14T10:00:00Z', items: [{ name: '콜라', quantity: 1, lineTotal: 1500, }] }],
     }
     const mapped = mapRemoteOrders(response, 17)
     expect(mapped.map((order) => [order.id, order.tableNumber])).toEqual([['first', 17], ['second', 18]])

@@ -46,32 +46,11 @@ export interface AdminSetting {
   description: string
 }
 
-export interface CatalogOption {
-  optionId: string
-  name: string
-  priceDelta: number
-  available: boolean
-  defaultSelected: boolean
-  sortOrder: number
-}
-
-export interface CatalogOptionGroup {
-  optionGroupId: string
-  label: string
-  required: boolean
-  selectionType: 'single' | 'multiple'
-  minSelections: number
-  maxSelections: number
-  sortOrder: number
-  options: CatalogOption[]
-}
-
 export interface AdminSnapshot {
   tables: AdminTable[]
   categories: AdminCategory[]
   menus: AdminMenu[]
   settings: AdminSetting[]
-  catalog: { items: Array<{ menuId: string; optionGroups: CatalogOptionGroup[] }> }
 }
 
 async function adminApi<T>(
@@ -137,24 +116,3 @@ export interface TokenResponse {
   url: string
   qrSvg: string
 }
-
-export const saveAdminOptionGroup = (
-  menuId: string,
-  group: CatalogOptionGroup,
-) =>
-  adminApi<void>(
-    `option-groups/${encodeURIComponent(group.optionGroupId)}`,
-    'PUT',
-    { menuId, ...group },
-  )
-
-export const saveAdminOption = (
-  menuId: string,
-  optionGroupId: string,
-  option: CatalogOption,
-) =>
-  adminApi<void>(`options/${encodeURIComponent(option.optionId)}`, 'PUT', {
-    menuId,
-    optionGroupId,
-    ...option,
-  })

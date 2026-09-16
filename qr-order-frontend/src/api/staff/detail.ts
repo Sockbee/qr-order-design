@@ -17,6 +17,7 @@ export interface StaffTableDetailResponse {
   tableId: string
   displayName: string
   orderStatus: string | null
+  departureAt?: string | null
   openedAt: string | null
   mergedTableIds: string[]
   originTableId: string | null
@@ -31,7 +32,10 @@ export interface StaffTableDetailResponse {
     tableId?: string
     itemId: string
     name: string
-    selectedOptions: string[]
+    paymentMethod?: 'KRW' | 'COIN'
+    coinAmount?: number
+    coinReceived?: boolean
+    preparationStation?: 'KITCHEN' | 'SERVING'
     quantity: number
     lineTotal: number
     status: string
@@ -95,6 +99,7 @@ export function mapStaffTableDetail(
   const opened = response.openedAt ? Date.parse(response.openedAt) : NaN
   return {
     sessionId: response.sessionId,
+    openedAt: response.openedAt, departureAt: response.departureAt,
     tableId: response.tableId,
     displayName: response.displayName,
     status: mapStatus(response.orderStatus),
@@ -107,9 +112,7 @@ export function mapStaffTableDetail(
       itemId: item.itemId,
       originTableId: response.mergedTableIds.length > 0 ? item.tableId : undefined,
       name: item.name,
-      // A02 draws an em dash rather than an empty row when there is no option.
-      optionSummary:
-        item.selectedOptions.length > 0 ? item.selectedOptions.join(' · ') : '—',
+      paymentMethod: item.paymentMethod, coinAmount: item.coinAmount, coinReceived: item.coinReceived, preparationStation: item.preparationStation,
       quantity: item.quantity,
       amount: item.lineTotal,
       cancelled: item.status === 'CANCELLED',

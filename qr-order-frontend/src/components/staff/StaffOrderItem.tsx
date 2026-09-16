@@ -20,14 +20,13 @@ export function StaffOrderItem({ item }: { item: OrderItem }) {
         <div className="order-item__info">
           {item.originTableId && <span className="order-item__option">{item.originTableId}에서 접수</span>}
           <span className="order-item__name">{item.name}</span>
-          <span className="order-item__option">{item.optionSummary}</span>
           {item.cancelled && (
             <span className="order-item__cancel-chip">취소됨</span>
           )}
         </div>
         <span className="order-item__qty">×{item.quantity}</span>
         <span className="order-item__amount">
-          {formatStaffAmount(item.amount)}
+          {item.paymentMethod === 'COIN' ? `엽전 ${item.coinAmount ?? 0}개` : formatStaffAmount(item.amount)}
         </span>
       </div>
       {item.note && (

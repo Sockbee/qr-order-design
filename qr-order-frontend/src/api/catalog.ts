@@ -34,21 +34,9 @@ interface MenuResponse {
     allergens: string[]
     origin: string | null
     badgeTags: string[]
-    optionGroups: Array<{
-      optionGroupId: string
-      label: string
-      required: boolean
-      selectionType: 'single' | 'multiple'
-      minSelections: number
-      maxSelections: number
-      defaultSelectedOptionIds: string[]
-      options: Array<{
-        optionId: string
-        name: string
-        priceDelta: number
-        available: boolean
-      }>
-    }>
+    coinPrice: number | null
+    preparationStation: 'KITCHEN' | 'SERVING'
+
   }>
   generatedAt: string
 }
@@ -108,21 +96,8 @@ export async function fetchStorefront(
       allergens: item.allergens,
       origin: item.origin ?? undefined,
       badgeTags: item.badgeTags,
-      optionGroups: item.optionGroups.map((group) => ({
-        id: group.optionGroupId,
-        label: group.label,
-        required: group.required,
-        type: group.selectionType === 'single' ? 'radio' : 'check',
-        minSelections: group.minSelections,
-        maxSelections: group.maxSelections,
-        defaultOptionIds: group.defaultSelectedOptionIds,
-        options: group.options.map((option) => ({
-          id: option.optionId,
-          label: option.name,
-          priceDelta: option.priceDelta,
-          soldOut: !option.available,
-        })),
-      })),
+      coinPrice: item.coinPrice,
+      preparationStation: item.preparationStation,
     })),
     statusPollSeconds: resolved.statusPollSeconds,
     generatedAt: menu.generatedAt,

@@ -16,3 +16,5 @@ export const demoMenuSales: MenuSaleRow[] = [
     quantity, amount: quantity * price * (i === 0 ? 1 : 0.8), unpaidQuantity: 0,
   }))
 })
+
+demoMenuSales.push({ menuId: 'soju', name: '소주', categoryId: 'drink', categoryLabel: '음료·주류', type: 'COIN', quantity: 5, amount: 0, discountRate: 0, unpaidQuantity: 0, receivedCoins: 27, pendingCoins: 18 })

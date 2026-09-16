@@ -32,13 +32,14 @@ export function useOrderSession(
   token: string,
   tableNumber: number,
   liveMode = false,
+  paymentMethod: 'KRW' | 'COIN' = 'KRW',
 ): OrderSession {
   const [cart, setCart] = usePersistentState<CartLine[]>(
-    sessionScopedKey(token, liveMode ? 'live-cart' : 'cart'),
-    liveMode ? [] : initialCart,
+    sessionScopedKey(token, `${liveMode ? 'live' : 'demo'}-${paymentMethod}-cart-v2`),
+    liveMode || paymentMethod === 'COIN' ? [] : initialCart,
   )
   const [orders, setOrders] = usePersistentState<PlacedOrder[]>(
-    sessionScopedKey(token, liveMode ? 'live-orders' : 'orders'),
+    sessionScopedKey(token, `${liveMode ? 'live' : 'demo'}-${paymentMethod}-orders`),
     [],
   )
 
@@ -88,14 +89,15 @@ export function useOrderSession(
 
   const placeOrder = (remoteOrder?: PlacedOrder): PlacedOrder => {
     const placed: PlacedOrder = remoteOrder ?? {
-      number: `A-${FIRST_ORDER_NUMBER + orders.length}`,
+      number: `${paymentMethod === 'COIN' ? 'E' : 'A'}-${FIRST_ORDER_NUMBER + orders.length}`,
       tableNumber,
-      lines: cart,
-      total: calculateCartTotal(cart),
+      lines: paymentMethod === 'COIN' ? cart.map((line) => ({ ...line, preparationStation: 'SERVING' as const, preparationStatus: 'ready' as const })) : cart,
+      total: paymentMethod === 'COIN' ? 0 : calculateCartTotal(cart),
+      paymentMethod, coinTotal: paymentMethod === 'COIN' ? calculateCartTotal(cart) : 0, coinReceived: false,
       placedAt: new Date().toISOString(),
       // Mock only. The real status arrives from the server poll
       // (UX-STRUCTURE §5.4); the S08 frame draws this step as the current one.
-      status: 'preparing',
+      status: paymentMethod === 'COIN' ? 'accepted' : 'preparing',
     }
     setOrders((current) => [...current, placed])
     // The cart is a new round once an order is placed (UX-STRUCTURE A3).

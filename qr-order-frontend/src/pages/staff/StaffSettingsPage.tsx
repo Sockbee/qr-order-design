@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
 import { staffNavItems } from '../../components/staff/staffNavItems'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
@@ -8,15 +8,11 @@ import {
   rotateAdminTableToken,
   saveAdminCategory,
   saveAdminMenu,
-  saveAdminOption,
-  saveAdminOptionGroup,
   saveAdminSetting,
   saveAdminTable,
 } from '../../api/staff/admin'
 import type {
   AdminSnapshot,
-  CatalogOption,
-  CatalogOptionGroup,
   TokenResponse,
 } from '../../api/staff/admin'
 import { useStaffEventState } from '../../hooks/useStaffEvents'
@@ -73,13 +69,6 @@ export function StaffSettingsPage() {
       if (timer !== undefined) window.clearTimeout(timer)
     }
   }, [eventRevision, eventsConnected, revision])
-
-  const optionRows = useMemo(
-    () => snapshot?.catalog.items.flatMap((item) =>
-      item.optionGroups.map((group) => ({ menuId: item.menuId, group })),
-    ) ?? [],
-    [snapshot],
-  )
 
   const perform = (key: string, action: () => Promise<unknown>) => {
     setSaving(key)
@@ -212,35 +201,6 @@ export function StaffSettingsPage() {
               </div>
             </section>
 
-            <section>
-              <div className="staff-settings__section-head">
-                <h2>옵션</h2>
-                <button type="button" onClick={() => {
-                  const menuId = window.prompt('옵션 그룹을 연결할 메뉴 ID')?.trim()
-                  if (!menuId || !snapshot.menus.some((menu) => menu.menuId === menuId)) return
-                  const optionGroupId = window.prompt('새 옵션 그룹 ID')?.trim()
-                  if (!optionGroupId) return
-                  const label = window.prompt('옵션 그룹 이름')?.trim()
-                  if (!label) return
-                  perform(optionGroupId, () => saveAdminOptionGroup(menuId, {
-                    optionGroupId,
-                    label,
-                    required: false,
-                    selectionType: 'single',
-                    minSelections: 0,
-                    maxSelections: 1,
-                    sortOrder: optionRows.length * 10 + 10,
-                    options: [],
-                  }))
-                }}>옵션 그룹 추가</button>
-              </div>
-              <div className="staff-settings__rows">
-                {optionRows.map(({ menuId, group }) => (
-                  <OptionEditor key={`${group.optionGroupId}:${revision}`} menuId={menuId} group={group} saving={saving !== null} perform={perform} />
-                ))}
-                {optionRows.length === 0 && <p className="staff-settings__empty">등록된 옵션이 없습니다.</p>}
-              </div>
-            </section>
 
             <section>
               <div className="staff-settings__section-head">
@@ -273,58 +233,6 @@ export function StaffSettingsPage() {
           </div>
         )}
       </main>
-    </div>
-  )
-}
-
-function OptionEditor({ menuId, group, saving, perform }: {
-  menuId: string
-  group: CatalogOptionGroup
-  saving: boolean
-  perform: (key: string, action: () => Promise<unknown>) => void
-}) {
-  const [draft, setDraft] = useState(group)
-  const updateOption = (optionId: string, patch: Partial<CatalogOption>) => setDraft({
-    ...draft,
-    options: draft.options.map((option) => option.optionId === optionId ? { ...option, ...patch } : option),
-  })
-  return (
-    <div className="staff-settings__option-group">
-      <div className="staff-settings__row staff-settings__row--option">
-        <code>{draft.optionGroupId}</code>
-        <input value={draft.label} onChange={(event) => setDraft({ ...draft, label: event.target.value })} />
-        <select value={draft.selectionType} onChange={(event) => setDraft({ ...draft, selectionType: event.target.value as 'single' | 'multiple' })}><option value="single">하나 선택</option><option value="multiple">복수 선택</option></select>
-        <input type="number" aria-label="최소 선택 수" value={draft.minSelections} onChange={(event) => setDraft({ ...draft, minSelections: Number(event.target.value) })} />
-        <input type="number" aria-label="최대 선택 수" value={draft.maxSelections} onChange={(event) => setDraft({ ...draft, maxSelections: Number(event.target.value) })} />
-        <input type="number" aria-label="옵션 그룹 정렬" value={draft.sortOrder} onChange={(event) => setDraft({ ...draft, sortOrder: Number(event.target.value) })} />
-        <label><input type="checkbox" checked={draft.required} onChange={(event) => setDraft({ ...draft, required: event.target.checked, minSelections: event.target.checked ? Math.max(1, draft.minSelections) : draft.minSelections })} />필수</label>
-        <button disabled={saving} type="button" onClick={() => perform(draft.optionGroupId, () => saveAdminOptionGroup(menuId, draft))}>그룹 저장</button>
-        <button disabled={saving} type="button" onClick={() => {
-          const optionId = window.prompt('새 옵션 ID')?.trim()
-          if (!optionId) return
-          const name = window.prompt('옵션 이름')?.trim()
-          if (!name) return
-          perform(optionId, () => saveAdminOption(menuId, draft.optionGroupId, {
-            optionId,
-            name,
-            priceDelta: 0,
-            available: true,
-            defaultSelected: false,
-            sortOrder: draft.options.length * 10 + 10,
-          }))
-        }}>옵션 추가</button>
-      </div>
-      {draft.options.map((option) => (
-        <div key={option.optionId} className="staff-settings__row staff-settings__row--option-item">
-          <code>{option.optionId}</code>
-          <input value={option.name} onChange={(event) => updateOption(option.optionId, { name: event.target.value })} />
-          <input type="number" value={option.priceDelta} onChange={(event) => updateOption(option.optionId, { priceDelta: Number(event.target.value) })} />
-          <input type="number" aria-label="옵션 정렬" value={option.sortOrder} onChange={(event) => updateOption(option.optionId, { sortOrder: Number(event.target.value) })} />
-          <label><input type="checkbox" checked={option.available} onChange={(event) => updateOption(option.optionId, { available: event.target.checked })} />판매</label>
-          <label><input type="checkbox" checked={option.defaultSelected} onChange={(event) => updateOption(option.optionId, { defaultSelected: event.target.checked })} />기본</label>
-          <button disabled={saving} type="button" onClick={() => perform(option.optionId, () => saveAdminOption(menuId, draft.optionGroupId, option))}>옵션 저장</button>
-        </div>
-      ))}
     </div>
   )
 }

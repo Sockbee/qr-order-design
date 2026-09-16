@@ -61,7 +61,6 @@ export function mapStaffMembers(
 export interface StaffServiceOrderLine {
   menuId: string
   quantity: number
-  selectedOptionIds?: string[]
 }
 
 export interface StaffServiceOrderResponse {

@@ -47,8 +47,7 @@ describe('고객 메뉴별 조리·서빙 상태', () => {
     const response: OrderListResponse = { table: { tableId: 'T17', displayName: '17' },
       latestPublicStatus: 'served', sessionTotalAmount: 1500, activeCall: null,
       orders: [{ orderId: 'id', displayCode: 'A-1', status: 'SERVING', publicStatus: 'served',
-        totalAmount: 1500, createdAt: '2026-09-14T12:00:00Z', items: [{ name: '콜라', quantity: 1, lineTotal: 1500,
-          selectedOptions: [], preparationStatus: 'READY' }] }] }
+        totalAmount: 1500, createdAt: '2026-09-14T12:00:00Z', items: [{ name: '콜라', quantity: 1, lineTotal: 1500, preparationStatus: 'READY' }] }] }
     const mapped = mapRemoteOrders(response, 17)[0]
     expect(mapped.status).toBe('preparing')
     expect(mapped.lines[0].preparationStatus).toBe('ready')
@@ -56,7 +55,7 @@ describe('고객 메뉴별 조리·서빙 상태', () => {
       status: 'COMPLETED', publicStatus: 'closed', paymentStatus: 'UNPAID', totalAmount: 1500,
       createdAt: '2026-09-14T12:00:00Z', idempotentReplay: true,
       items: [{ lineNo: 1, menuId: 'cola', name: '콜라', basePrice: 1500, unitPrice: 1500, quantity: 1,
-        lineTotal: 1500, selectedOptions: [], preparationStatus: 'SERVED' }] }
+        lineTotal: 1500, preparationStatus: 'SERVED' }] }
     expect(mapCreatedOrder(created, 17).status).toBe('served')
     expect(mapCreatedOrder(created, 17).lines[0].preparationStatus).toBe('served')
   })

@@ -69,3 +69,5 @@
 .table-floor-plan__table--diamond.table-floor-plan__table--delayed:not(.table-floor-plan__table--selected) .table-floor-plan__diamond {
   filter: drop-shadow(1px 0 0 var(--color-status-attention-fg)) drop-shadow(-1px 0 0 var(--color-status-attention-fg));
 }
+
+.table-floor-plan__time { position: relative; font-size: calc(10px * var(--floor-scale)); line-height: 1.3; white-space: nowrap; }

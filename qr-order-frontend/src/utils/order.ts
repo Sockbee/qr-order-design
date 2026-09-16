@@ -8,8 +8,9 @@ export function formatOrderTime(isoTimestamp: string): string {
   })
 }
 
-export function itemProgress(line: PlacedOrderLine, orderStatus: OrderStatus): 'preparing' | 'served' | 'cancelled' {
+export function itemProgress(line: PlacedOrderLine, orderStatus: OrderStatus): 'accepted' | 'preparing' | 'served' | 'cancelled' {
   if (line.cancelled || orderStatus === 'cancelled') return 'cancelled'
+  if (line.preparationStation === 'SERVING' && line.preparationStatus !== 'served') return 'accepted'
   if (line.preparationStatus) return line.preparationStatus === 'served' ? 'served' : 'preparing'
   return orderStatus === 'served' || orderStatus === 'closed' ? 'served' : 'preparing'
 }
@@ -25,6 +26,6 @@ export function overallOrderStatus(orders: PlacedOrder[]): 'accepted' | 'prepari
       : order.status === 'served' || order.status === 'closed'
   })) return 'served'
   if (active.every((order) => order.status === 'accepted' &&
-    order.lines.every((line) => !line.preparationStatus || line.preparationStatus === 'pending'))) return 'accepted'
+    order.lines.every((line) => !line.preparationStatus || line.preparationStatus === 'pending' || line.preparationStation === 'SERVING'))) return 'accepted'
   return 'preparing'
 }

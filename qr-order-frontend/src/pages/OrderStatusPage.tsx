@@ -92,6 +92,7 @@ export function OrderStatusPage({
               serviceMessage={order.serviceMessage}
               chargedStaffName={order.chargedStaffName}
             >
+              <p className="text-sm font-bold pb-2">{order.paymentMethod === 'COIN' ? `엽전 주문 · ${order.coinReceived ? '수령 완료' : '수령 대기'}` : '일반 주문'}</p>
               {groupTableIds.length > 1 && <p className="text-xs text-body pb-2">{order.originTableId ?? `T${String(order.tableNumber).padStart(2, '0')}`}에서 접수</p>}
               {order.lines.map((line, index) => {
                 const currentMenuItem = menuItems.find(
@@ -106,6 +107,7 @@ export function OrderStatusPage({
                     name={name}
                     quantity={line.quantity}
                     amount={line.unitPrice * line.quantity}
+                    coin={order.paymentMethod === 'COIN'}
                     status={itemProgress(line, order.status)}
                     comped={order.kind === 'SERVICE'}
                   />

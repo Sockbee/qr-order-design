@@ -68,6 +68,7 @@ export function StationOrderCard({
         />
       </header>
 
+      {order.paymentMethod === 'COIN' && <p className="station-card__coins">엽전 주문 · {order.coinTotal}개 · {order.coinReceived ? '수령 완료' : '수령 대기'}</p>}
       <ul className="station-card__items">
         {order.items.map((item) => (
           <li

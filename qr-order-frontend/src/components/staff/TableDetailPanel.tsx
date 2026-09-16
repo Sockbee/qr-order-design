@@ -1,3 +1,4 @@
+import { visitElapsed, departureLabel } from '../../utils/tableVisit'
 import './TableDetailPanel.css'
 import { OperationalButton } from './OperationalButton'
 import { OrderNote } from './OrderNote'
@@ -22,6 +23,7 @@ export interface TableDetailActions {
   onNote: () => void
   onEditOrder: () => void
   onCancelOrder: () => void
+  onCheckIn: () => void
   onReset: () => void
 }
 
@@ -74,6 +76,7 @@ export function TableDetailPanel({
   onEditOrder,
   onCancelOrder,
   onReset,
+  onCheckIn,
 }: TableDetailPanelProps) {
   if (loading || !detail) {
     return (
@@ -147,11 +150,12 @@ export function TableDetailPanel({
           )}
           {elapsedLabel(detail.elapsedMinutes) && (
             <span className="detail-panel__elapsed">
-              {elapsedLabel(detail.elapsedMinutes)}
+              {visitElapsed(detail.openedAt, now) ?? elapsedLabel(detail.elapsedMinutes)}
             </span>
           )}
         </div>
 
+        {detail.openedAt && <p>{departureLabel(detail.departureAt, now)}</p>}
         {statusError && (
           <StaffInlineAlert
             title="상태 변경에 실패했어요. 기존 상태는 유지됩니다."
@@ -203,7 +207,8 @@ export function TableDetailPanel({
           a staff member is picked and the confirm dialog is read, so landing
           here by muscle memory is recoverable.
         */}
-        <OperationalButton block onClick={onServiceOrder}>
+        <OperationalButton block onClick={onCheckIn}>{detail.openedAt ? '예약 시간 변경' : '입장'}</OperationalButton>
+        <OperationalButton block variant="secondary" onClick={onServiceOrder}>
           서비스 제공
         </OperationalButton>
         <div className="detail-panel__action-row">
