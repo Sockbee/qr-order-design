@@ -8,9 +8,11 @@ import type {
 
 interface QueueItemResponse {
   itemId: string
+  unitIds: string[]
+  unitNumber?: number
   name: string
   quantity: number
-  preparationStatus: 'PENDING' | 'READY' | 'SERVED'
+  preparationStatus: 'PENDING' | 'COOKING' | 'READY' | 'SERVED'
 }
 
 /**
@@ -21,6 +23,7 @@ interface QueueItemResponse {
  */
 export interface StaffQueueResponse {
   kitchen: Array<{
+    cardId: string
     orderId: string
     tableId: string
     status: 'RECEIVED' | 'COOKING'
@@ -29,6 +32,7 @@ export interface StaffQueueResponse {
     kitchenNote: string | null
   }>
   serving: Array<{
+    cardId: string
     paymentMethod: 'KRW' | 'COIN'
     coinTotal: number
     coinReceived: boolean
@@ -82,25 +86,21 @@ export function advanceStaffOrder(
   return callStaffApi<void>('orders/status', { orderId, status: remote }, signal)
 }
 
-export function setStaffOrderItemPrepared(
-  itemId: string,
-  ready: boolean,
-  signal?: AbortSignal,
-): Promise<void> {
-  return callStaffApi<void>(
-    'orders/items/preparation',
-    { itemId, ready },
-    signal,
-  )
+export type PreparationAction = 'START' | 'COMPLETE' | 'SERVE'
+export function transitionPreparation(orderId: string, unitIds: string[], action: PreparationAction): Promise<void> {
+  return callStaffApi<void>('orders/preparation/transition', { orderId, unitIds, action })
 }
 
 function mapItems(items: QueueItemResponse[]) {
   return items.map((item) => ({
     itemId: item.itemId,
+    unitIds: item.unitIds,
+    unitNumber: item.unitNumber,
     name: item.name,
     quantity: item.quantity,
     preparationStatus: item.preparationStatus.toLowerCase() as
       | 'pending'
+      | 'cooking'
       | 'ready'
       | 'served',
   }))
@@ -119,12 +119,13 @@ export function mapKitchenQueue(
 ): StaffStationOrder[] {
   return response.kitchen.map((order) => ({
     orderId: order.orderId,
+    cardId: order.cardId,
     tableId: order.tableId,
     status: order.status === 'COOKING' ? 'cooking' : 'new',
     elapsedMinutes: minutesSince(order.createdAt, now) ?? 0,
     items: mapItems(order.items),
     remainingKitchenItemCount: order.items.filter(
-      (item) => item.preparationStatus === 'PENDING',
+      (item) => item.preparationStatus === 'PENDING' || item.preparationStatus === 'COOKING',
     ).length,
     note: order.kitchenNote,
   }))
@@ -136,6 +137,7 @@ export function mapServingQueue(
 ): StaffStationOrder[] {
   return response.serving.map((order) => ({
     orderId: order.orderId,
+    cardId: order.cardId,
     tableId: order.tableId,
     status: 'ready',
     elapsedMinutes: minutesSince(order.readyAt, now) ?? 0,
