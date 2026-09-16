@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import {
   BrowserRouter,
   Navigate,
@@ -12,6 +13,7 @@ import { EventOrderPage } from './pages/EventOrderPage'
 import { CartPage } from './pages/CartPage'
 import { MenuDetailPage } from './pages/MenuDetailPage'
 import { MenuPage } from './pages/MenuPage'
+import type { MenuBrowseState } from './pages/MenuPage'
 import { OrderCompletePage } from './pages/OrderCompletePage'
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage'
 import { OrderStatusPage } from './pages/OrderStatusPage'
@@ -72,6 +74,9 @@ function orderCartSignature(cart: CartLine[]): string {
 }
 
 interface CatalogRouteProps {
+  menuBrowseState: RefObject<MenuBrowseState>
+  menuCategoryId: string | null
+  onMenuCategoryChange: (categoryId: string) => void
   categories: typeof mockCategories
   menuItems: typeof mockMenuItems
   storefront: ReturnType<typeof useStorefront>
@@ -141,6 +146,9 @@ function TableConfirmationRoute({
 
 function MenuRoute({
   session,
+  menuBrowseState,
+  menuCategoryId,
+  onMenuCategoryChange,
   categories,
   menuItems,
   storefront,
@@ -151,6 +159,9 @@ function MenuRoute({
 
   return (
     <MenuPage
+      browseState={menuBrowseState}
+      categoryId={menuCategoryId}
+      onCategoryChange={onMenuCategoryChange}
       categories={categories}
       menuItems={menuItems}
       cart={session.cart}
@@ -170,6 +181,9 @@ function MenuRoute({
 
 function MenuDetailRoute({
   session,
+  menuBrowseState,
+  menuCategoryId,
+  onMenuCategoryChange,
   categories,
   menuItems,
   storefront,
@@ -182,6 +196,9 @@ function MenuDetailRoute({
   if (storefront.loading || storefront.error) {
     return (
       <MenuPage
+        browseState={menuBrowseState}
+        categoryId={menuCategoryId}
+        onCategoryChange={onMenuCategoryChange}
         categories={categories}
         menuItems={menuItems}
         cart={session.cart}
@@ -382,6 +399,8 @@ function OrderStatusRoute({
 }
 
 function App() {
+  const [menuCategoryId, setMenuCategoryId] = useState<string | null>(null)
+  const menuBrowseState = useRef<MenuBrowseState>({ categoryId: null, scrollY: 0 })
   const location = window.location
   const initialTableMatch = location.pathname.match(/^\/t\/(T\d{2,})\/?$/)
   const initialToken = new URLSearchParams(location.search).get('token')
@@ -438,6 +457,9 @@ function App() {
           path="/menu"
           element={(
             <MenuRoute
+              menuBrowseState={menuBrowseState}
+              menuCategoryId={menuCategoryId}
+              onMenuCategoryChange={setMenuCategoryId}
               session={session}
               categories={categories}
               menuItems={menuItems}
@@ -451,6 +473,9 @@ function App() {
           path="/menu/:itemId"
           element={(
             <MenuDetailRoute
+              menuBrowseState={menuBrowseState}
+              menuCategoryId={menuCategoryId}
+              onMenuCategoryChange={setMenuCategoryId}
               session={session}
               categories={categories}
               menuItems={menuItems}

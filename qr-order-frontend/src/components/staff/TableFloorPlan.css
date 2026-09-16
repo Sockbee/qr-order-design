@@ -7,9 +7,9 @@
 }
 .table-floor-plan__title {
   flex: none;
-  height: 44px;
+
   margin: 0;
-  padding: 8px 16px;
+  padding: 0;
   font: var(--type-caption-strong);
   color: var(--color-text-strong);
 }
@@ -71,3 +71,20 @@
 }
 
 .table-floor-plan__time { position: relative; font-size: calc(10px * var(--floor-scale)); line-height: 1.3; white-space: nowrap; }
+
+.table-floor-plan__header {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  flex: none; gap: 8px 16px; padding: 8px 16px;
+}
+.table-floor-plan__view { display: flex; align-items: center; gap: 8px; font: var(--type-caption-strong); }
+.table-floor-plan__view select {
+  min-height: 44px; padding: 8px 12px; border: 1px solid var(--color-border-default);
+  border-radius: 6px; background: var(--color-bg-canvas); color: var(--color-text-strong); font: inherit;
+}
+.table-floor-plan__view select:focus-visible { outline: 3px solid var(--color-bg-primary); outline-offset: 2px; }
+.table-floor-plan__event {
+  position: absolute; display: flex; align-items: center; justify-content: center;
+  border: 2px dashed var(--color-border-default); border-radius: 50%;
+  background: var(--color-bg-surface); color: var(--color-text-muted);
+  font-size: max(12px, calc(18px * var(--floor-scale))); font-weight: 700;
+}
