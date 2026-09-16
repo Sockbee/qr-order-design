@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { AppBar } from '../components/AppBar'
 import { Button } from '../components/Button'
 import { MenuImage } from '../components/MenuImage'
@@ -19,6 +19,7 @@ export function MenuDetailPage({
   onAddToCart,
   onCallStaff,
 }: MenuDetailPageProps) {
+  useLayoutEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [item.id])
   const [quantity, setQuantity] = useState(item.minQuantity ?? 1)
   const unitPrice = item.price
   const total = unitPrice * quantity
