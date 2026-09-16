@@ -41,7 +41,12 @@
 .staff-settings__rows { display: grid; gap: var(--space-3); }
 .staff-settings__row { display: grid; grid-template-columns: minmax(170px, 1fr) minmax(240px, 2fr) auto; align-items: center; gap: var(--space-3); }
 .staff-settings__row--wide { grid-template-columns: 130px 1fr 1.5fr 80px auto auto; }
-.staff-settings__row--menu { grid-template-columns: 170px 1.5fr 120px 110px 70px auto auto; }
+.staff-settings__row--menu { grid-template-columns: repeat(3, minmax(0, 1fr)); padding: var(--space-4); border: 1px solid var(--color-border-default); border-radius: var(--radius-btn-md); }
+.staff-settings__menu-id { grid-column: 1 / -1; }
+.staff-settings__menu-help { padding-bottom: var(--space-4); color: var(--color-text-muted); font: var(--type-caption-default); }
+.staff-settings__menu-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: var(--space-3); }
+.staff-settings__coin-price input { width: 90px; }
+.staff-settings input:disabled { opacity: .5; }
 .staff-settings__row--table { grid-template-columns: 70px 1fr 80px auto 70px auto auto; }
 .staff-settings__row--option { grid-template-columns: 170px 1fr 120px auto auto; }
 .staff-settings__row--option-item { grid-template-columns: 190px 1fr 110px auto auto; padding-left: var(--space-4); }

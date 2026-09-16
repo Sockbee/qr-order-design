@@ -21,6 +21,7 @@ export interface AdminMenu {
   categoryId: string
   name: string
   description: string
+  coinPrice: number | null
   basePrice: number
   imageUrl: string | null
   available: boolean
@@ -55,7 +56,7 @@ export interface AdminSnapshot {
 
 async function adminApi<T>(
   path: string,
-  method: 'POST' | 'PUT',
+  method: 'POST' | 'PUT' | 'DELETE',
   payload: Record<string, unknown> = {},
   signal?: AbortSignal,
 ): Promise<T> {
@@ -97,6 +98,9 @@ export const saveAdminCategory = (category: AdminCategory) =>
 
 export const saveAdminMenu = (menu: AdminMenu) =>
   adminApi<void>(`menus/${encodeURIComponent(menu.menuId)}`, 'PUT', menu as unknown as Record<string, unknown>)
+
+export const deleteAdminMenu = (menuId: string) =>
+  adminApi<void>(`menus/${encodeURIComponent(menuId)}`, 'DELETE')
 
 export const saveAdminSetting = (key: string, value: string) =>
   adminApi<void>(`settings/${encodeURIComponent(key)}`, 'PUT', { value })

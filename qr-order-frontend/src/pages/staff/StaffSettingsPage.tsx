@@ -4,6 +4,7 @@ import { staffNavItems } from '../../components/staff/staffNavItems'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
 import {
   createAdminTable,
+  deleteAdminMenu,
   getAdminSnapshot,
   rotateAdminTableToken,
   saveAdminCategory,
@@ -175,6 +176,7 @@ export function StaffSettingsPage() {
                     name,
                     description: '',
                     basePrice: 0,
+                    coinPrice: null,
                     imageUrl: null,
                     available: true,
                     minQuantity: 1,
@@ -184,18 +186,29 @@ export function StaffSettingsPage() {
                   }))
                 }}>메뉴 추가</button>
               </div>
+              <p className="staff-settings__menu-help">판매 중을 해제하면 품절로 표시됩니다. 메뉴 영구 삭제는 목록에서 제거하며, 기존 주문과 판매 통계는 유지됩니다.</p>
               <div className="staff-settings__rows">
                 {snapshot.menus.map((menu) => (
                   <div key={menu.menuId} className="staff-settings__row staff-settings__row--menu">
-                    <code>{menu.menuId}</code>
+                    <code className="staff-settings__menu-id">{menu.menuId}</code>
                     <input value={menu.name} aria-label={`${menu.menuId} 이름`} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, name: event.target.value } : item) })} />
                     <input value={menu.description} aria-label={`${menu.menuId} 설명`} placeholder="메뉴 설명" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, description: event.target.value } : item) })} />
                     <input type="url" value={menu.imageUrl ?? ''} aria-label={`${menu.menuId} 이미지 URL`} placeholder="https://… 이미지 URL" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, imageUrl: event.target.value || null } : item) })} />
                     <select value={menu.categoryId} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, categoryId: event.target.value } : item) })}>{snapshot.categories.map((category) => <option key={category.categoryId} value={category.categoryId}>{category.label}</option>)}</select>
                     <input type="number" value={menu.basePrice} aria-label="가격" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, basePrice: Number(event.target.value) } : item) })} />
                     <input type="number" value={menu.sortOrder} aria-label="정렬" onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, sortOrder: Number(event.target.value) } : item) })} />
-                    <label><input type="checkbox" checked={menu.available} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, available: event.target.checked } : item) })} />판매</label>
-                    <button disabled={saving !== null} type="button" onClick={() => perform(menu.menuId, () => saveAdminMenu(menu))}>저장</button>
+                    <label><input type="checkbox" checked={menu.available} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, available: event.target.checked } : item) })} />판매 중</label>
+                    <label><input type="checkbox" checked={menu.coinPrice !== null} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, coinPrice: event.target.checked ? 1 : null } : item) })} />이벤트 주문 허용</label>
+                    <label className="staff-settings__coin-price">엽전 가격
+                      <input type="number" min={1} step={1} disabled={menu.coinPrice === null} value={menu.coinPrice ?? ''} aria-label={`${menu.name} 엽전 가격`} onChange={(event) => setSnapshot({ ...snapshot, menus: snapshot.menus.map((item) => item.menuId === menu.menuId ? { ...item, coinPrice: Number(event.target.value) } : item) })} />개
+                    </label>
+                    <div className="staff-settings__menu-actions">
+                      <button disabled={saving !== null || (menu.coinPrice !== null && (!Number.isInteger(menu.coinPrice) || menu.coinPrice < 1 || menu.coinPrice > 2147483647))} type="button" onClick={() => perform(menu.menuId, () => saveAdminMenu(menu))}>저장</button>
+                      <button className="staff-settings__danger" disabled={saving !== null} type="button" onClick={() => {
+                        if (!window.confirm(`“${menu.name}” 메뉴를 영구 삭제할까요?\n고객·POS 메뉴 목록에서 제거되며 복구할 수 없습니다.\n기존 주문과 판매 통계는 유지됩니다.`)) return
+                        perform(`delete-${menu.menuId}`, () => deleteAdminMenu(menu.menuId))
+                      }}>메뉴 영구 삭제</button>
+                    </div>
                   </div>
                 ))}
               </div>
