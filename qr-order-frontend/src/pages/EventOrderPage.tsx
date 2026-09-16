@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppBar } from '../components/AppBar'
 import { Button } from '../components/Button'
+import { MenuImage } from '../components/MenuImage'
 import { QuantitySelector } from '../components/QuantitySelector'
 import { createOrder, mapCreatedOrder } from '../api/orders'
 import { ApiClientError } from '../api/client'
@@ -56,7 +57,7 @@ export function EventOrderPage({ session, menuItems, tableNumber, credentials, l
       {step === 'menu' && loading && <p aria-busy="true">메뉴를 불러오고 있어요.</p>}
       {step === 'menu' && catalogError && <div role="alert"><p>{catalogError}</p><Button label="다시 시도" onClick={onRetry} /></div>}
       {step === 'menu' && !loading && !catalogError && <div>{items.length === 0 && <p className="py-8">이벤트 메뉴를 준비하고 있어요.</p>}{items.map((item) => <article key={item.id} className="flex items-center gap-3 py-4 border-b border-dashed border-border-default">
-        {item.imageUrl && <img className="size-16 rounded-xl object-cover" src={item.imageUrl} alt="" />}
+        <MenuImage src={item.imageUrl} className="flex-none size-16 rounded-xl" />
         <div className="flex-1"><h2 className="font-bold">{item.name}</h2><p className="text-sm text-body mt-1">엽전 {item.coinPrice}개</p></div>
         <Button size="small" variant="weak" label={item.soldOut ? '품절' : '담기'} disabled={item.soldOut} onClick={() => session.addToCart({ itemId: item.id, nameSnapshot: item.name, unitPrice: item.coinPrice!, quantity: 1, maxQuantitySnapshot: item.maxQuantity })} />
       </article>)}</div>}

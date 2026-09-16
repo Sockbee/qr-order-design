@@ -1,0 +1,132 @@
+[
+  {
+    "menuId": "cheese-egg-custard",
+    "source": "계란찜.png",
+    "path": "cheese-egg-custard/718b9c00f94c1b1b.webp",
+    "width": 540,
+    "height": 462,
+    "bytes": 44978,
+    "sourceBytes": 367179,
+    "sha256": "718b9c00f94c1b1b91b34f856a07fe70b62edaf1353447c5bbb21a2b7ee36015"
+  },
+  {
+    "menuId": "chicken-feet",
+    "source": "닭발.png",
+    "path": "chicken-feet/8d284ebf7fd0cdc8.webp",
+    "width": 644,
+    "height": 387,
+    "bytes": 56632,
+    "sourceBytes": 404968,
+    "sha256": "8d284ebf7fd0cdc8321d4fc67e7378e79a878842543d552bc262dac9789471d8"
+  },
+  {
+    "menuId": "tteokbokki-egg-fried-set",
+    "source": "떡볶이.png",
+    "path": "tteokbokki-egg-fried-set/af143f03f83a1509.webp",
+    "width": 563,
+    "height": 443,
+    "bytes": 54286,
+    "sourceBytes": 415800,
+    "sha256": "af143f03f83a1509a20f5c7f2bd75f51da0b5b2e3131bca7da035e8009ab8cc7"
+  },
+  {
+    "menuId": "dried-snack-platter",
+    "source": "마른안주.png",
+    "path": "dried-snack-platter/5d26ec5ce340b7bb.webp",
+    "width": 552,
+    "height": 452,
+    "bytes": 48706,
+    "sourceBytes": 326636,
+    "sha256": "5d26ec5ce340b7bb88d994569f5f5e0b0c22f2f8d47e3392b5432ad012e8c59d"
+  },
+  {
+    "menuId": "mix-coffee-highball",
+    "source": "믹스커피.png",
+    "path": "mix-coffee-highball/f777c033a636ca2a.webp",
+    "width": 267,
+    "height": 454,
+    "bytes": 28772,
+    "sourceBytes": 185109,
+    "sha256": "f777c033a636ca2a5412095ce7a1f9e249620283219bb7783525689e7effa2fc"
+  },
+  {
+    "menuId": "banana-milk-highball",
+    "source": "바나나우유.png",
+    "path": "banana-milk-highball/50d918d3ca5c457b.webp",
+    "width": 386,
+    "height": 646,
+    "bytes": 37960,
+    "sourceBytes": 294667,
+    "sha256": "50d918d3ca5c457b31bf812ca9e864972eec2f730cf0c90fbcac30aaee0d707c"
+  },
+  {
+    "menuId": "frozen-sikhye",
+    "source": "식혜.png",
+    "path": "frozen-sikhye/466bfe392e7127aa.webp",
+    "width": 343,
+    "height": 712,
+    "bytes": 38926,
+    "sourceBytes": 359070,
+    "sha256": "466bfe392e7127aad110928ac461fa57ad8ac0097d9f2ecc041ed455e9fdf999"
+  },
+  {
+    "menuId": "eolbaksa",
+    "source": "얼박사.png",
+    "path": "eolbaksa/29703e115fa29f79.webp",
+    "width": 322,
+    "height": 682,
+    "bytes": 32746,
+    "sourceBytes": 346902,
+    "sha256": "29703e115fa29f79f0e24b66a8e664bd87fd2641071816eb9539f0d587a5f888"
+  },
+  {
+    "menuId": "spicy-pork",
+    "source": "제육.png",
+    "path": "spicy-pork/fec58c3baf9c8fd7.webp",
+    "width": 604,
+    "height": 413,
+    "bytes": 50940,
+    "sourceBytes": 375964,
+    "sha256": "fec58c3baf9c8fd77d9b8b59c56b82c446f127ba7e18a4b4218c34f76fa8bd86"
+  },
+  {
+    "menuId": "tuna-mayo-rice-ball",
+    "source": "주먹밥.png",
+    "path": "tuna-mayo-rice-ball/9255de4cd6f6723e.webp",
+    "width": 550,
+    "height": 453,
+    "bytes": 47036,
+    "sourceBytes": 321762,
+    "sha256": "9255de4cd6f6723e3091b23430fbb1e982e867887106b3a42a2db58637644186"
+  },
+  {
+    "menuId": "jjapagetti-egg-cheese",
+    "source": "짜계치.png",
+    "path": "jjapagetti-egg-cheese/fdd7c3080b8c50b3.webp",
+    "width": 527,
+    "height": 473,
+    "bytes": 47822,
+    "sourceBytes": 380138,
+    "sha256": "fdd7c3080b8c50b3ca729329d08807b2b2b01e575c97617b6984f5b254a87bd5"
+  },
+  {
+    "menuId": "red-bean-bingsu",
+    "source": "팥빙수.png",
+    "path": "red-bean-bingsu/9fefd9c00db948b8.webp",
+    "width": 586,
+    "height": 426,
+    "bytes": 49654,
+    "sourceBytes": 333741,
+    "sha256": "9fefd9c00db948b8962a34ae096a9883a31fe22f72b53a29fb42a7d43d15a275"
+  },
+  {
+    "menuId": "seaweed-soup-rice",
+    "source": "해장미역국밥.png",
+    "path": "seaweed-soup-rice/be8aa3a93bef3910.webp",
+    "width": 576,
+    "height": 433,
+    "bytes": 40788,
+    "sourceBytes": 365339,
+    "sha256": "be8aa3a93bef3910dfe6ade927e4cbe326180c25daaf327d7cbce2fc563e7190"
+  }
+]
