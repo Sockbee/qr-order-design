@@ -4,6 +4,9 @@
 처음 배포하는 경우를 기준으로 작성했습니다. 인프라는 Terraform으로 관리하고,
 애플리케이션은 Cloud Build에서 빌드한 뒤 Cloud Run에 배포합니다.
 
+메뉴 이미지 전용 Cloud Storage 버킷·공개 읽기·캐시·기존 메뉴 연결은
+[메뉴 이미지 운영 가이드](../docs/qr-order/menu-images.md)를 참고하세요.
+
 > **비용 주의:** `terraform apply`를 실행하면 유료 리소스가 만들어집니다. 특히 이
 > 구성은 Cloud SQL과 Cloud Run 최소 인스턴스 1개를 사용하므로 요청이 없어도 비용이
 > 발생할 수 있습니다. 적용 전에 결제 예산 알림을 만들고, 테스트가 끝난 staging은

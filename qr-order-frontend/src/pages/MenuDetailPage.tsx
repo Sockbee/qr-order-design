@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AppBar } from '../components/AppBar'
 import { Button } from '../components/Button'
+import { MenuImage } from '../components/MenuImage'
 import { QuantitySelector } from '../components/customer/QuantitySelector'
 import { formatPrice } from '../utils/price'
 import type { CartLine, MenuItemDetail } from '../types/menu'
@@ -36,11 +37,11 @@ export function MenuDetailPage({
         actions={[{ label: '직원 호출', onClick: onCallStaff }]}
       />
 
-      <div className="flex-none mx-4 mt-2 h-[216px] rounded-[24px] bg-surface overflow-hidden">
-        {item.imageUrl && (
-          <img className="w-full h-full object-cover" src={item.imageUrl} alt="" />
-        )}
-      </div>
+      <MenuImage
+        src={item.imageUrl}
+        loading="eager"
+        className="flex-none mx-4 mt-2 h-[216px] rounded-[24px] p-2"
+      />
 
       <main className="flex flex-1 flex-col gap-5 pt-[18px] px-4 pb-6">
         <div className="flex flex-col gap-1.5">

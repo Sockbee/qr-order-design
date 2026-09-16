@@ -1,0 +1,2 @@
+Pillow==11.3.0
+cloud-sql-python-connector[pg8000]==1.22.0
