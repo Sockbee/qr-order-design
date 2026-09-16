@@ -34,6 +34,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -1097,8 +1099,79 @@ class QrOrderApiIntegrationTest {
         assertEquals(2,old.queryForObject("SELECT quantity FROM order_items WHERE order_item_id=?",Integer.class,item));
         assertEquals(23000,old.queryForObject("SELECT line_total FROM order_items WHERE order_item_id=?",Integer.class,item));
         assertEquals(11500,old.queryForObject("SELECT unit_price_snapshot FROM order_items WHERE order_item_id=?",Integer.class,item));
+        assertEquals("main",old.queryForObject("SELECT category_id_snapshot FROM order_items WHERE order_item_id=?",String.class,item));
+        old.update("DELETE FROM menus WHERE menu_id='chicken-feet'");
+        assertEquals(23000,old.queryForObject("SELECT line_total FROM order_items WHERE order_item_id=?",Integer.class,item));
         assertEquals(0,old.queryForObject("SELECT count(*) FROM information_schema.tables WHERE table_schema=? AND table_name IN ('options','option_groups','order_item_options')",Integer.class,schema));
     }
+    @Test
+    void adminConfiguresEventPricesAndDisablesOnlyFutureCoinOrders() throws Exception {
+        String token = staffToken(), id = "test-event-price";
+        var menu = new HashMap<String,Object>(Map.of("categoryId","beverage","name","이벤트 음료","basePrice",1500,"coinPrice",7));
+        mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
+                .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isOk());
+        mvc.perform(post("/api/v1/admin/snapshot").header("Authorization","Bearer "+token))
+                .andExpect(jsonPath("$.data.menus[?(@.menuId == 'test-event-price')].coinPrice",org.hamcrest.Matchers.contains(7)));
+        var body = customerOrder("T01",TABLE_TOKEN,"cola");
+        body.put("items",List.of(Map.of("menuId",id,"quantity",1)));
+        body.put("paymentMethod","COIN"); body.put("expectedTotalAmount",7);
+        var order = orders.create(body,false);
+        for (Object invalid : List.of(0,-1,1.5,"abc",2147483648L,true)) {
+            menu.put("coinPrice",invalid);
+            mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
+                    .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isBadRequest());
+        }
+        menu.remove("coinPrice");
+        mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
+                .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isOk());
+        assertEquals(7,jdbc.queryForObject("SELECT coin_price FROM menus WHERE menu_id=?",Integer.class,id));
+        menu.put("coinPrice",null);
+        mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
+                .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isOk());
+        assertEquals(null,jdbc.queryForObject("SELECT coin_price FROM menus WHERE menu_id=?",Integer.class,id));
+        body.put("clientRequestId",UUID.randomUUID().toString());
+        assertThrows(ApiException.class,()->orders.create(body,false));
+        assertEquals(7,jdbc.queryForObject("SELECT coin_total FROM orders WHERE order_id=?",Integer.class,UUID.fromString(order.get("orderId").toString())));
+        body.put("paymentMethod","KRW"); body.put("expectedTotalAmount",1500);
+        orders.create(body,false); // Ordinary ordering remains available.
+    }
+
+    @Test
+    void hardDeletePreservesOrdersQueuesAndBothCurrenciesInSales() throws Exception {
+        String token=staffToken(),id="test-deleted-menu";
+        var menu=Map.of("categoryId","beverage","name","삭제할 음료","basePrice",1500,"coinPrice",8);
+        mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
+                .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isOk());
+        var body=customerOrder("T01",TABLE_TOKEN,"cola");
+        body.put("items",List.of(Map.of("menuId",id,"quantity",1)));
+        orders.create(body,false);
+        body.put("clientRequestId",UUID.randomUUID().toString()); body.put("paymentMethod","COIN"); body.put("expectedTotalAmount",8);
+        var coin=orders.create(body,false);
+        var before=salesRows();
+        mvc.perform(delete("/api/v1/admin/menus/"+id)).andExpect(status().isUnauthorized());
+        mvc.perform(delete("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)).andExpect(status().isOk());
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM menus WHERE menu_id=?",Integer.class,id));
+        assertEquals(2,jdbc.queryForObject("SELECT count(*) FROM order_items WHERE menu_id=?",Integer.class,id));
+        assertEquals(before,salesRows());
+        assertEquals(2,((List<?>)orders.list(Map.of("tableId","T01","tableToken",TABLE_TOKEN)).get("orders")).size());
+        assertEquals(2,((List<?>)staffOperations.queues().get("serving")).size());
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action='MENU_DELETED' AND entity_id=?",Integer.class,id));
+        mvc.perform(post("/api/v1/customer/bootstrap").contentType("application/json")
+                .content(mapper.writeValueAsString(Map.of("tableId","T01","tableToken",TABLE_TOKEN))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.items[?(@.menuId == 'test-deleted-menu')]").isEmpty());
+        body.put("clientRequestId",UUID.randomUUID().toString());
+        assertEquals("MENU_NOT_FOUND",assertThrows(ApiException.class,()->orders.create(body,false)).code());
+        StaffPrincipal staff=new StaffPrincipal("서빙",Instant.now(),Instant.now().plusSeconds(3600),1);
+        staffOperations.receiveCoins(coin.get("orderId").toString(),8,staff);
+        staffOperations.updateStatus(Map.of("orderId",coin.get("orderId"),"status","SERVED"),staff);
+        assertEquals(8L,salesRows().stream().mapToLong(row->((Number)row.get("receivedCoins")).longValue()).sum());
+        staffOperations.confirmPayment("T01",1500,staff,"입금자");
+        assertEquals(1500L,salesAmount("GENERAL"));
+        mvc.perform(delete("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)).andExpect(status().isNotFound());
+        mvc.perform(put("/api/v1/admin/menus/"+id).header("Authorization","Bearer "+token)
+                .contentType("application/json").content(mapper.writeValueAsString(menu))).andExpect(status().isBadRequest());
+    }
+
     private static Map<String, Object> customerOrder(String tableId, String token, String menuId) {
         Map<String, Object> request = new HashMap<>();
         request.put("tableId", tableId);

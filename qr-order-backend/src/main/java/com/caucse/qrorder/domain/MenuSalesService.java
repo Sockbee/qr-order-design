@@ -34,7 +34,9 @@ public class MenuSalesService {
         // keeps item totals equal to payment, including merged multi-day visits.
         var rows = jdbc.query("""
                 WITH lines AS (
-                  SELECT i.order_item_id,i.line_no,i.menu_id,m.name,m.category_id,c.label AS category_label,
+                  SELECT i.order_item_id,i.line_no,i.menu_id,COALESCE(m.name,i.menu_name_snapshot) AS name,
+                    COALESCE(m.category_id,i.category_id_snapshot,'deleted') AS category_id,
+                    COALESCE(c.label,i.category_label_snapshot,'삭제된 메뉴') AS category_label,
                     o.order_id,o.created_at,i.quantity,i.line_total::bigint AS gross,
                     CASE WHEN o.payment_method='COIN' THEN 'COIN' WHEN o.order_kind='SERVICE' THEN 'SERVICE'
                          WHEN o.payment_status='PAID' AND o.paid_discount_rate>0 THEN 'MEMBER'
@@ -47,7 +49,7 @@ public class MenuSalesService {
                     o.order_kind,o.payment_status,o.payment_method,o.coin_received_at,COALESCE(i.coin_unit_price,0)*i.quantity AS coins
                   FROM order_items i JOIN orders o ON o.order_id=i.order_id
                   JOIN table_sessions s ON s.session_id=o.session_id
-                  JOIN menus m ON m.menu_id=i.menu_id JOIN categories c ON c.category_id=m.category_id
+                  LEFT JOIN menus m ON m.menu_id=i.menu_id LEFT JOIN categories c ON c.category_id=m.category_id
                   WHERE i.status='ACTIVE' AND o.status<>'CANCELLED' AND o.payment_status<>'REFUNDED'
                 ), allocated AS (
                   SELECT *, SUM(gross) OVER (
