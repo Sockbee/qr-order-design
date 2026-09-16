@@ -36,28 +36,30 @@ public class MenuSalesService {
                 WITH lines AS (
                   SELECT i.order_item_id,i.line_no,i.menu_id,m.name,m.category_id,c.label AS category_label,
                     o.order_id,o.created_at,i.quantity,i.line_total::bigint AS gross,
-                    CASE WHEN o.order_kind='SERVICE' THEN 'SERVICE'
+                    CASE WHEN o.payment_method='COIN' THEN 'COIN' WHEN o.order_kind='SERVICE' THEN 'SERVICE'
                          WHEN o.payment_status='PAID' AND o.paid_discount_rate>0 THEN 'MEMBER'
                          ELSE 'GENERAL' END AS sale_type,
-                    CASE WHEN o.order_kind='SERVICE' THEN o.staff_discount_rate
+                    CASE WHEN o.payment_method='COIN' THEN 0 WHEN o.order_kind='SERVICE' THEN o.staff_discount_rate
                          WHEN o.payment_status='PAID' THEN COALESCE(o.paid_discount_rate,0)
                          ELSE 0 END AS rate,
                     CASE WHEN o.order_kind='SERVICE' THEN o.order_id
                          ELSE COALESCE(s.merged_into_session_id,s.session_id) END AS charge_group,
-                    o.order_kind,o.payment_status
+                    o.order_kind,o.payment_status,o.payment_method,o.coin_received_at,COALESCE(i.coin_unit_price,0)*i.quantity AS coins
                   FROM order_items i JOIN orders o ON o.order_id=i.order_id
                   JOIN table_sessions s ON s.session_id=o.session_id
                   JOIN menus m ON m.menu_id=i.menu_id JOIN categories c ON c.category_id=m.category_id
                   WHERE i.status='ACTIVE' AND o.status<>'CANCELLED' AND o.payment_status<>'REFUNDED'
                 ), allocated AS (
                   SELECT *, SUM(gross) OVER (
-                    PARTITION BY charge_group,order_kind ORDER BY created_at,order_id,line_no,order_item_id
+                    PARTITION BY charge_group,order_kind,payment_method ORDER BY created_at,order_id,line_no,order_item_id
                     ROWS UNBOUNDED PRECEDING) AS running_gross
                   FROM lines
                 )
                 SELECT menu_id,name,category_id,category_label,sale_type,rate,
                   SUM(quantity)::bigint AS quantity,
                   SUM(gross-(floor(running_gross*rate/100)-floor((running_gross-gross)*rate/100)))::bigint AS amount,
+                  SUM(CASE WHEN sale_type='COIN' AND coin_received_at IS NOT NULL THEN coins ELSE 0 END)::bigint AS received_coins,
+                  SUM(CASE WHEN sale_type='COIN' AND coin_received_at IS NULL THEN coins ELSE 0 END)::bigint AS pending_coins,
                   SUM(CASE WHEN sale_type='GENERAL' AND payment_status='UNPAID' THEN quantity ELSE 0 END)::bigint AS unpaid_quantity
                 FROM allocated WHERE created_at>=? AND created_at<?
                 GROUP BY menu_id,name,category_id,category_label,sale_type,rate
@@ -67,6 +69,7 @@ public class MenuSalesService {
                 "categoryId", rs.getString("category_id"), "categoryLabel", rs.getString("category_label"),
                 "type", rs.getString("sale_type"), "discountRate", rs.getInt("rate"),
                 "quantity", rs.getLong("quantity"), "amount", rs.getLong("amount"),
+                "receivedCoins",rs.getLong("received_coins"),"pendingCoins",rs.getLong("pending_coins"),
                 "unpaidQuantity", rs.getLong("unpaid_quantity")),
                 start.atStartOfDay(zone).toOffsetDateTime(), end.plusDays(1).atStartOfDay(zone).toOffsetDateTime());
         return ApiEnvelope.map("startDate", startDate, "endDate", endDate, "timeZone", timeZone, "rows", rows);

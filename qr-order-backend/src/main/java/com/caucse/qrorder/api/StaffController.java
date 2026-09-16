@@ -147,6 +147,16 @@ public class StaffController {
     @PostMapping("/orders/cancel") ApiEnvelope<Void> cancel(@RequestBody Map<String, Object> body, @RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
         return ApiEnvelope.ok(service.cancelOrders(required(body, "tableId"), staff));
     }
+    @PostMapping("/tables/check-in")
+    @Operation(summary="테이블 입장 및 예약 회차 지정",requestBody=@io.swagger.v3.oas.annotations.parameters.RequestBody(required=true,content=@Content(schema=@Schema(implementation=OpenApiRequests.CheckIn.class))))
+    ApiEnvelope<Void> checkIn(@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        return ApiEnvelope.ok(service.checkIn(required(body,"tableId"),(String)body.get("expectedSessionId"),(String)body.get("departureAt"),staff));
+    }
+    @PostMapping("/orders/coins/receive")
+    @Operation(summary="실물 엽전 수령 확인",requestBody=@io.swagger.v3.oas.annotations.parameters.RequestBody(required=true,content=@Content(schema=@Schema(implementation=OpenApiRequests.CoinReceipt.class))))
+    ApiEnvelope<Void> receiveCoins(@RequestBody Map<String,Object> body,@RequestAttribute(StaffAuthFilter.PRINCIPAL_ATTRIBUTE) StaffPrincipal staff) {
+        return ApiEnvelope.ok(service.receiveCoins(required(body,"orderId"),number(body,"expectedCoinTotal"),staff));
+    }
     @PostMapping("/sales/menu")
     @Operation(summary = "메뉴별 판매 통계", description = "주문일 기준. 일반·학생회비 납부자·서비스별 할인 반영 금액을 조회합니다.",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,

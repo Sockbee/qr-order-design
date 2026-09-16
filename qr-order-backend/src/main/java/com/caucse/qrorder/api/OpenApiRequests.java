@@ -6,6 +6,8 @@ import java.util.List;
 
 /** Documentation-only request models. Runtime controllers keep the legacy Map contract. */
 public final class OpenApiRequests {
+    public record CheckIn(@Schema(requiredMode=Schema.RequiredMode.REQUIRED) String tableId, String expectedSessionId, String departureAt) {}
+    public record CoinReceipt(@Schema(requiredMode=Schema.RequiredMode.REQUIRED) String orderId, @Schema(requiredMode=Schema.RequiredMode.REQUIRED) int expectedCoinTotal) {}
     private OpenApiRequests() {}
 
     @Schema(name = "TableCredentialsRequest", description = "인쇄 QR에 포함된 테이블 인증 정보")
@@ -17,12 +19,11 @@ public final class OpenApiRequests {
     @Schema(name = "CustomerOrderItemRequest")
     public record CustomerOrderItem(
             @Schema(example = "chicken-feet", requiredMode = Schema.RequiredMode.REQUIRED) String menuId,
-            @Schema(example = "2", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity,
-            @Schema(example = "[\"chicken-feet-spicy\"]", requiredMode = Schema.RequiredMode.REQUIRED)
-            List<String> selectedOptionIds) {}
+            @Schema(example = "2", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity) {}
 
     @Schema(name = "CustomerOrderCreateRequest")
     public record CustomerOrderCreate(
+            @Schema(allowableValues={"KRW","COIN"},defaultValue="KRW") String paymentMethod,
             @Schema(example = "T01", requiredMode = Schema.RequiredMode.REQUIRED) String tableId,
             @Schema(example = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
                     requiredMode = Schema.RequiredMode.REQUIRED) String tableToken,
@@ -129,8 +130,7 @@ public final class OpenApiRequests {
     @Schema(name = "StaffOrderItemRequest")
     public record StaffOrderItem(
             @Schema(example = "cola", requiredMode = Schema.RequiredMode.REQUIRED) String itemId,
-            @Schema(example = "1", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity,
-            @Schema(example = "[]") List<String> selectedOptionIds) {}
+            @Schema(example = "1", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity) {}
 
     @Schema(name = "StaffOrderCreateRequest")
     public record StaffOrderCreate(
@@ -142,8 +142,7 @@ public final class OpenApiRequests {
     @Schema(name = "StaffServiceOrderItemRequest")
     public record StaffServiceOrderItem(
             @Schema(example = "cola", requiredMode = Schema.RequiredMode.REQUIRED) String menuId,
-            @Schema(example = "1", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity,
-            @Schema(example = "[]") List<String> selectedOptionIds) {}
+            @Schema(example = "1", minimum = "1", requiredMode = Schema.RequiredMode.REQUIRED) int quantity) {}
 
     @Schema(name = "StaffServiceOrderCreateRequest")
     public record StaffServiceOrderCreate(
@@ -197,27 +196,7 @@ public final class OpenApiRequests {
             @Schema(example = "국내산") String origin,
             @Schema(example = "1") int sortOrder) {}
 
-    @Schema(name = "AdminOptionGroupRequest")
-    public record AdminOptionGroup(
-            @Schema(example = "chicken-feet", requiredMode = Schema.RequiredMode.REQUIRED) String menuId,
-            @Schema(example = "맵기", requiredMode = Schema.RequiredMode.REQUIRED) String label,
-            @Schema(allowableValues = {"SINGLE", "MULTIPLE"}, example = "SINGLE",
-                    requiredMode = Schema.RequiredMode.REQUIRED) String selectionType,
-            @Schema(example = "true") boolean required,
-            @Schema(example = "1", minimum = "0") int minSelections,
-            @Schema(example = "1", minimum = "0") int maxSelections,
-            @Schema(example = "1") int sortOrder,
-            @Schema(example = "true") boolean active) {}
 
-    @Schema(name = "AdminOptionRequest")
-    public record AdminOption(
-            @Schema(example = "chicken-feet-spicy-group", requiredMode = Schema.RequiredMode.REQUIRED) String optionGroupId,
-            @Schema(example = "chicken-feet", requiredMode = Schema.RequiredMode.REQUIRED) String menuId,
-            @Schema(example = "보통맛", requiredMode = Schema.RequiredMode.REQUIRED) String name,
-            @Schema(example = "0") int priceDelta,
-            @Schema(example = "true") boolean available,
-            @Schema(example = "true") boolean defaultSelected,
-            @Schema(example = "1") int sortOrder) {}
 
     @Schema(name = "AdminSettingRequest")
     public record AdminSetting(

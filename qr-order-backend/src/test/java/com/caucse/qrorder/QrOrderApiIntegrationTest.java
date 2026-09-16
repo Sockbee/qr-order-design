@@ -77,7 +77,6 @@ class QrOrderApiIntegrationTest {
         jdbc.update("DELETE FROM domain_events");
         jdbc.update("DELETE FROM audit_logs");
         jdbc.update("DELETE FROM calls");
-        jdbc.update("DELETE FROM order_item_options");
         jdbc.update("DELETE FROM order_items");
         jdbc.update("DELETE FROM orders");
         jdbc.update("DELETE FROM table_sessions");
@@ -163,7 +162,7 @@ class QrOrderApiIntegrationTest {
         String requestId = UUID.randomUUID().toString();
         String order = """
                 {"tableId":"T01","tableToken":"%s","clientRequestId":"%s","expectedTotalAmount":20000,"note":"",
-                 "items":[{"menuId":"chicken-feet","quantity":2,"selectedOptionIds":[]}]}
+                 "items":[{"menuId":"chicken-feet","quantity":2}]}
                 """.formatted(TABLE_TOKEN, requestId);
         String orderResponse = mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content(order))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.data.displayCode", is("A-1042")))
@@ -264,7 +263,7 @@ class QrOrderApiIntegrationTest {
                     request.put("expectedTotalAmount", 1500);
                     request.put("note", "");
                     request.put("items", List.of(Map.of(
-                            "menuId", "cola", "quantity", 1, "selectedOptionIds", List.of())));
+                            "menuId", "cola", "quantity", 1)));
                     return orders.create(request, false);
                 }));
             }
@@ -363,18 +362,18 @@ class QrOrderApiIntegrationTest {
                 StaffTokenService.sha256Hex(PEPPER + ":" + "c".repeat(64)));
         StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
         orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
-        var other = orders.create(customerOrder("T02", "c".repeat(64), "cola"), false);
+        var other = orders.create(customerOrder("T02", "c".repeat(64), "chicken-feet"), false);
         staffOperations.merge("T01", "T02", staff);
         String itemId = jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?::uuid", String.class, other.get("orderId"));
         long before = events.latestId();
         staffOperations.updateOrder(Map.of("operation", "quantity", "itemId", itemId, "quantity", 2), staff);
         staffOperations.updateItemPreparation(itemId, true, staff);
-        assertEquals(4500, orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("sessionTotalAmount"));
+        assertEquals(21500, orders.list(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN)).get("sessionTotalAmount"));
         assertEquals(List.of("order.updated", "order.item.updated"), events.after(before, "T01", 100).stream().map(e -> e.type()).toList());
         assertEquals(List.of("order.updated", "order.item.updated"), events.after(before, "T02", 100).stream().map(e -> e.type()).toList());
         var service = orders.createService(Map.of("tableId", "T02", "clientRequestId", UUID.randomUUID().toString(),
                 "chargedStaffId", "S-001", "serviceMessage", "함께 드세요",
-                "items", List.of(Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))), "S-001", 20, "카운터");
+                "items", List.of(Map.of("menuId", "cider", "quantity", 1))), "S-001", 20, "카운터");
         assertEquals(service.get("orderId"), orders.get(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN, "orderId", service.get("orderId"))).get("orderId"));
         staffOperations.updateItemPreparation(itemId, false, staff);
         staffOperations.updateOrder(Map.of("operation", "cancel-item", "itemId", itemId), staff);
@@ -436,7 +435,7 @@ class QrOrderApiIntegrationTest {
         Map<String, Object> service = orders.createService(Map.of(
                 "tableId", "T01", "clientRequestId", UUID.randomUUID().toString(),
                 "chargedStaffId", "S-001", "serviceMessage", "서비스",
-                "items", List.of(Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))),
+                "items", List.of(Map.of("menuId", "cider", "quantity", 1))),
                 "S-001", 20, "카운터");
         UUID sessionId = UUID.fromString(String.valueOf(staffOperations.tableDetail("T01").get("sessionId")));
         staffOperations.saveTableNote("T01", "유아 의자 사용 중", staff);
@@ -478,10 +477,10 @@ class QrOrderApiIntegrationTest {
         StaffPrincipal staff = new StaffPrincipal("주방", Instant.now(), Instant.now().plusSeconds(3600), 1);
         Map<String, Object> order = orders.create(new HashMap<>(Map.of(
                 "tableId", "T01", "tableToken", TABLE_TOKEN,
-                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 4500, "note", "",
+                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 29000, "note", "",
                 "items", List.of(
-                        Map.of("menuId", "cola", "quantity", 2, "selectedOptionIds", List.of()),
-                        Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of())))), false);
+                        Map.of("menuId", "chicken-feet", "quantity", 2),
+                        Map.of("menuId", "spicy-pork", "quantity", 1)))), false);
         UUID orderId = UUID.fromString(order.get("orderId").toString());
         List<UUID> itemIds = jdbc.queryForList(
                 "SELECT order_item_id FROM order_items WHERE order_id=? ORDER BY line_no", UUID.class, orderId);
@@ -515,9 +514,9 @@ class QrOrderApiIntegrationTest {
     void customerProgressWaitsForActualServingAndExposesEachMenu() {
         StaffPrincipal staff = new StaffPrincipal("주방", Instant.now(), Instant.now().plusSeconds(3600), 1);
         var result = orders.create(Map.of("tableId", "T01", "tableToken", TABLE_TOKEN,
-                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 3000,
-                "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()),
-                                 Map.of("menuId", "cider", "quantity", 1, "selectedOptionIds", List.of()))), false);
+                "clientRequestId", UUID.randomUUID().toString(), "expectedTotalAmount", 19000,
+                "items", List.of(Map.of("menuId", "chicken-feet", "quantity", 1),
+                                 Map.of("menuId", "spicy-pork", "quantity", 1))), false);
         UUID orderId = UUID.fromString(result.get("orderId").toString());
         List<String> itemIds = jdbc.queryForList("SELECT order_item_id::text FROM order_items WHERE order_id=? ORDER BY line_no", String.class, orderId);
         assertCustomerProgress(orderId, "accepted", List.of("PENDING", "PENDING"));
@@ -541,7 +540,7 @@ class QrOrderApiIntegrationTest {
     @Test
     void bulkKitchenCompletionIsPreparingAndBulkServingCompletionIsServed() {
         StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
-        var result = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        var result = orders.create(customerOrder("T01", TABLE_TOKEN, "chicken-feet"), false);
         UUID orderId = UUID.fromString(result.get("orderId").toString());
         staffOperations.updateStatus(Map.of("tableId", "T01", "status", "READY"), staff);
         assertCustomerProgress(orderId, "preparing", List.of("READY"));
@@ -575,7 +574,7 @@ class QrOrderApiIntegrationTest {
 
         String inactiveRequest = """
                 {"tableId":"T01","clientRequestId":"%s","chargedStaffId":"S-002","serviceMessage":null,
-                 "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
+                 "items":[{"menuId":"cola","quantity":1}]}
                 """.formatted(UUID.randomUUID());
         mvc.perform(post("/api/v1/staff/orders/service").header("Authorization", "Bearer " + token)
                         .contentType("application/json").content(inactiveRequest))
@@ -585,7 +584,7 @@ class QrOrderApiIntegrationTest {
         String serviceRequest = """
                 {"tableId":"T01","clientRequestId":"%s","chargedStaffId":"S-001",
                  "serviceMessage":"기다려 주셔서 감사합니다!",
-                 "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
+                 "items":[{"menuId":"cola","quantity":1}]}
                 """.formatted(UUID.randomUUID());
         String response = mvc.perform(post("/api/v1/staff/orders/service")
                         .header("Authorization", "Bearer " + token)
@@ -630,10 +629,10 @@ class QrOrderApiIntegrationTest {
         mvc.perform(post("/api/v1/staff/orders/queue").header("Authorization", "Bearer " + token)
                         .contentType("application/json").content("{}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.kitchen[0].orderKind", is("SERVICE")))
-                .andExpect(jsonPath("$.data.kitchen[0].serviceMessage").doesNotExist())
-                .andExpect(jsonPath("$.data.kitchen[0].chargedStaffName").doesNotExist())
-                .andExpect(jsonPath("$.data.kitchen[0].staffChargeAmount").doesNotExist());
+                .andExpect(jsonPath("$.data.serving[0].orderKind", is("SERVICE")))
+                .andExpect(jsonPath("$.data.serving[0].serviceMessage").doesNotExist())
+                .andExpect(jsonPath("$.data.serving[0].chargedStaffName").doesNotExist())
+                .andExpect(jsonPath("$.data.serving[0].staffChargeAmount").doesNotExist());
 
         UUID itemId = jdbc.queryForObject(
                 "SELECT order_item_id FROM order_items WHERE order_id=?::uuid", UUID.class, serviceOrderId);
@@ -735,7 +734,7 @@ class QrOrderApiIntegrationTest {
         String valid = """
                 {"tableId":"T01","tableToken":"%s","clientRequestId":"%s",
                  "expectedTotalAmount":1500,"note":"",
-                 "items":[{"menuId":"cola","quantity":1,"selectedOptionIds":[]}]}
+                 "items":[{"menuId":"cola","quantity":1}]}
                 """.formatted(TABLE_TOKEN, requestId);
         mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content(valid))
                 .andExpect(status().isOk())
@@ -749,7 +748,7 @@ class QrOrderApiIntegrationTest {
         mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content("""
                 {"tableId":"T01","tableToken":"%s","clientRequestId":"%s",
                  "expectedTotalAmount":1500,"note":"",
-                 "items":[{"menuId":"cola","quantity":1.5,"selectedOptionIds":[]}]}
+                 "items":[{"menuId":"cola","quantity":1.5}]}
                 """.formatted(TABLE_TOKEN, UUID.randomUUID())))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code", is("INVALID_REQUEST")))
@@ -761,7 +760,7 @@ class QrOrderApiIntegrationTest {
         mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json").content("""
                 {"tableId":"T01","tableToken":"%s","clientRequestId":"%s",
                  "expectedTotalAmount":1500,"note":"",
-                 "items":[{"menuId":"cola","quantity":2,"selectedOptionIds":[]}]}
+                 "items":[{"menuId":"cola","quantity":2}]}
                 """.formatted(TABLE_TOKEN, UUID.randomUUID())))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code", is("ORDER_PRICE_CHANGED")))
@@ -841,7 +840,7 @@ class QrOrderApiIntegrationTest {
         orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
         orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
         services.createServiceOrder(Map.of("tableId", "T01", "clientRequestId", UUID.randomUUID().toString(),
-                "chargedStaffId", "S-001", "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()))), staff);
+                "chargedStaffId", "S-001", "items", List.of(Map.of("menuId", "cola", "quantity", 1))), staff);
         staffOperations.discount("T01", 20, staff);
         assertEquals(3000L, salesAmount("GENERAL"));
         assertEquals(1200L, salesAmount("SERVICE"));
@@ -881,7 +880,7 @@ class QrOrderApiIntegrationTest {
         for (int rate : List.of(20, 50)) {
             jdbc.update("UPDATE settings SET value=? WHERE key='STAFF_DISCOUNT_RATE'", String.valueOf(rate));
             services.createServiceOrder(Map.of("tableId", "T01", "clientRequestId", UUID.randomUUID().toString(),
-                    "chargedStaffId", "S-001", "items", List.of(Map.of("menuId", "cola", "quantity", 1, "selectedOptionIds", List.of()))), staff);
+                    "chargedStaffId", "S-001", "items", List.of(Map.of("menuId", "cola", "quantity", 1))), staff);
         }
         assertEquals(1950L, salesAmount("SERVICE"));
         assertEquals(2, salesRows().size());
@@ -939,6 +938,167 @@ class QrOrderApiIntegrationTest {
         return mapper.readTree(loginResponse).get("data").get("staffToken").asString();
     }
 
+
+    @Test
+    void emptyMergeActivatesWholeGroupOnceAndPaymentEndsVisit() {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        String token2 = "c".repeat(64);
+        jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES('T02','테이블 2',?,2)", StaffTokenService.sha256Hex(PEPPER+":"+token2));
+        staffOperations.merge("T01", "T02", staff);
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM table_sessions WHERE status='PREPARED' AND opened_at IS NULL", Integer.class));
+        assertEquals("PREPARED", ((List<Map<String,Object>>)staffOperations.listTables().get("tables")).getFirst().get("sessionStatus"));
+        var order = orders.create(customerOrder("T02", token2, "cola"), false);
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM table_sessions WHERE status='OPEN'", Integer.class));
+        assertEquals(1, jdbc.queryForObject("SELECT count(DISTINCT opened_at) FROM table_sessions", Integer.class));
+        String opened = jdbc.queryForObject("SELECT opened_at::text FROM table_sessions LIMIT 1", String.class);
+        String session = staffOperations.tableDetail("T01").get("sessionId").toString();
+        staffOperations.checkIn("T01", session, "2026-09-17T01:50:00+09:00", staff);
+        assertEquals(opened, jdbc.queryForObject("SELECT opened_at::text FROM table_sessions LIMIT 1", String.class));
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM table_sessions WHERE departure_at='2026-09-17T01:50:00+09:00'", Integer.class));
+        assertEquals(1, ((List<?>)orders.list(Map.of("tableId","T01","tableToken",TABLE_TOKEN)).get("orders")).size());
+        staffOperations.confirmPayment("T01",session,UUID.randomUUID().toString(),1500,staff,"입금자");
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM table_sessions WHERE status='CLOSED'", Integer.class));
+        assertEquals(null, staffOperations.tableDetail("T01").get("openedAt"));
+        var fresh = orders.create(customerOrder("T02", token2, "cola"),false);
+        assertTrue(!fresh.get("orderId").equals(order.get("orderId")));
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM table_sessions WHERE status='OPEN'", Integer.class));
+    }
+
+    @Test
+    void explicitCheckInAndConcurrentFirstOrdersPreserveEarliestTime() throws Exception {
+        StaffPrincipal staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        staffOperations.checkIn("T01",null,null,staff);
+        String session=staffOperations.tableDetail("T01").get("sessionId").toString();
+        jdbc.update("UPDATE table_sessions SET opened_at=now()-interval '35 minutes',departure_at=now()-interval '5 minutes'");
+        String opened=jdbc.queryForObject("SELECT opened_at::text FROM table_sessions",String.class);
+        try(var executor=Executors.newFixedThreadPool(3)) {
+            var one=executor.submit(()->orders.create(customerOrder("T01",TABLE_TOKEN,"cola"),false));
+            var two=executor.submit(()->staffOperations.checkIn("T01",session,null,staff));
+            one.get();two.get();
+        }
+        assertEquals(opened,jdbc.queryForObject("SELECT opened_at::text FROM table_sessions",String.class));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM table_sessions",Integer.class));
+        assertThrows(ApiException.class,()->staffOperations.checkIn("T01",session,"2026-09-16T20:00:00+09:00",staff));
+        staffOperations.checkIn("T01",session,"2026-09-15T19:50:00+09:00",staff);
+        orders.create(customerOrder("T01",TABLE_TOKEN,"cola"),false); // overdue never blocks
+    }
+
+    @Test
+    void mixedFoodAndDrinkAreRoutedIndependentlyImmediately() {
+        var body=customerOrder("T01",TABLE_TOKEN,"chicken-feet");
+        body.put("expectedTotalAmount",11500);
+        body.put("items",List.of(Map.of("menuId","chicken-feet","quantity",1),Map.of("menuId","cola","quantity",1)));
+        var order=orders.create(body,false);
+        var queue=staffOperations.queues();
+        var kitchen=(List<Map<String,Object>>)queue.get("kitchen");
+        var serving=(List<Map<String,Object>>)queue.get("serving");
+        assertEquals(1,kitchen.size());assertEquals(1,serving.size());
+        assertEquals("닭발",((List<Map<String,Object>>)kitchen.getFirst().get("items")).getFirst().get("name"));
+        assertEquals("콜라",((List<Map<String,Object>>)serving.getFirst().get("items")).getFirst().get("name"));
+        StaffPrincipal staff = new StaffPrincipal("서빙", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        staffOperations.updateStatus(Map.of("orderId",order.get("orderId"),"status","SERVED"),staff);
+        assertEquals(1,((List<?>)staffOperations.queues().get("kitchen")).size());
+        assertEquals(0,((List<?>)staffOperations.queues().get("serving")).size());
+    }
+
+    @Test
+    void coinReceiptIsIdempotentAndSeparateFromWonDiscountsAndServing() throws Exception {
+        StaffPrincipal staff = new StaffPrincipal("서빙", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        var body=customerOrder("T01",TABLE_TOKEN,"soju");body.put("paymentMethod","COIN");body.put("expectedTotalAmount",18);
+        body.put("items",List.of(Map.of("menuId","soju","quantity",2)));
+        var coin=orders.create(body,false);String id=coin.get("orderId").toString();
+        assertEquals(0,coin.get("totalAmount"));assertEquals(18,coin.get("coinTotal"));
+        assertEquals(id,orders.create(body,false).get("orderId"));
+        orders.create(customerOrder("T01",TABLE_TOKEN,"soju"),false);
+        staffOperations.discount("T01",20,staff);
+        String day=java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString();
+        var pending=(List<Map<String,Object>>)sales.report(day,day).get("rows");
+        var pendingCoin=pending.stream().filter(r->r.get("type").equals("COIN")).findFirst().orElseThrow();
+        assertEquals(18L,pendingCoin.get("pendingCoins"));assertEquals(0L,pendingCoin.get("receivedCoins"));
+        assertEquals("COINS_NOT_RECEIVED",assertThrows(ApiException.class,()->staffOperations.updateStatus(Map.of("orderId",id,"status","SERVED"),staff)).code());
+        assertEquals("COIN_AMOUNT_CHANGED",assertThrows(ApiException.class,()->staffOperations.receiveCoins(id,9,staff)).code());
+        try(var executor=Executors.newFixedThreadPool(2)) {
+            var a=executor.submit(()->staffOperations.receiveCoins(id,18,staff));var b=executor.submit(()->staffOperations.receiveCoins(id,18,staff));a.get();b.get();
+        }
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action='COINS_RECEIVED'",Integer.class));
+        assertEquals("READY",jdbc.queryForObject("SELECT preparation_status FROM order_items WHERE order_id=?",String.class,UUID.fromString(id)));
+        String item=jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?",String.class,UUID.fromString(id));
+        assertEquals("COINS_ALREADY_RECEIVED",assertThrows(ApiException.class,()->staffOperations.updateOrder(Map.of("operation","quantity","itemId",item,"quantity",3),staff)).code());
+        staffOperations.updateStatus(Map.of("orderId",id,"status","SERVED"),staff);
+        String session=staffOperations.tableDetail("T01").get("sessionId").toString();
+        staffOperations.confirmPayment("T01",session,UUID.randomUUID().toString(),3600,staff,"홍길동");
+        var rows=(List<Map<String,Object>>)sales.report(day,day).get("rows");
+        var received=rows.stream().filter(r->r.get("type").equals("COIN")).findFirst().orElseThrow();
+        assertEquals(18L,received.get("receivedCoins"));assertEquals(0L,received.get("amount"));assertEquals(0L,received.get("pendingCoins"));
+        assertEquals(3600L,rows.stream().filter(r->r.get("type").equals("MEMBER")).findFirst().orElseThrow().get("amount"));
+        assertEquals("WAIVED",jdbc.queryForObject("SELECT payment_status FROM orders WHERE order_id=?",String.class,UUID.fromString(id)));
+    }
+
+    @Test
+    void onlyEligibleMenusAcceptCoinsAndOptionsAreRemoved() throws Exception {
+        var body=customerOrder("T01",TABLE_TOKEN,"cola");body.put("paymentMethod","COIN");body.put("expectedTotalAmount",9);
+        assertThrows(ApiException.class,()->orders.create(body,false));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM table_sessions",Integer.class));
+        assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('options','option_groups','order_item_options')",Integer.class));
+        for(var entry:Map.of("soju",9,"beer",9,"banana-milk-highball",10,"mix-coffee-highball",10,"frozen-sikhye",8,"eolbaksa",8).entrySet()) {
+            var request=customerOrder("T01",TABLE_TOKEN,entry.getKey());request.put("paymentMethod","COIN");request.put("expectedTotalAmount",entry.getValue());
+            assertEquals(entry.getValue(),orders.create(request,false).get("coinTotal"));
+        }
+        body.put("paymentMethod","KRW");body.put("items",List.of(Map.of("menuId","cola","quantity",1,"selectedOptionIds",List.of())));
+        assertEquals("INVALID_REQUEST",assertThrows(ApiException.class,()->orders.create(body,false)).code());
+    }
+
+
+    @Test
+    void cancelledCoinLinesDoNotBlockZeroWonCheckout() {
+        StaffPrincipal staff=new StaffPrincipal("서빙",Instant.now(),Instant.now().plusSeconds(3600),1);
+        var request=customerOrder("T01",TABLE_TOKEN,"soju");request.put("paymentMethod","COIN");request.put("expectedTotalAmount",9);
+        var order=orders.create(request,false);
+        String item=jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?::uuid",String.class,order.get("orderId"));
+        staffOperations.updateOrder(Map.of("operation","cancel-item","itemId",item),staff);
+        assertEquals("CANCELLED",jdbc.queryForObject("SELECT status FROM orders WHERE order_id=?::uuid",String.class,order.get("orderId")));
+        staffOperations.confirmPayment("T01",0,staff,"원화 결제 없음");
+        assertEquals(null,staffOperations.tableDetail("T01").get("sessionId"));
+    }
+
+    @Test
+    void receivedCoinOnlyVisitCanCloseWithoutWonAndCannotLoseReceiptByReset() {
+        StaffPrincipal staff=new StaffPrincipal("서빙",Instant.now(),Instant.now().plusSeconds(3600),1);
+        var request=customerOrder("T01",TABLE_TOKEN,"soju");request.put("paymentMethod","COIN");request.put("expectedTotalAmount",9);
+        var order=orders.create(request,false);String id=order.get("orderId").toString();
+        String session=staffOperations.tableDetail("T01").get("sessionId").toString();
+        assertEquals("COINS_NOT_RECEIVED",assertThrows(ApiException.class,()->staffOperations.confirmPayment("T01",0,staff,"원화 결제 없음")).code());
+        staffOperations.receiveCoins(id,9,staff);
+        assertEquals("COINS_ALREADY_RECEIVED",assertThrows(ApiException.class,()->staffOperations.cancelOrders("T01",staff)).code());
+        assertEquals("COINS_ALREADY_RECEIVED",assertThrows(ApiException.class,()->staffOperations.resetTable("T01",session,staff)).code());
+        staffOperations.updateStatus(Map.of("orderId",id,"status","SERVED"),staff);
+        staffOperations.confirmPayment("T01",0,staff,"원화 결제 없음");
+        assertEquals(null,staffOperations.tableDetail("T01").get("sessionId"));
+        assertEquals("ORDER_NOT_ACTIVE",assertThrows(ApiException.class,()->staffOperations.updateStatus(Map.of("orderId",id,"status","READY"),staff)).code());
+    }
+
+    @Test
+    void migrationDeletesAllOptionRecordsWhilePreservingHistoricAmounts() {
+        String schema="option_migration_test";
+        var config=org.flywaydb.core.Flyway.configure().dataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword()).schemas(schema).defaultSchema(schema);
+        config.target("6").load().migrate();
+        var source=new org.springframework.jdbc.datasource.DriverManagerDataSource(postgres.getJdbcUrl()+(postgres.getJdbcUrl().contains("?") ? "&" : "?")+"currentSchema="+schema,postgres.getUsername(),postgres.getPassword());
+        var old=new JdbcTemplate(source);
+        UUID session=UUID.randomUUID(),order=UUID.randomUUID(),item=UUID.randomUUID();
+        old.update("INSERT INTO tables(table_id,display_name,token_hash) VALUES('T01','테스트',?)","a".repeat(64));
+        old.update("INSERT INTO table_sessions(session_id,table_id,origin_table_id,status,opened_at) VALUES(?,'T01','T01','OPEN',now())",session);
+        old.update("INSERT INTO orders(order_id,display_number,display_code,client_request_id,idempotency_key,request_fingerprint,table_id,session_id,status,public_status,total_amount,payment_status) VALUES(?,1,'A1',?,'old-order',?,'T01',?,'COMPLETED','served',23000,'PAID')",order,UUID.randomUUID(),"0".repeat(64),session);
+        old.update("INSERT INTO order_items(order_item_id,order_id,line_no,menu_id,menu_name_snapshot,base_price_snapshot,unit_price_snapshot,quantity,line_total) VALUES(?,?,1,'chicken-feet','닭발',10000,11500,2,23000)",item,order);
+        old.update("INSERT INTO option_groups(option_group_id,menu_id,label,selection_type) VALUES('old-group','chicken-feet','과거 옵션','SINGLE')");
+        old.update("INSERT INTO options(option_id,option_group_id,menu_id,name,price_delta) VALUES('old-option','old-group','chicken-feet','추가',1500)");
+        old.update("INSERT INTO order_item_options(order_item_option_id,order_item_id,order_id,option_group_id,option_group_name_snapshot,option_id,option_name_snapshot,price_delta_snapshot) VALUES(?,?,?,'old-group','과거 옵션','old-option','추가',1500)",UUID.randomUUID(),item,order);
+        org.flywaydb.core.Flyway.configure().dataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword()).schemas(schema).defaultSchema(schema).load().migrate();
+        assertEquals(23000,old.queryForObject("SELECT total_amount FROM orders WHERE order_id=?",Integer.class,order));
+        assertEquals(2,old.queryForObject("SELECT quantity FROM order_items WHERE order_item_id=?",Integer.class,item));
+        assertEquals(23000,old.queryForObject("SELECT line_total FROM order_items WHERE order_item_id=?",Integer.class,item));
+        assertEquals(11500,old.queryForObject("SELECT unit_price_snapshot FROM order_items WHERE order_item_id=?",Integer.class,item));
+        assertEquals(0,old.queryForObject("SELECT count(*) FROM information_schema.tables WHERE table_schema=? AND table_name IN ('options','option_groups','order_item_options')",Integer.class,schema));
+    }
     private static Map<String, Object> customerOrder(String tableId, String token, String menuId) {
         Map<String, Object> request = new HashMap<>();
         request.put("tableId", tableId);
@@ -960,7 +1120,7 @@ class QrOrderApiIntegrationTest {
         });
         request.put("note", "");
         request.put("items", List.of(Map.of(
-                "menuId", menuId, "quantity", 1, "selectedOptionIds", List.of())));
+                "menuId", menuId, "quantity", 1)));
         return request;
     }
 }
