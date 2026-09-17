@@ -5,18 +5,60 @@ import com.caucse.qrorder.sse.DomainEventService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import java.time.*;
 import java.util.*;
 
-/** Visit/group mutations share one short transaction lock to serialize QR orders and staff actions. */
+/** Orders share a topology barrier and serialize only within their table/billing group. */
 @Service
 public class TableVisitService {
     private final JdbcTemplate jdbc;
     private final DomainEventService events;
-    public TableVisitService(JdbcTemplate jdbc, DomainEventService events) { this.jdbc=jdbc; this.events=events; }
-    public void lock() { jdbc.queryForObject("SELECT pg_advisory_xact_lock(7319021)", Object.class); }
+    private final MeterRegistry metrics;
+    public TableVisitService(JdbcTemplate jdbc, DomainEventService events, MeterRegistry metrics) { this.jdbc=jdbc; this.events=events; this.metrics=metrics; }
+    public void lock() {
+        metrics.timer("qr.visit.lock.wait", "scope", "exclusive").record(() ->
+                jdbc.queryForObject("SELECT pg_advisory_xact_lock(7319021)", Object.class));
+        recordHold();
+    }
+    private void recordHold() {
+        if (!TransactionSynchronizationManager.isSynchronizationActive())
+            throw new IllegalStateException("Visit locks require a transaction");
+        String key = "qr.visit.lock.hold";
+        if (TransactionSynchronizationManager.hasResource(key)) return;
+        var sample = Timer.start(metrics);
+        TransactionSynchronizationManager.bindResource(key, sample);
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override public void afterCompletion(int status) {
+                        sample.stop(metrics.timer(key));
+                        TransactionSynchronizationManager.unbindResourceIfPossible(key);
+                    }
+                });
+    }
+    public void lockForTable(String tableId) {
+        metrics.timer("qr.visit.lock.wait", "scope", "table-group").record(() -> lockTableGroup(tableId));
+        recordHold();
+    }
+    private void lockTableGroup(String tableId) {
+        // Structural/staff changes take the exclusive barrier first. Therefore group membership
+        // cannot change between resolving the root and acquiring its lock, including moved QR aliases.
+        jdbc.queryForObject("SELECT pg_advisory_xact_lock_shared(7319021)", Object.class);
+        jdbc.queryForObject("SELECT pg_advisory_xact_lock(7319022, hashtext(?))", Object.class, tableId);
+        UUID root = jdbc.query("""
+                SELECT COALESCE(merged_into_session_id,session_id) FROM table_sessions
+                WHERE (table_id=? OR origin_table_id=?) AND status IN ('OPEN','PREPARED')
+                ORDER BY (table_id=?) DESC LIMIT 1
+                """, rs -> rs.next() ? rs.getObject(1, UUID.class) : null, tableId, tableId, tableId);
+        if (root != null) jdbc.queryForObject("SELECT pg_advisory_xact_lock(7319023, hashtext(?))",
+                Object.class, root.toString());
+    }
+    @Transactional
     public UUID prepare(String tableId) {
-        lock();
+        lockForTable(tableId);
         if (!Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM tables WHERE table_id=? AND active)",Boolean.class,tableId)))
             throw ApiException.notFound("TABLE_NOT_FOUND","테이블을 찾을 수 없습니다.");
         UUID id=jdbc.query("SELECT session_id FROM table_sessions WHERE table_id=? AND status IN ('OPEN','PREPARED')",rs->rs.next()?rs.getObject(1,UUID.class):null,tableId);
@@ -25,8 +67,9 @@ public class TableVisitService {
         jdbc.update("INSERT INTO table_sessions(session_id,table_id,origin_table_id,status,opened_at) VALUES(?,?,?,'PREPARED',NULL)",id,tableId,tableId);
         return id;
     }
+    @Transactional
     public UUID activate(String tableId) {
-        lock();
+        lockForTable(tableId);
         // Preserve the original QR of a moved visit, unless that table has a new visit.
         UUID id=jdbc.query("SELECT session_id FROM table_sessions WHERE (table_id=? OR origin_table_id=?) AND status IN ('OPEN','PREPARED') ORDER BY (table_id=?) DESC LIMIT 1",rs->rs.next()?rs.getObject(1,UUID.class):null,tableId,tableId,tableId);
         if(id==null)id=prepare(tableId);

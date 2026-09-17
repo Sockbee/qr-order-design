@@ -1,3 +1,4 @@
+import { menuImages } from './menuImages'
 import type { CartLine, MenuCategory, MenuItemDetail } from '../types/menu'
 
 /**
@@ -251,6 +252,7 @@ export const menuItems: MenuItemDetail[] = [
 
   },
   {
+    imageUrl: menuImages.soju,
     id: 'soju', coinPrice: 9, preparationStation: 'SERVING',
     categoryId: 'drink',
     name: '소주',
@@ -260,6 +262,7 @@ export const menuItems: MenuItemDetail[] = [
 
   },
   {
+    imageUrl: menuImages.beer,
     id: 'beer', coinPrice: 9, preparationStation: 'SERVING',
     categoryId: 'drink',
     name: '맥주',

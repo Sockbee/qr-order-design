@@ -1,3 +1,4 @@
+import { menuImageClassName } from '../data/menuImages'
 import { useState } from 'react'
 
 interface MenuImageProps {
@@ -18,7 +19,7 @@ function MenuImageContent({ src, className = '', loading = 'lazy' }: MenuImagePr
     <span className={`flex items-center justify-center overflow-hidden bg-surface ${className}`} aria-hidden="true">
       {src && !failed ? (
         <img
-          className="block w-full h-full object-contain p-2"
+          className={menuImageClassName(src)}
           src={src}
           alt=""
           loading={loading}

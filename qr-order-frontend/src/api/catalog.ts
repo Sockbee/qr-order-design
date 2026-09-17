@@ -1,3 +1,4 @@
+import { menuImages } from '../data/menuImages'
 import { callApi } from './client'
 import type { MenuCategory, MenuItemDetail } from '../types/menu'
 import type { TableCredentials, TableSession } from '../types/session'
@@ -90,7 +91,7 @@ export async function fetchStorefront(
       description: item.description,
       price: item.basePrice,
       soldOut: !item.available,
-      imageUrl: item.imageUrl ?? undefined,
+      imageUrl: item.imageUrl || menuImages[item.menuId],
       minQuantity: item.minQuantity,
       maxQuantity: item.maxQuantity,
       allergens: item.allergens,

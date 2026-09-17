@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { hasApi } from '../api/client'
 import { connectCustomerEvents } from '../api/events'
 import { listOrders } from '../api/orders'
@@ -25,7 +25,9 @@ interface OrderPollingState {
  */
 export function useOrderPolling(
   credentials: TableCredentials | null,
+  paused = false,
 ): OrderPollingState {
+  const hasStarted = useRef(false)
   const enabled = credentials !== null && hasApi()
   const sessionKey = credentials
     ? `${credentials.tableId}:${credentials.tableToken}`
@@ -36,7 +38,7 @@ export function useOrderPolling(
   const [revision, setRevision] = useState(0)
 
   useEffect(() => {
-    if (!enabled || !credentials) return
+    if (!enabled || !credentials || paused) return
 
     let disposed = false
     let failureCount = 0
@@ -126,12 +128,20 @@ export function useOrderPolling(
         streamFailureCount += 1
         streamTimer = window.setTimeout(
           startStream,
-          Math.min(1_000 * 2 ** streamFailureCount, 30_000),
+          Math.min(1_000 * 2 ** streamFailureCount, 30_000) + Math.floor(Math.random() * 501),
         )
         // Keep the fallback clock independent from the SSE retry clock. A
         // series of short stream failures must not postpone the next poll.
         if (hadLiveStream || timer === undefined) schedule(ORDER_POLL_INTERVAL_MS)
       })
+    }
+
+    const resume = () => {
+      clearTimer()
+      if (streamTimer !== undefined) window.clearTimeout(streamTimer)
+      const delay = hasStarted.current ? Math.floor(Math.random() * 501) : 0
+      hasStarted.current = true
+      timer = window.setTimeout(() => { void run(); startStream() }, delay)
     }
 
     const onVisibilityChange = () => {
@@ -143,12 +153,10 @@ export function useOrderPolling(
         if (streamTimer !== undefined) window.clearTimeout(streamTimer)
         return
       }
-      void run()
-      startStream()
+      resume()
     }
 
-    void run()
-    startStream()
+    resume()
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => {
       disposed = true
@@ -158,13 +166,13 @@ export function useOrderPolling(
       if (streamTimer !== undefined) window.clearTimeout(streamTimer)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [credentials, enabled, sessionKey])
+  }, [credentials, enabled, sessionKey, paused])
 
   const hasCurrentResult = resultSessionKey === sessionKey
   return {
     enabled,
     data: hasCurrentResult ? data : null,
-    initialLoading: enabled && !hasCurrentResult,
+    initialLoading: enabled && !paused && !hasCurrentResult,
     lastError: hasCurrentResult ? lastError : null,
     revision,
   }

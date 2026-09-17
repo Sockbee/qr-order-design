@@ -31,16 +31,18 @@ public class CustomerOrderService {
     private final ObjectMapper mapper;
     private final TableOrderScope orderScope;
     private final TableVisitService visits;
+    private final OrderNumberAllocator numbers;
     private final PreparationService preparation;
 
     public CustomerOrderService(JdbcTemplate jdbc, TableCatalogService catalog,
-                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope, TableVisitService visits, PreparationService preparation) {
+                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope, TableVisitService visits, OrderNumberAllocator numbers, PreparationService preparation) {
         this.jdbc = jdbc;
         this.catalog = catalog;
         this.events = events;
         this.mapper = mapper;
         this.orderScope = orderScope;
         this.visits = visits;
+        this.numbers = numbers;
         this.preparation = preparation;
     }
 
@@ -84,7 +86,12 @@ public class CustomerOrderService {
         fingerprint = StaffTokenService.sha256Hex(fingerprint);
         // The same table row also guards first-session creation and concurrent
         // replays of an idempotency key.
-        visits.lock();
+        visits.lockForTable(tableId);
+        // Admin updates/QR rotation may have completed while waiting for the topology barrier.
+        if (!staff) catalog.requireTable(tableId, string(request, "tableToken"), true);
+        else if (!Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS(SELECT 1 FROM tables WHERE table_id=? AND active)", Boolean.class, tableId)))
+            throw ApiException.notFound("TABLE_NOT_FOUND", "테이블을 찾을 수 없습니다.");
         jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
         Map<String, Object> replay = existingOrder(key, fingerprint);
         if (replay != null) return replay;
@@ -129,8 +136,9 @@ public class CustomerOrderService {
 
         insertLines(orderId, lines);
         audit(staff ? "STAFF" : "CLIENT", staff ? "STAFF" : tableId, "ORDER_CREATED", "ORDER", orderId.toString(), null, displayCode);
+        var response = hydrateCreated(orderId, false);
         events.publishOrder("order.created", orderId.toString(), orderId, Map.of("displayCode", displayCode));
-        return hydrateCreated(orderId, false);
+        return response;
     }
 
     @Transactional
@@ -165,7 +173,7 @@ public class CustomerOrderService {
         String key = "service:" + tableId + ":" + clientRequestId;
         String fingerprint = serviceFingerprint(tableId, chargedStaffId, inputItems, serviceMessage);
 
-        visits.lock();
+        visits.lockForTable(tableId);
         jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
         Map<String, Object> replay = existingServiceOrder(key, fingerprint);
         if (replay != null) return replay;
@@ -291,8 +299,8 @@ public class CustomerOrderService {
         String reason = string(request, "reason");
         if (!CALL_REASONS.contains(reason)) throw ApiException.invalid("호출 사유를 확인해 주세요.");
         UUID requestId = parseUuid(string(request, "clientRequestId"), "clientRequestId");
+        visits.lockForTable(tableId);
         jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", Object.class, requestId.toString());
-        visits.lock();
         jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
         Map<String, Object> replay = jdbc.query("SELECT call_id,table_id,reason,created_at,status FROM calls WHERE client_request_id=?",
                 rs -> {
@@ -399,10 +407,7 @@ public class CustomerOrderService {
     }
 
     private long nextDisplayNumber() {
-        String value = jdbc.queryForObject("SELECT value FROM settings WHERE key='NEXT_DISPLAY_NUMBER' FOR UPDATE", String.class);
-        long next = Long.parseLong(value);
-        jdbc.update("UPDATE settings SET value=?,updated_at=now() WHERE key='NEXT_DISPLAY_NUMBER'", String.valueOf(next + 1));
-        return next;
+        return numbers.next();
     }
 
     private void insertLines(UUID orderId, List<ValidatedLine> lines) {
