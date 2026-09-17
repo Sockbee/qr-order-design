@@ -1,5 +1,5 @@
-import { menuImageClassName } from '../data/menuImages'
 import { QuantitySelector } from './customer/QuantitySelector'
+import { MenuImage } from './MenuImage'
 import { formatPrice } from '../utils/price'
 
 interface CartLineProps {
@@ -22,9 +22,7 @@ export function CartLine({
 }: CartLineProps) {
   return (
     <div className="flex gap-3 items-start w-full">
-      <div className="flex-none size-16 rounded-btn-lg bg-surface overflow-hidden">
-        {imageUrl && <img className={menuImageClassName(imageUrl)} src={imageUrl} alt="" />}
-      </div>
+      <MenuImage src={imageUrl} className="flex-none size-16 rounded-btn-lg" />
 
       <div className="flex flex-1 min-w-0 flex-col gap-1">
         <p className="font-bold text-base leading-6 text-strong truncate">{name}</p>

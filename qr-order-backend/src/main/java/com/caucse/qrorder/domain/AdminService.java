@@ -33,7 +33,10 @@ public class AdminService {
 
     public AdminService(JdbcTemplate jdbc, TableCatalogService catalog, QrOrderProperties properties, DomainEventService events, TableVisitService visits) {
         this.jdbc = jdbc;
-        this.visits = visits; this.catalog = catalog; this.properties = properties; this.events = events;
+        this.visits = visits;
+        this.catalog = catalog;
+        this.properties = properties;
+        this.events = events;
     }
 
     public Map<String, Object> snapshot() {
@@ -43,10 +46,10 @@ public class AdminService {
                         "updatedAt", rs.getObject(6, OffsetDateTime.class).toInstant().toString()));
         List<Map<String, Object>> categories = jdbc.query("SELECT category_id,label,heading,sort_order,active FROM categories ORDER BY sort_order,category_id",
                 (rs, index) -> ApiEnvelope.map("categoryId", rs.getString(1), "label", rs.getString(2), "heading", rs.getString(3), "sortOrder", rs.getInt(4), "active", rs.getBoolean(5)));
-        List<Map<String, Object>> menus = jdbc.query("SELECT menu_id,category_id,name,description,base_price,image_url,available,min_quantity,max_quantity,origin,sort_order FROM menus ORDER BY sort_order,menu_id",
+        List<Map<String, Object>> menus = jdbc.query("SELECT menu_id,category_id,name,description,base_price,image_url,available,min_quantity,max_quantity,origin,sort_order,coin_price FROM menus ORDER BY sort_order,menu_id",
                 (rs, index) -> ApiEnvelope.map("menuId", rs.getString(1), "categoryId", rs.getString(2), "name", rs.getString(3),
                         "description", rs.getString(4), "basePrice", rs.getInt(5), "imageUrl", rs.getString(6), "available", rs.getBoolean(7),
-                        "minQuantity", rs.getInt(8), "maxQuantity", rs.getInt(9), "origin", rs.getString(10), "sortOrder", rs.getInt(11)));
+                        "minQuantity", rs.getInt(8), "maxQuantity", rs.getInt(9), "origin", rs.getString(10), "sortOrder", rs.getInt(11), "coinPrice", rs.getObject(12, Integer.class)));
         List<Map<String, Object>> settings = jdbc.query("SELECT key,value,type,description FROM settings ORDER BY key",
                 (rs, index) -> ApiEnvelope.map("key", rs.getString(1), "value", rs.getString(2), "type", rs.getString(3), "description", rs.getString(4)));
         return ApiEnvelope.map("tables", tables, "categories", categories, "menus", menus, "settings", settings,
@@ -69,6 +72,14 @@ public class AdminService {
     public Void saveMenu(String id, Map<String, Object> body, StaffPrincipal staff) {
         visits.lock();
         validateId(id);
+        if (Boolean.TRUE.equals(jdbc.queryForObject("SELECT EXISTS(SELECT 1 FROM audit_logs WHERE action='MENU_DELETED' AND entity_id=?)", Boolean.class, id)))
+            throw ApiException.invalid("삭제한 메뉴 ID는 다시 사용할 수 없습니다. 새 ID로 추가해 주세요.");
+        Integer coinPrice = null;
+        if (body.containsKey("coinPrice") && body.get("coinPrice") != null) {
+            try { coinPrice = new java.math.BigDecimal(body.get("coinPrice").toString()).intValueExact(); }
+            catch (RuntimeException error) { throw ApiException.invalid("엽전 가격은 1 이상의 정수여야 합니다."); }
+            if (coinPrice < 1) throw ApiException.invalid("엽전 가격은 1 이상의 정수여야 합니다.");
+        }
         int min = number(body, "minQuantity", 1), max = number(body, "maxQuantity", 10), price = number(body, "basePrice", -1);
         if (price < 0 || min < 1 || max < min) throw ApiException.invalid("가격과 수량 범위를 확인해 주세요.");
         String imageUrl = nullable(body.get("imageUrl"));
@@ -93,7 +104,20 @@ public class AdminService {
                 price, imageUrl, bool(body, "available", true), min, max,
                 nullable(body.get("origin")), number(body, "sortOrder", 0));
         jdbc.update("UPDATE menus SET preparation_station=CASE WHEN category_id IN ('alcohol','beverage') THEN 'SERVING' ELSE 'KITCHEN' END WHERE menu_id=?",id);
+        // Older clients omit this field; keep their existing event price unchanged.
+        if (body.containsKey("coinPrice")) jdbc.update("UPDATE menus SET coin_price=? WHERE menu_id=?", coinPrice, id);
         changed(staff, "MENU_SAVED", "MENU", id, "menu.updated"); return null;
+    }
+
+    @Transactional
+    public Void deleteMenu(String id, StaffPrincipal staff) {
+        validateId(id);
+        visits.lock();
+        // Keep order snapshots; only the catalog row is physically removed.
+        int deleted = jdbc.update("DELETE FROM menus WHERE menu_id=?", id);
+        if (deleted == 0) throw ApiException.notFound("MENU_NOT_FOUND", "이미 삭제되었거나 존재하지 않는 메뉴입니다.");
+        changed(staff, "MENU_DELETED", "MENU", id, "menu.updated");
+        return null;
     }
 
     @Transactional

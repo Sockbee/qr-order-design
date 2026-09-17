@@ -7,6 +7,7 @@ flowchart LR
     QR[테이블 QR] --> HOSTING[React / Firebase Hosting]
     STAFF[운영 iPad] --> HOSTING
     HOSTING -->|JSON + SSE| RUN[Spring Boot / Cloud Run]
+    HOSTING -->|브라우저에서 이미지 직접 GET| IMAGES[Cloud Storage / 공개 메뉴 이미지]
     RUN -->|JDBC connector| SQL[(Cloud SQL PostgreSQL)]
     RUN --> SECRET[Secret Manager]
     BUILD[Cloud Build] --> AR[Artifact Registry]
@@ -14,6 +15,8 @@ flowchart LR
 ```
 
 - 고객과 운영 앱은 하나의 `VITE_API_BASE_URL`을 사용한다.
+- 메뉴 API의 기존 `imageUrl`은 공개 Cloud Storage 객체를 가리킨다. 이미지 업로드·캐시·URL 연결은
+  [메뉴 이미지 운영 가이드](./menu-images.md)를 따른다. Cloud Run을 통한 이미지 중계는 하지 않는다.
 - 고객은 QR의 table token, 운영 앱은 공용 passcode로 발급받은 bearer token으로 인증한다.
 - Cloud Run은 서울 리전에서 최소 1개, 최대 3개 인스턴스를 사용한다.
 - Cloud SQL은 단일 존 PostgreSQL 17, 자동 백업과 PITR을 사용한다.

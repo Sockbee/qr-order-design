@@ -12,7 +12,7 @@
 
 [구현·검증 기록 및 예약 운영 절차](reservation-capacity-implementation.md)에 잠금 설계, DB 연결 예산, 테스트 결과와 남은 배포 조건을 정리했다. CAP-01의 고객·직원·서비스 **주문 생성**은 테이블/그룹 단위로 병렬화했으며, 직원 구조 변경은 공통 배타 잠금을 유지했다. CAP-02는 변수화·수동 준비/복원 도구, CAP-03은 메뉴 화면 5분 유휴 중지를 구현했다.
 
-아래 체크는 실제 끝낸 범위만 표시한다. 운영 결과가 필요한 완료 기준은 체크하지 않는다. 현재 브랜치는 운영 배포보다 이전 기능을 포함하므로 직접 배포하지 않았다.
+아래 체크는 실제 끝낸 범위만 표시한다. 운영 결과가 필요한 완료 기준은 체크하지 않는다. 최초 구현은 운영보다 이전 코드였으나, 2026-09-17 `origin/dev` (`00428f6`)를 통합하고 회귀 검증을 마쳤다. 운영 배포·재검증은 아직 수행하지 않았다.
 
 ## 근거와 현재 상태
 
@@ -72,7 +72,7 @@ CAP-02의 설정 변수화와 운영 절차 작성, CAP-03의 구현은 CAP-01�
 - [CustomerOrderService.java](../../qr-order-backend/src/main/java/com/caucse/qrorder/domain/CustomerOrderService.java)
 - [TableVisitService.java](../../qr-order-backend/src/main/java/com/caucse/qrorder/domain/TableVisitService.java)
 - [StaffOperationsService.java](../../qr-order-backend/src/main/java/com/caucse/qrorder/domain/StaffOperationsService.java)
-- 현재 `dev`의 조리 변경은 `StaffOperationsService`에 있다. 운영 후속 버전의 별도 `PreparationService`는 배포 기준 통합 시 재검토한다.
+- [PreparationService.java](../../qr-order-backend/src/main/java/com/caucse/qrorder/domain/PreparationService.java): 2026-09-17 dev 병합으로 통합했으며, 개별 조리 변경의 공통 배타 잠금과 주문 생성 시 초기화를 함께 검증했다.
 - [AdminService.java](../../qr-order-backend/src/main/java/com/caucse/qrorder/domain/AdminService.java)
 - [PostgresEventListener.java](../../qr-order-backend/src/main/java/com/caucse/qrorder/sse/PostgresEventListener.java)
 - [application.yml](../../qr-order-backend/src/main/resources/application.yml)

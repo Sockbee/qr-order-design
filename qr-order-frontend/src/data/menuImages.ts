@@ -6,6 +6,6 @@ export const menuImages: Partial<Record<string, string>> = { soju, beer }
 
 export function menuImageClassName(imageUrl: string): string {
   return imageUrl === soju || imageUrl === beer
-    ? 'w-full h-full object-contain bg-white p-2'
-    : 'w-full h-full object-cover'
+    ? 'block w-full h-full object-contain bg-white p-2'
+    : 'block w-full h-full object-contain p-2'
 }

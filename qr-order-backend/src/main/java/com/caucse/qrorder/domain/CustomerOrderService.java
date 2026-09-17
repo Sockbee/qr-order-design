@@ -32,9 +32,10 @@ public class CustomerOrderService {
     private final TableOrderScope orderScope;
     private final TableVisitService visits;
     private final OrderNumberAllocator numbers;
+    private final PreparationService preparation;
 
     public CustomerOrderService(JdbcTemplate jdbc, TableCatalogService catalog,
-                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope, TableVisitService visits, OrderNumberAllocator numbers) {
+                                DomainEventService events, ObjectMapper mapper, TableOrderScope orderScope, TableVisitService visits, OrderNumberAllocator numbers, PreparationService preparation) {
         this.jdbc = jdbc;
         this.catalog = catalog;
         this.events = events;
@@ -42,6 +43,7 @@ public class CustomerOrderService {
         this.orderScope = orderScope;
         this.visits = visits;
         this.numbers = numbers;
+        this.preparation = preparation;
     }
 
     @Transactional
@@ -417,9 +419,15 @@ public class CustomerOrderService {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """, itemId, orderId, line.lineNo(), line.menuId(), line.name(), line.basePrice(),
                     line.coins()>0 ? 0 : line.unitPrice(), line.quantity(), line.coins()>0 ? 0 : line.lineTotal());
+            jdbc.update("""
+                    UPDATE order_items i SET category_id_snapshot=m.category_id,category_label_snapshot=c.label
+                    FROM menus m JOIN categories c ON c.category_id=m.category_id
+                    WHERE i.order_item_id=? AND m.menu_id=i.menu_id
+                    """, itemId);
             jdbc.update("UPDATE order_items SET preparation_station=?,coin_unit_price=?,preparation_status=?,prepared_at=CASE WHEN ?='SERVING' THEN now() END WHERE order_item_id=?",
                     line.station(), line.coins(), "SERVING".equals(line.station()) ? "READY" : "PENDING", line.station(), itemId);
         }
+        preparation.initialize(orderId);
     }
 
     private ValidatedLine validateLine(Map<String, Object> input, int lineNo) { return validateLine(input, lineNo, false); }

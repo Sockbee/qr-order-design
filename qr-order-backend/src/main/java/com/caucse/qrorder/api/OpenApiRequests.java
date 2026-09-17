@@ -8,6 +8,11 @@ import java.util.List;
 public final class OpenApiRequests {
     public record CheckIn(@Schema(requiredMode=Schema.RequiredMode.REQUIRED) String tableId, String expectedSessionId, String departureAt) {}
     public record CoinReceipt(@Schema(requiredMode=Schema.RequiredMode.REQUIRED) String orderId, @Schema(requiredMode=Schema.RequiredMode.REQUIRED) int expectedCoinTotal) {}
+    @Schema(name = "PreparationTransitionRequest")
+    public record PreparationTransition(
+        @Schema(format="uuid", requiredMode=Schema.RequiredMode.REQUIRED) String orderId,
+        @Schema(requiredMode=Schema.RequiredMode.REQUIRED) List<String> unitIds,
+        @Schema(allowableValues={"START","COMPLETE","SERVE"}, requiredMode=Schema.RequiredMode.REQUIRED) String action) {}
     private OpenApiRequests() {}
 
     @Schema(name = "TableCredentialsRequest", description = "인쇄 QR에 포함된 테이블 인증 정보")
@@ -190,6 +195,7 @@ public final class OpenApiRequests {
             @Schema(example = "매콤한 무뼈 닭발") String description,
             @Schema(example = "10000", minimum = "0", requiredMode = Schema.RequiredMode.REQUIRED) int basePrice,
             @Schema(example = "https://example.com/images/chicken-feet.jpg") String imageUrl,
+            @Schema(description = "엽전 가격. null이면 이벤트 주문 불가, 생략하면 기존 값 유지", example = "9", minimum = "1") Integer coinPrice,
             @Schema(example = "true") boolean available,
             @Schema(example = "1", minimum = "1") int minQuantity,
             @Schema(example = "10", minimum = "1") int maxQuantity,

@@ -50,16 +50,11 @@ public class PostgresEventListener {
                 PGConnection pg = next.unwrap(PGConnection.class);
                 while (running && !next.isClosed()) {
                     PGNotification[] notifications = pg.getNotifications(10_000);
-                    if (notifications == null) continue;
-                    for (PGNotification notification : notifications) {
-                        long eventId = Long.parseLong(notification.getParameter());
-                        if (eventId <= lastEventId) continue;
-                        if (eventId > lastEventId + 1) catchUp();
-                        else {
-                            hub.broadcast(events.find(eventId));
-                            lastEventId = eventId;
-                        }
-                    }
+                    if (notifications == null || notifications.length == 0) continue;
+                    // Notifications are wakeups; drain committed rows in cursor order in batches.
+                    // Borrowing a request-pool connection for every single event delays delivery
+                    // when staff queue refreshes compete for the same pool during an order burst.
+                    catchUp();
                 }
             } catch (Exception error) {
                 if (running) {

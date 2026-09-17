@@ -85,6 +85,14 @@ class FiftyCustomerCapacityTest {
                 var response = client.send(request("events", credentials(i)), HttpResponse.BodyHandlers.ofInputStream());
                 assertEquals(200, response.statusCode());
                 streams.add(response.body());
+                // Consume SSE continuously like a real customer screen, including heartbeats.
+                readers.submit(() -> {
+                    try {
+                        response.body().transferTo(java.io.OutputStream.nullOutputStream());
+                    } catch (java.io.IOException closed) {
+                        // Closing selected streams below models hidden/idle customer screens.
+                    }
+                });
             }
             for (String label : List.of("카운터", "주방", "서빙", "결제")) {
                 String token = staffTokens.login("capacity-passcode", label).get("staffToken").toString();
