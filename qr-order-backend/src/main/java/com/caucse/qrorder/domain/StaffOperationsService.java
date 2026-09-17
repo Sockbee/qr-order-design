@@ -56,6 +56,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Map<String, Object> acknowledgeCall(String tableId, StaffPrincipal staff) {
+        visits.lock();
         int count = jdbc.update("""
                 UPDATE calls SET status='ACKNOWLEDGED',acknowledged_at=now(),acknowledged_by=?,updated_at=now()
                 WHERE table_id=? AND status='PENDING'
@@ -68,6 +69,9 @@ public class StaffOperationsService {
         return ApiEnvelope.map("tableId", tableId, "acknowledgedCount", count, "acknowledgedAt", now.toString());
     }
 
+    // Nested row mapping must reuse the transaction's connection instead of borrowing a
+    // second pool slot per request; otherwise concurrent staff refreshes can exhaust the pool.
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public Map<String, Object> listTables() {
         List<Map<String, Object>> tables = jdbc.query("SELECT table_id,display_name FROM tables WHERE active=true ORDER BY sort_order,table_id",
                 (rs, index) -> tableSummary(rs.getString(1), rs.getString(2)));
@@ -129,8 +133,10 @@ public class StaffOperationsService {
                 "call", pendingCall(tableId));
     }
 
+    @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public Map<String, Object> billResponse(String tableId) {
-        Bill bill = requireBill(tableId);
+        Bill bill = bill(tableId, false);
+        if (bill == null) throw ApiException.notFound("OPEN_SESSION_NOT_FOUND", "사용 중인 테이블이 아닙니다.");
         List<Map<String, Object>> serviceLines = jdbc.query("""
                 SELECT o.display_code,o.service_message,sm.name AS charged_staff_name,
                        COALESCE(sum(i.line_total) FILTER (WHERE i.status='ACTIVE'),0)::integer gross_amount
@@ -169,6 +175,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void discount(String tableId, int rate, StaffPrincipal staff) {
+        visits.lock();
         int configured = settingInt("TABLE_DISCOUNT_RATE");
         if (rate != 0 && rate != configured) throw ApiException.invalid("할인율을 확인해 주세요.");
         Bill bill = requireBill(tableId);
@@ -182,6 +189,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void move(String from, String to, StaffPrincipal staff) {
+        visits.lock();
         if (from.equals(to)) throw ApiException.invalid("이동할 테이블을 다시 선택해 주세요.");
         lockTables(from, to);
         Bill source = requireBill(from);
@@ -201,6 +209,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void merge(String primaryTable, String secondaryTable, StaffPrincipal staff) {
+        visits.lock();
         if (primaryTable.equals(secondaryTable)) throw ApiException.invalid("서로 다른 테이블을 선택해 주세요.");
         lockTables(primaryTable, secondaryTable);
         visits.prepare(primaryTable); visits.prepare(secondaryTable);
@@ -223,6 +232,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void split(String tableId, StaffPrincipal staff) {
+        visits.lock();
         Bill bill = requireBill(tableId);
         if (bill.sessionIds().size() < 2) throw ApiException.conflict("TABLE_NOT_MERGED", "합석 상태가 아닙니다.");
         List<String> audience = java.util.stream.Stream.concat(orderScope.audience(bill.primarySessionId()).stream(),bill.members().stream()).distinct().toList();
@@ -235,6 +245,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void saveTableNote(String tableId, String note, StaffPrincipal staff) {
+        visits.lock();
         String normalized = note.strip();
         if (normalized.length() > 200) throw ApiException.invalid("메모는 200자 이하여야 합니다.");
         Bill bill = requireBill(tableId);
@@ -365,6 +376,7 @@ public class StaffOperationsService {
     @Transactional
     public Void confirmPayment(String tableId, String expectedSessionIdValue,
                                String clientRequestIdValue, int expected, StaffPrincipal staff, String payerName) {
+        visits.lock();
         if (payerName == null || payerName.strip().isEmpty() || payerName.strip().length() > 100) {
             throw ApiException.invalid("입금자명을 1~100자로 입력해 주세요.");
         }
@@ -417,6 +429,7 @@ public class StaffOperationsService {
     /** Internal convenience for trusted callers; HTTP clients must provide both guards. */
     @Transactional
     public Void confirmPayment(String tableId, int expected, StaffPrincipal staff, String payerName) {
+        visits.lock();
         Bill bill = requireBill(tableId);
         return confirmPayment(
                 tableId,
@@ -495,6 +508,8 @@ public class StaffOperationsService {
         return null;
     }
 
+    // Nested row mapping must reuse the transaction's connection instead of borrowing a
+    // second pool slot per request; otherwise concurrent staff refreshes can exhaust the pool.
     @Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
     public Map<String, Object> queues() {
         List<Map<String, Object>> kitchen = preparation.kitchen();
@@ -553,6 +568,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void availability(String itemId, boolean soldOut, StaffPrincipal staff) {
+        visits.lock();
         int updated = jdbc.update("UPDATE menus SET available=?,updated_at=now() WHERE menu_id=?", !soldOut, itemId);
         if (updated == 0) throw ApiException.notFound("MENU_NOT_FOUND", "메뉴를 찾을 수 없습니다.");
         audit(staff, "MENU_AVAILABILITY_CHANGED", "MENU", itemId, null, soldOut ? "SOLD_OUT" : "AVAILABLE");
@@ -656,6 +672,7 @@ public class StaffOperationsService {
 
     @Transactional
     public Void cancelOrders(String tableId, StaffPrincipal staff) {
+        visits.lock();
         Bill bill = requireBill(tableId); assertUnpaid(bill); assertNoReceivedCoins(bill);
         jdbc.update("""
                 UPDATE order_items SET status='CANCELLED',updated_at=now()
@@ -811,7 +828,9 @@ public class StaffOperationsService {
 
     private String departure(UUID id) { return jdbc.query("SELECT departure_at FROM table_sessions WHERE session_id=?",rs->rs.next() && rs.getObject(1)!=null?rs.getObject(1,OffsetDateTime.class).toInstant().toString():null,id); }
     @Transactional
-    public Void checkIn(String tableId,String sessionId,String departure,StaffPrincipal staff) { visits.checkIn(tableId,sessionId,departure,staff.deviceLabel()); return null; }
+    public Void checkIn(String tableId,String sessionId,String departure,StaffPrincipal staff) {
+        visits.lock();
+        visits.checkIn(tableId,sessionId,departure,staff.deviceLabel()); return null; }
     @Transactional
     public Void receiveCoins(String orderId,int expected,StaffPrincipal staff) {
         visits.lock();

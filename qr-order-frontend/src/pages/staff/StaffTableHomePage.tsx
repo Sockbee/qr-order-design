@@ -29,7 +29,7 @@ interface StaffTableHomePageProps {
   selectedTableId?: string | null
 }
 
-const SKELETON_COUNT = 24
+const SKELETON_COUNT = 23
 
 /**
  * One clock for the whole screen: the header time and every row's elapsed

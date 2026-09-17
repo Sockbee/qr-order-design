@@ -1,7 +1,8 @@
 import { visitElapsed, departureLabel } from '../../utils/tableVisit'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
-import { HANSHIN_LANDMARKS, HANSHIN_TABLES } from '../../data/hanshinFloorPlan'
+import { FLOOR_WIDTH, FLOOR_HEIGHT, getHanshinFloorPlan } from '../../data/hanshinFloorPlan'
+import { useFloorPlanView } from '../../hooks/useFloorPlanView'
 import { isDelayed } from '../../api/staff/tables'
 import { formatStaffAmount } from '../../utils/price'
 import type { StaffTableSummary } from '../../types/staff'
@@ -26,6 +27,8 @@ export function TableFloorPlan({
   disabledReason,
   label = '테이블 배치도',
 }: TableFloorPlanProps) {
+  const [view, setView] = useFloorPlanView()
+  const floor = getHanshinFloorPlan(view)
   const [now, setNow] = useState(Date.now)
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 15_000); return () => window.clearInterval(timer) }, [])
   const viewport = useRef<HTMLDivElement>(null)
@@ -36,31 +39,45 @@ export function TableFloorPlan({
     const observer = new ResizeObserver(([entry]) => {
       // Keep every touch target at least 48px. Small viewports scroll the map.
       setScale(Math.max(0.64, Math.min(
-        (entry.contentRect.width - 32) / 1000,
-        entry.contentRect.height / 600,
+        (entry.contentRect.width - 32) / FLOOR_WIDTH,
+        entry.contentRect.height / FLOOR_HEIGHT,
       )))
     })
     observer.observe(node)
     return () => observer.disconnect()
   }, [])
 
-  const mappedIds = new Set(HANSHIN_TABLES.map((position) => position.tableId))
+  const mappedIds = new Set(floor.tables.map((position) => position.tableId))
   const extras = tables.filter((table) => !mappedIds.has(table.tableId))
 
   return (
     <section className="table-floor-plan" aria-label={label}>
-      <h2 className="table-floor-plan__title">소프트 한신포차 · 24테이블 · 4인 기준</h2>
+      <header className="table-floor-plan__header">
+        <h2 className="table-floor-plan__title">소프트 한신포차 · {floor.tables.length}테이블 · 4인 기준</h2>
+        <label className="table-floor-plan__view">
+          보기 방향
+          <select value={view} onChange={(event) => setView(event.target.value === 'window' ? 'window' : 'pos')}>
+            <option value="pos">POS → 입구</option>
+            <option value="window">창문 쪽에서 보기</option>
+          </select>
+        </label>
+      </header>
       <div ref={viewport} className="table-floor-plan__viewport">
         <div className="table-floor-plan__canvas" style={{
-          width: 1000 * scale, height: 600 * scale, '--floor-scale': scale,
+          width: FLOOR_WIDTH * scale, height: FLOOR_HEIGHT * scale, '--floor-scale': scale,
         } as CSSProperties}>
-          {HANSHIN_LANDMARKS.map((mark) => (
+          {floor.landmarks.map((mark) => (
             <span key={mark.label} className="table-floor-plan__landmark" style={{
-              left: mark.x * scale, top: mark.y * scale,
-              width: mark.width * scale, height: 32 * scale,
+              left: (mark.x - mark.width / 2) * scale, top: (mark.y - mark.height / 2) * scale,
+              width: mark.width * scale, height: mark.height * scale,
             }}>{mark.label}</span>
           ))}
-          {HANSHIN_TABLES.map((position) => {
+          <span className="table-floor-plan__event" style={{
+            left: (floor.event.x - floor.event.width / 2) * scale,
+            top: (floor.event.y - floor.event.height / 2) * scale,
+            width: floor.event.width * scale, height: floor.event.height * scale,
+          }} aria-label="이벤트 공간 · 주문 테이블 아님">이벤트</span>
+          {floor.tables.map((position) => {
             const table = tables.find((item) => item.tableId === position.tableId)
             const reason = table ? disabledReason?.(table) : '미등록 또는 비활성 테이블'
             const selected = selectedTableIds.includes(position.tableId)
@@ -118,7 +135,7 @@ export function TableFloorPlan({
             onSelect={disabledReason?.(table) ? undefined : onSelect} />)}
         </section>}
       </div>
-      <p className="table-floor-plan__caption">기본 96석 · 단체는 테이블 합치기</p>
+      <p className="table-floor-plan__caption">기본 {floor.tables.length * 4}석 · 이벤트 공간 별도 · 단체는 테이블 합치기</p>
     </section>
   )
 }

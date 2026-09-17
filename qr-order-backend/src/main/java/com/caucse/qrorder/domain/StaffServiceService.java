@@ -17,9 +17,11 @@ import java.util.UUID;
 public class StaffServiceService {
     private final JdbcTemplate jdbc;
     private final CustomerOrderService customerOrders;
+    private final TableVisitService visits;
 
-    public StaffServiceService(JdbcTemplate jdbc, CustomerOrderService customerOrders) {
+    public StaffServiceService(JdbcTemplate jdbc, CustomerOrderService customerOrders, TableVisitService visits) {
         this.jdbc = jdbc;
+        this.visits = visits;
         this.customerOrders = customerOrders;
     }
 
@@ -37,6 +39,7 @@ public class StaffServiceService {
 
     @Transactional
     public Map<String, Object> createServiceOrder(Map<String, Object> body, StaffPrincipal staff) {
+        visits.lockForTable(required(body, "tableId"));
         String chargedStaffId = required(body, "chargedStaffId");
         Member member = jdbc.query("""
                 SELECT staff_id,name,active FROM staff_members WHERE staff_id=? FOR UPDATE
@@ -84,6 +87,7 @@ public class StaffServiceService {
     @Transactional
     public Map<String, Object> confirmSettlement(String staffId, int expectedChargeAmount,
                                                   StaffPrincipal staff) {
+        visits.lock();
         MemberSettlement member = jdbc.query("""
                 SELECT staff_id,name,affiliation,settlement_status,settled_amount,settled_at
                 FROM staff_members WHERE staff_id=? FOR UPDATE

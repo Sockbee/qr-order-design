@@ -35,6 +35,22 @@ public class ApiExceptionHandler {
                 "CONFLICT", "이미 처리되었거나 현재 상태와 충돌합니다.", false, null));
     }
 
+    @ExceptionHandler({org.springframework.transaction.CannotCreateTransactionException.class,
+            org.springframework.dao.DataAccessResourceFailureException.class,
+            org.springframework.dao.CannotAcquireLockException.class})
+    ResponseEntity<ApiEnvelope<Void>> busy(Exception error) {
+        log.warn("Database capacity temporarily unavailable", error);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).header("Retry-After", "1")
+                .body(ApiEnvelope.failure("SERVER_BUSY", "주문이 몰리고 있어요. 잠시 후 같은 요청으로 다시 확인해 주세요.", true, null));
+    }
+
+    @ExceptionHandler({org.springframework.web.context.request.async.AsyncRequestNotUsableException.class,
+            org.springframework.web.context.request.async.AsyncRequestTimeoutException.class})
+    void disconnected(Exception error) {
+        // A completed/aborted SSE response cannot carry a JSON error envelope.
+        log.debug("Async client disconnected: {}", error.getMessage());
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ApiEnvelope<Void>> unexpected(Exception error) {
         log.error("Unhandled API error", error);

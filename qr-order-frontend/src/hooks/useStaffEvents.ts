@@ -10,6 +10,7 @@ let lastNumericEventId = 0
 let controller: AbortController | null = null
 let reconnectTimer: number | undefined
 let reconnectAttempt = 0
+let eventTimer: number | undefined
 const subscribers = new Set<() => void>()
 
 function publish(nextRevision = revision, nextConnected = connected) {
@@ -23,7 +24,19 @@ function emit() {
   publish(revision + 1, connected)
 }
 
+function scheduleEventRefresh() {
+  if (eventTimer !== undefined) return
+  // Retain every cursor immediately, but coalesce invalidations during an order burst.
+  // A fixed window (not a resetting debounce) also guarantees updates under sustained traffic.
+  eventTimer = window.setTimeout(() => {
+    eventTimer = undefined
+    if (!document.hidden && subscribers.size > 0) emit()
+  }, 100)
+}
+
 function stop() {
+  if (eventTimer !== undefined) window.clearTimeout(eventTimer)
+  eventTimer = undefined
   controller?.abort()
   controller = null
   if (reconnectTimer !== undefined) window.clearTimeout(reconnectTimer)
@@ -49,7 +62,7 @@ function connect() {
         lastEventId = event.id
         if (Number.isFinite(numericId)) lastNumericEventId = numericId
       }
-      if (event.type !== 'connected') emit()
+      if (event.type !== 'connected') scheduleEventRefresh()
     },
   ).catch(() => {
     // Polling remains active while the stream reconnects.

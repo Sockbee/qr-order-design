@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
+import com.caucse.qrorder.config.InfrastructureConnections;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 @Component
 public class PostgresEventListener {
     private static final Logger log = LoggerFactory.getLogger(PostgresEventListener.class);
-    private final DataSource dataSource;
+    private final InfrastructureConnections dataSource;
     private final DomainEventService events;
     private final SseHub hub;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(Thread.ofVirtual().name("pg-events-").factory());
@@ -26,7 +26,7 @@ public class PostgresEventListener {
     private long lastEventId;
     private boolean initialized;
 
-    public PostgresEventListener(DataSource dataSource, DomainEventService events, SseHub hub) {
+    public PostgresEventListener(InfrastructureConnections dataSource, DomainEventService events, SseHub hub) {
         this.dataSource = dataSource;
         this.events = events;
         this.hub = hub;
@@ -39,7 +39,7 @@ public class PostgresEventListener {
 
     private void listenLoop() {
         while (running) {
-            try (Connection next = dataSource.getConnection(); Statement statement = next.createStatement()) {
+            try (Connection next = dataSource.connection(); Statement statement = next.createStatement()) {
                 connection = next;
                 next.setAutoCommit(true);
                 statement.execute("LISTEN qr_order_events");
@@ -50,16 +50,11 @@ public class PostgresEventListener {
                 PGConnection pg = next.unwrap(PGConnection.class);
                 while (running && !next.isClosed()) {
                     PGNotification[] notifications = pg.getNotifications(10_000);
-                    if (notifications == null) continue;
-                    for (PGNotification notification : notifications) {
-                        long eventId = Long.parseLong(notification.getParameter());
-                        if (eventId <= lastEventId) continue;
-                        if (eventId > lastEventId + 1) catchUp();
-                        else {
-                            hub.broadcast(events.find(eventId));
-                            lastEventId = eventId;
-                        }
-                    }
+                    if (notifications == null || notifications.length == 0) continue;
+                    // Notifications are wakeups; drain committed rows in cursor order in batches.
+                    // Borrowing a request-pool connection for every single event delays delivery
+                    // when staff queue refreshes compete for the same pool during an order burst.
+                    catchUp();
                 }
             } catch (Exception error) {
                 if (running) {

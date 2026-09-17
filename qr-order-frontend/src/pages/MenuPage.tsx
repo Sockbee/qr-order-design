@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import { AppBar } from '../components/AppBar'
 import { BottomOrderBar } from '../components/BottomOrderBar'
 import { CategoryTabs } from '../components/customer/CategoryTabs'
@@ -14,7 +15,15 @@ import type {
 
 const CONTENT_PANEL_ID = 'menu-category-panel'
 
+export interface MenuBrowseState {
+  categoryId: string | null
+  scrollY: number
+}
+
 interface MenuPageProps {
+  browseState?: RefObject<MenuBrowseState>
+  categoryId?: string | null
+  onCategoryChange?: (categoryId: string) => void
   categories: MenuCategory[]
   menuItems: MenuItemDetail[]
   cart: CartLine[]
@@ -32,6 +41,9 @@ interface MenuPageProps {
 }
 
 export function MenuPage({
+  browseState,
+  categoryId,
+  onCategoryChange,
   categories,
   menuItems,
   cart,
@@ -46,12 +58,38 @@ export function MenuPage({
   onCallStaff,
   onEventOrder,
 }: MenuPageProps) {
-  const [requestedCategoryId, setRequestedCategoryId] = useState<string | null>(null)
+  const fallbackBrowseState = useRef<MenuBrowseState>({ categoryId: null, scrollY: 0 })
+  const savedBrowseState = browseState ?? fallbackBrowseState
+  const [localCategoryId, setLocalCategoryId] = useState<string | null>(null)
+  const requestedCategoryId = categoryId === undefined ? localCategoryId : categoryId
 
   const selectedCategory =
     categories.find((category) => category.id === requestedCategoryId) ??
     categories[0]
   const selectedCategoryId = selectedCategory?.id ?? ''
+
+  useLayoutEffect(() => {
+    if (loading || errorMessage || !selectedCategoryId) return
+    const saved = savedBrowseState.current
+    const scrollY = saved.categoryId === selectedCategoryId ? saved.scrollY : 0
+    savedBrowseState.current = { categoryId: selectedCategoryId, scrollY }
+    window.scrollTo({ top: scrollY, behavior: 'instant' })
+    const rememberScroll = () => { savedBrowseState.current.scrollY = window.scrollY }
+    window.addEventListener('scroll', rememberScroll, { passive: true })
+    return () => window.removeEventListener('scroll', rememberScroll)
+  }, [loading, errorMessage, selectedCategoryId, savedBrowseState])
+
+  const selectCategory = (categoryId: string) => {
+    if (categoryId === selectedCategoryId) return
+    savedBrowseState.current = { categoryId, scrollY: 0 }
+    setLocalCategoryId(categoryId)
+    onCategoryChange?.(categoryId)
+  }
+
+  const selectItem = (id: MenuItemSummary['id']) => {
+    savedBrowseState.current = { categoryId: selectedCategoryId, scrollY: window.scrollY }
+    onSelectItem(id)
+  }
 
   const visibleItems = useMemo(
     () => menuItems.filter((item) => item.categoryId === selectedCategoryId),
@@ -87,7 +125,7 @@ export function MenuPage({
         <CategoryTabs
           categories={categories}
           selectedId={selectedCategoryId}
-          onSelect={setRequestedCategoryId}
+          onSelect={selectCategory}
           panelId={CONTENT_PANEL_ID}
         />
       )}
@@ -138,7 +176,7 @@ export function MenuPage({
             {visibleItems.length > 0 ? (
               <div className="flex flex-col">
                 {visibleItems.map((item) => (
-                  <MenuItem key={item.id} item={item} onSelect={onSelectItem} />
+                  <MenuItem key={item.id} item={item} onSelect={selectItem} />
                 ))}
               </div>
             ) : (

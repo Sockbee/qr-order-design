@@ -40,7 +40,7 @@ const SEEDS: Seed[] = [
   { n: 12, amount: 19_000, minutes: 5, pending: 0, paid: true },
   { n: 13 },
   { n: 14, amount: 33_000, minutes: 14, pending: 2 },
-  ...Array.from({ length: 10 }, (_, index) => ({ n: index + 15 })),
+  ...Array.from({ length: 9 }, (_, index) => ({ n: index + 15 })),
 ]
 
 export const staffTables: StaffTableSummary[] = SEEDS.map((seed) => {

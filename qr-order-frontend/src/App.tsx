@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { RefObject } from 'react'
 import {
   BrowserRouter,
   Navigate,
   Route,
   Routes,
   useNavigate,
+  useLocation,
   useParams,
   useSearchParams,
 } from 'react-router-dom'
@@ -12,6 +14,7 @@ import { EventOrderPage } from './pages/EventOrderPage'
 import { CartPage } from './pages/CartPage'
 import { MenuDetailPage } from './pages/MenuDetailPage'
 import { MenuPage } from './pages/MenuPage'
+import type { MenuBrowseState } from './pages/MenuPage'
 import { OrderCompletePage } from './pages/OrderCompletePage'
 import { OrderConfirmationPage } from './pages/OrderConfirmationPage'
 import { OrderStatusPage } from './pages/OrderStatusPage'
@@ -20,6 +23,7 @@ import { CallStaffSheet } from './components/CallStaffSheet'
 import { useOrderSession } from './hooks/useOrderSession'
 import { usePresence } from './hooks/usePresence'
 import { useStaffCall } from './hooks/useStaffCall'
+import { useCustomerActivity } from './hooks/useCustomerActivity'
 import { useOrderPolling } from './hooks/useOrderPolling'
 import { useStorefront } from './hooks/useStorefront'
 import type { OrderSession } from './hooks/useOrderSession'
@@ -72,6 +76,9 @@ function orderCartSignature(cart: CartLine[]): string {
 }
 
 interface CatalogRouteProps {
+  menuBrowseState: RefObject<MenuBrowseState>
+  menuCategoryId: string | null
+  onMenuCategoryChange: (categoryId: string) => void
   categories: typeof mockCategories
   menuItems: typeof mockMenuItems
   storefront: ReturnType<typeof useStorefront>
@@ -141,6 +148,9 @@ function TableConfirmationRoute({
 
 function MenuRoute({
   session,
+  menuBrowseState,
+  menuCategoryId,
+  onMenuCategoryChange,
   categories,
   menuItems,
   storefront,
@@ -151,6 +161,9 @@ function MenuRoute({
 
   return (
     <MenuPage
+      browseState={menuBrowseState}
+      categoryId={menuCategoryId}
+      onCategoryChange={onMenuCategoryChange}
       categories={categories}
       menuItems={menuItems}
       cart={session.cart}
@@ -170,6 +183,9 @@ function MenuRoute({
 
 function MenuDetailRoute({
   session,
+  menuBrowseState,
+  menuCategoryId,
+  onMenuCategoryChange,
   categories,
   menuItems,
   storefront,
@@ -182,6 +198,9 @@ function MenuDetailRoute({
   if (storefront.loading || storefront.error) {
     return (
       <MenuPage
+        browseState={menuBrowseState}
+        categoryId={menuCategoryId}
+        onCategoryChange={onMenuCategoryChange}
         categories={categories}
         menuItems={menuItems}
         cart={session.cart}
@@ -381,7 +400,11 @@ function OrderStatusRoute({
   )
 }
 
-function App() {
+function CustomerApp() {
+  const route = useLocation()
+  const idle = useCustomerActivity(route.pathname)
+  const [menuCategoryId, setMenuCategoryId] = useState<string | null>(null)
+  const menuBrowseState = useRef<MenuBrowseState>({ categoryId: null, scrollY: 0 })
   const location = window.location
   const initialTableMatch = location.pathname.match(/^\/t\/(T\d{2,})\/?$/)
   const initialToken = new URLSearchParams(location.search).get('token')
@@ -401,7 +424,7 @@ function App() {
     storefront.configured,
   )
   const coinSession = useOrderSession(credentials?.tableToken ?? tableSession.token, Number(credentials?.tableId.slice(1)) || tableSession.tableNumber, storefront.configured, 'COIN')
-  const remote = useOrderPolling(credentials)
+  const remote = useOrderPolling(credentials, idle)
   /*
    * 직원 호출 lives above the router so the "직원을 불렀어요" state survives
    * navigation between the menu, an item and the order history — the same
@@ -422,7 +445,7 @@ function App() {
     (Number(credentials?.tableId.slice(1)) || tableSession.tableNumber)
 
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route path="/" element={<SessionEntry />} />
         <Route
@@ -438,6 +461,9 @@ function App() {
           path="/menu"
           element={(
             <MenuRoute
+              menuBrowseState={menuBrowseState}
+              menuCategoryId={menuCategoryId}
+              onMenuCategoryChange={setMenuCategoryId}
               session={session}
               categories={categories}
               menuItems={menuItems}
@@ -451,6 +477,9 @@ function App() {
           path="/menu/:itemId"
           element={(
             <MenuDetailRoute
+              menuBrowseState={menuBrowseState}
+              menuCategoryId={menuCategoryId}
+              onMenuCategoryChange={setMenuCategoryId}
               session={session}
               categories={categories}
               menuItems={menuItems}
@@ -509,8 +538,12 @@ function App() {
           }}
         />
       )}
-    </BrowserRouter>
+    </>
   )
+}
+
+function App() {
+  return <BrowserRouter><CustomerApp /></BrowserRouter>
 }
 
 export default App

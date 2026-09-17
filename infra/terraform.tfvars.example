@@ -6,3 +6,9 @@ allowed_origins     = "https://your-firebase-project-id.web.app"
 frontend_base_url   = "https://your-firebase-project-id.web.app"
 deletion_protection = false
 # alert_notification_channels = ["projects/your-gcp-project-id/notificationChannels/123"]
+
+# Request pool 10 + infrastructure pool 2 = at most 12 DB connections per instance.
+service_min_instances = 1
+service_max_instances = 5
+revision_max_instances = 5
+request_concurrency = 100
