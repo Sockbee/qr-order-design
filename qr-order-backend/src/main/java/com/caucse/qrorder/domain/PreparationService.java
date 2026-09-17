@@ -86,7 +86,7 @@ public class PreparationService {
         String to=switch(action) {case "START"->"COOKING";case "COMPLETE"->"READY";default->"SERVED";};
         var order=jdbc.query("""
             SELECT o.payment_method,o.coin_received_at,o.payment_status,o.status,s.status AS visit_status
-            FROM orders o JOIN table_sessions s ON s.session_id=o.session_id WHERE o.order_id=? FOR UPDATE OF o
+            FROM live_orders o JOIN live_table_sessions s ON s.session_id=o.session_id WHERE o.order_id=? FOR UPDATE OF o
             """,rs->rs.next()?ApiEnvelope.map("coin",rs.getString(1).equals("COIN"),"received",rs.getObject(2)!=null,
                 "paid",rs.getString(3).equals("PAID"),"cancelled",rs.getString(4).equals("CANCELLED"),"open",rs.getString(5).equals("OPEN")):null,orderId);
         if(order==null || !(boolean)order.get("open") || (boolean)order.get("paid") || (boolean)order.get("cancelled"))
@@ -134,18 +134,18 @@ public class PreparationService {
         String status=statuses.stream().allMatch("SERVED"::equals)?"COMPLETED":
             statuses.stream().allMatch("PENDING"::equals)?"RECEIVED":
             statuses.stream().anyMatch(s->s.equals("PENDING")||s.equals("COOKING"))?"PREPARING":"SERVING";
-        jdbc.update("UPDATE orders SET status=?,public_status=?,status_updated_at=now(),updated_at=now() WHERE order_id=?",
+        jdbc.update("UPDATE live_orders SET status=?,public_status=?,status_updated_at=now(),updated_at=now() WHERE order_id=?",
             status,CustomerOrderStatus.fromInternal(status),orderId);
     }
 
     public List<Map<String,Object>> kitchen() {
         return jdbc.query("""
             SELECT o.order_id,o.order_kind,s.table_id,u.status,o.created_at,o.note,o.note_audience
-            FROM orders o JOIN table_sessions s ON s.session_id=o.session_id
+            FROM live_orders o JOIN live_table_sessions s ON s.session_id=o.session_id
             JOIN order_items i ON i.order_id=o.order_id JOIN order_preparation_units u USING(order_item_id)
             WHERE s.status='OPEN' AND o.status<>'CANCELLED' AND o.payment_status<>'PAID' AND i.status='ACTIVE'
               AND i.preparation_station='KITCHEN' AND u.status IN ('PENDING','COOKING')
-            GROUP BY o.order_id,s.table_id,u.status ORDER BY o.created_at,u.status
+            GROUP BY o.order_id,o.order_kind,s.table_id,u.status,o.created_at,o.note,o.note_audience ORDER BY o.created_at,u.status
             """,(rs,n)->ApiEnvelope.map("cardId",rs.getString("order_id")+":"+rs.getString("status"),
             "orderId",rs.getString("order_id"),"orderKind",rs.getString("order_kind"),"tableId",rs.getString("table_id"),"status",rs.getString("status").equals("PENDING")?"RECEIVED":"COOKING",
             "createdAt",rs.getObject("created_at",OffsetDateTime.class).toInstant().toString(),
@@ -156,10 +156,10 @@ public class PreparationService {
     public List<Map<String,Object>> serving() {
         return jdbc.query("""
             SELECT o.order_id,o.order_kind,s.table_id,o.payment_method,o.coin_total,o.coin_received_at,u.batch_id,min(u.ready_at) AS ready_at,o.note,o.note_audience
-            FROM orders o JOIN table_sessions s ON s.session_id=o.session_id
+            FROM live_orders o JOIN live_table_sessions s ON s.session_id=o.session_id
             JOIN order_items i ON i.order_id=o.order_id JOIN order_preparation_units u USING(order_item_id)
             WHERE s.status='OPEN' AND o.status<>'CANCELLED' AND o.payment_status<>'PAID' AND i.status='ACTIVE' AND u.status='READY'
-            GROUP BY o.order_id,s.table_id,u.batch_id ORDER BY ready_at,u.batch_id
+            GROUP BY o.order_id,o.order_kind,s.table_id,o.payment_method,o.coin_total,o.coin_received_at,u.batch_id,o.note,o.note_audience ORDER BY ready_at,u.batch_id
             """,(rs,n)->ApiEnvelope.map("cardId",rs.getString("batch_id"),"orderId",rs.getString("order_id"),"orderKind",rs.getString("order_kind"),"tableId",rs.getString("table_id"),
             "paymentMethod",rs.getString("payment_method"),"coinTotal",rs.getInt("coin_total"),"coinReceived",rs.getObject("coin_received_at")!=null,
             "readyAt",rs.getObject("ready_at",OffsetDateTime.class).toInstant().toString(),

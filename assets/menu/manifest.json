@@ -132,21 +132,41 @@
   {
     "menuId": "soju",
     "source": "소주.png",
-    "path": "soju/7b02ca17650ec610.webp",
-    "width": 640,
-    "height": 2168,
-    "bytes": 91044,
-    "sourceBytes": 1180323,
-    "sha256": "7b02ca17650ec610d96d9f132442fb1834921813cedc5a999c8094d43f53c1e4"
+    "path": "soju/4e77c7c0e6430908.webp",
+    "width": 724,
+    "height": 2171,
+    "bytes": 152912,
+    "sourceBytes": 1468879,
+    "sha256": "4e77c7c0e643090894d7be409ba01317dfc96f4d28348a9940d904393d5811d5"
   },
   {
     "menuId": "beer",
     "source": "맥주.png",
-    "path": "beer/d2799fe859959570.webp",
-    "width": 208,
-    "height": 476,
-    "bytes": 12280,
-    "sourceBytes": 86147,
-    "sha256": "d2799fe8599595706566928e95fa25a68289a1b38db2761afbd5c6e9e5162121"
+    "path": "beer/868f0a63f3367eef.webp",
+    "width": 829,
+    "height": 1897,
+    "bytes": 155142,
+    "sourceBytes": 1161858,
+    "sha256": "868f0a63f3367eefdc5159e983b3bcec8f45a2c9e0cbe2381cb2c9cd8fca1d63"
+  },
+  {
+    "menuId": "cola",
+    "source": "콜라.png",
+    "path": "cola/23a3c603f4c08861.webp",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 107140,
+    "sourceBytes": 997319,
+    "sha256": "23a3c603f4c088613d8e5fa9f4b1a5c742109184bc3366c67ef6587bc6e1b600"
+  },
+  {
+    "menuId": "cider",
+    "source": "사이다.png",
+    "path": "cider/0fc3194af32888bc.webp",
+    "width": 1254,
+    "height": 1254,
+    "bytes": 95168,
+    "sourceBytes": 852826,
+    "sha256": "0fc3194af32888bce4e65c892344c85c89406745af3610e9cc880f0755e06b92"
   }
 ]

@@ -60,10 +60,12 @@ class QrOrderApiIntegrationTest {
         registry.add("qr-order.token-pepper", () -> PEPPER);
         registry.add("qr-order.staff-passcode-hash", () -> StaffTokenService.sha256Hex(PEPPER + ":" + PASSCODE));
         registry.add("qr-order.staff-token-secret", () -> "test-staff-secret-that-is-at-least-32-characters");
+        registry.add("qr-order.cutover-initial-delay-ms", () -> "3600000");
         registry.add("springdoc.api-docs.enabled", () -> true);
         registry.add("springdoc.swagger-ui.enabled", () -> true);
     }
 
+    @Autowired com.caucse.qrorder.domain.OperationCutoverService cutover;
     @Autowired MockMvc mvc;
     @Autowired JdbcTemplate jdbc;
     @Autowired ObjectMapper mapper;
@@ -76,6 +78,8 @@ class QrOrderApiIntegrationTest {
 
     @BeforeEach
     void table() {
+        jdbc.update("DELETE FROM operation_cutover");
+        jdbc.update("DELETE FROM archived_staff_settlements");
         jdbc.update("DELETE FROM auth_attempts");
         jdbc.update("DELETE FROM domain_events");
         jdbc.update("DELETE FROM audit_logs");
@@ -94,6 +98,105 @@ class QrOrderApiIntegrationTest {
         jdbc.update("UPDATE settings SET value='1042' WHERE key='NEXT_DISPLAY_NUMBER'");
         jdbc.update("UPDATE settings SET value='20' WHERE key='STAFF_DISCOUNT_RATE'");
         jdbc.update("UPDATE settings SET value='TRUE' WHERE key='EVENT_OPEN'");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void scheduledOpeningArchivesTestsOnceAndPreservesConfigurationAndNewOrders() {
+        var guestRequest = Map.<String,Object>of("tableId","T01","tableToken",TABLE_TOKEN,
+                "clientRequestId",UUID.randomUUID().toString(),"expectedTotalAmount",1500,
+                "items",List.of(Map.of("menuId","cola","quantity",1)));
+        var guest = orders.create(guestRequest, false);
+        var staff = new StaffPrincipal("cashier", java.time.Instant.now(), java.time.Instant.now().plusSeconds(3600), 1);
+        services.createServiceOrder(Map.of("tableId","T01","chargedStaffId","S-001",
+                "clientRequestId",UUID.randomUUID().toString(),"items",List.of(Map.of("menuId","cola","quantity",1))),staff);
+        orders.createCall(Map.of("tableId","T01","tableToken",TABLE_TOKEN,"reason","OTHER","clientRequestId",UUID.randomUUID().toString()));
+        jdbc.update("UPDATE staff_members SET settlement_status='SETTLED',settled_amount=1200,settled_at=now() WHERE staff_id='S-001'");
+        var totalItems = jdbc.queryForObject("SELECT count(*) FROM order_items",Integer.class);
+        var tokens = jdbc.queryForList("SELECT token_hash FROM tables",String.class);
+        var prices = jdbc.queryForList("SELECT base_price FROM menus ORDER BY menu_id",Integer.class);
+        jdbc.update("INSERT INTO operation_cutover(id,starts_at) VALUES(1,now()+interval '1 hour')");
+        assertEquals(false, cutover.startIfDue());
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM live_orders",Integer.class));
+        // Set a boundary between the old records and future orders without depending on wall-clock waits.
+        jdbc.update("UPDATE orders SET created_at=now()-interval '2 hours'");
+        jdbc.update("UPDATE calls SET created_at=now()-interval '2 hours'");
+        jdbc.update("UPDATE table_sessions SET opened_at=now()-interval '2 hours'");
+        jdbc.update("UPDATE operation_cutover SET starts_at=now()-interval '1 hour'");
+        assertEquals(true, cutover.startIfDue());
+        assertEquals(false, cutover.startIfDue());
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM orders WHERE deleted_at IS NOT NULL",Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM live_orders",Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM live_table_sessions",Integer.class));
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM live_calls",Integer.class));
+        assertEquals(totalItems, jdbc.queryForObject("SELECT count(*) FROM order_items",Integer.class));
+        assertEquals(tokens,jdbc.queryForList("SELECT token_hash FROM tables",String.class));
+        assertEquals(prices,jdbc.queryForList("SELECT base_price FROM menus ORDER BY menu_id",Integer.class));
+        assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM staff_members",Integer.class));
+        assertEquals("SETTLED", jdbc.queryForObject("SELECT snapshot->>'settlement_status' FROM archived_staff_settlements WHERE staff_id='S-001'",String.class));
+        assertEquals("UNSETTLED", jdbc.queryForObject("SELECT settlement_status FROM staff_members WHERE staff_id='S-001'",String.class));
+        assertEquals(List.of(),services.listSettlements(true).get("members"));
+        assertEquals(List.of(),orders.list(Map.of("tableId","T01","tableToken",TABLE_TOKEN)).get("orders"));
+        assertEquals(List.of(),preparation.kitchen());
+        assertEquals(List.of(),preparation.serving());
+        assertEquals(List.of(),staffOperations.listCalls().get("groups"));
+        assertEquals(0, salesRows().size());
+        assertEquals("TEST_DATA_ARCHIVED",assertThrows(ApiException.class,()->orders.create(guestRequest,false)).code());
+        orders.create(Map.of("tableId","T01","tableToken",TABLE_TOKEN,"clientRequestId",UUID.randomUUID().toString(),
+                "expectedTotalAmount",1500,"items",List.of(Map.of("menuId","cola","quantity",1))),false);
+        assertEquals(1, preparation.serving().size());
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM live_table_sessions WHERE status='OPEN'",Integer.class));
+        assertEquals(1500L, sumSales(sales.report(java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString(),java.time.LocalDate.now(java.time.ZoneId.of("Asia/Seoul")).toString())));
+        assertEquals(false, cutover.startIfDue());
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM live_orders",Integer.class));
+    }
+
+    @Test
+    void openingRequestGuardClearsQueuesBeforeReturningAndRejectsStaleOrderAccess() throws Exception {
+        var old = orders.create(Map.of("tableId","T01","tableToken",TABLE_TOKEN,
+                "clientRequestId",UUID.randomUUID().toString(),"expectedTotalAmount",10000,
+                "items",List.of(Map.of("menuId","chicken-feet","quantity",1))),false);
+        assertEquals(1, preparation.kitchen().size());
+        jdbc.update("UPDATE orders SET created_at=now()-interval '2 hours'");
+        jdbc.update("UPDATE table_sessions SET opened_at=now()-interval '2 hours'");
+        jdbc.update("INSERT INTO operation_cutover(id,starts_at) VALUES(1,now()-interval '1 hour')");
+        assertEquals("OPERATION_STARTING",assertThrows(ApiException.class,()->orders.create(Map.of(
+                "tableId","T01","tableToken",TABLE_TOKEN,"clientRequestId",UUID.randomUUID().toString(),
+                "expectedTotalAmount",1500,"items",List.of(Map.of("menuId","cola","quantity",1))),false)).code());
+        mvc.perform(post("/api/v1/customer/orders/list").contentType("application/json")
+                .content(mapper.writeValueAsString(Map.of("tableId","T01","tableToken",TABLE_TOKEN))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.orders.length()",is(0)));
+        assertEquals(List.of(), preparation.kitchen());
+        assertEquals(List.of(),staffOperations.queues().get("payment"));
+        mvc.perform(post("/api/v1/customer/orders/get").contentType("application/json")
+                .content(mapper.writeValueAsString(Map.of("tableId","T01","tableToken",TABLE_TOKEN,"orderId",old.get("orderId")))))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void cutoffIncludesOrdersExactlyAtOpeningAndConcurrentCutoverRunsOnlyOnce() throws Exception {
+        var old = orders.create(Map.of("tableId","T01","tableToken",TABLE_TOKEN,
+                "clientRequestId",UUID.randomUUID().toString(),"expectedTotalAmount",1500,
+                "items",List.of(Map.of("menuId","cola","quantity",1))),false);
+        var live = orders.create(Map.of("tableId","T01","tableToken",TABLE_TOKEN,
+                "clientRequestId",UUID.randomUUID().toString(),"expectedTotalAmount",1500,
+                "items",List.of(Map.of("menuId","cola","quantity",1))),false);
+        var start = java.time.OffsetDateTime.now().minusHours(1);
+        jdbc.update("UPDATE orders SET created_at=? WHERE order_id=?",start.minusSeconds(1),UUID.fromString(old.get("orderId").toString()));
+        jdbc.update("UPDATE orders SET created_at=? WHERE order_id=?",start,UUID.fromString(live.get("orderId").toString()));
+        jdbc.update("UPDATE table_sessions SET opened_at=?",start.minusSeconds(1));
+        jdbc.update("INSERT INTO operation_cutover(id,starts_at) VALUES(1,?)",start);
+        try (var pool = Executors.newFixedThreadPool(2)) {
+            var first = pool.submit(cutover::startIfDue);
+            var second = pool.submit(cutover::startIfDue);
+            assertEquals(1,(first.get()?1:0)+(second.get()?1:0));
+        }
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM orders WHERE deleted_at IS NOT NULL",Integer.class));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM live_orders",Integer.class));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM live_table_sessions",Integer.class));
+        var day = start.atZoneSameInstant(java.time.ZoneId.of("Asia/Seoul")).toLocalDate().toString();
+        assertEquals(1500L,sumSales(sales.report(day,day)));
+        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM audit_logs WHERE action='OPERATION_STARTED'",Integer.class));
     }
 
     @Test
