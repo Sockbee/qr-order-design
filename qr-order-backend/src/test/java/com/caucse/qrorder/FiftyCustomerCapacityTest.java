@@ -102,13 +102,18 @@ class FiftyCustomerCapacityTest {
                 int readerIndex = staffStreams.size() - 1;
                 String refreshPath = "카운터".equals(label) ? "tables/list" : "orders/queue";
                 var dirty = new java.util.concurrent.atomic.AtomicBoolean();
+                var refreshing = new java.util.concurrent.atomic.AtomicBoolean();
                 refreshClock.scheduleAtFixedRate(() -> {
-                    if (!reading.get() || !dirty.getAndSet(false)) return;
-                    pendingRefreshes.add(client.sendAsync(staffRequest(refreshPath, token), HttpResponse.BodyHandlers.discarding())
+                    // Coalesce invalidations while a snapshot is in flight. A slow CI
+                    // database must not turn four staff screens into an unbounded queue.
+                    if (!reading.get() || refreshing.get() || !dirty.getAndSet(false)) return;
+                    refreshing.set(true);
+                    pendingRefreshes.add(client.sendAsync(staffRequest(refreshPath, token), HttpResponse.BodyHandlers.ofString())
                             .handle((snapshot, error) -> {
                                 if (error != null) staffErrors.add(error.toString());
-                                else if (snapshot.statusCode() != 200) staffErrors.add("queue HTTP " + snapshot.statusCode());
+                                else if (snapshot.statusCode() != 200) staffErrors.add("queue HTTP " + snapshot.statusCode() + ": " + snapshot.body());
                                 refreshes.incrementAndGet();
+                                refreshing.set(false);
                                 return null;
                             }));
                 }, 100, 100, TimeUnit.MILLISECONDS);
