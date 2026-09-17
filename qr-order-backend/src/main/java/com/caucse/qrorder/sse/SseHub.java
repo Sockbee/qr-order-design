@@ -20,9 +20,13 @@ public class SseHub {
     private final DomainEventService events;
     private final QrOrderProperties properties;
 
-    public SseHub(DomainEventService events, QrOrderProperties properties) {
+    public SseHub(DomainEventService events, QrOrderProperties properties, io.micrometer.core.instrument.MeterRegistry metrics) {
         this.events = events;
         this.properties = properties;
+        io.micrometer.core.instrument.Gauge.builder("qr.sse.connections", clients,
+                map -> map.values().stream().filter(c -> !c.staff()).count()).tag("audience", "customer").register(metrics);
+        io.micrometer.core.instrument.Gauge.builder("qr.sse.connections", clients,
+                map -> map.values().stream().filter(Client::staff).count()).tag("audience", "staff").register(metrics);
     }
 
     public SseEmitter customer(String tableId, long lastEventId) {
@@ -58,7 +62,7 @@ public class SseHub {
                     if (page.size() < 250) break;
                 }
             }
-        } catch (IOException error) {
+        } catch (IOException | IllegalStateException error) {
             remove.run();
             emitter.completeWithError(error);
         }
@@ -71,7 +75,7 @@ public class SseHub {
             if (!client.staff() && event.tableId() != null && !event.tableId().equals(client.tableId())) return;
             try {
                 send(client, event);
-            } catch (IOException error) {
+            } catch (IOException | IllegalStateException error) {
                 clients.remove(id);
                 client.emitter().completeWithError(error);
             }
@@ -89,7 +93,7 @@ public class SseHub {
         clients.forEach((id, client) -> {
             try {
                 client.emitter().send(SseEmitter.event().comment("heartbeat " + Instant.now()));
-            } catch (IOException error) {
+            } catch (IOException | IllegalStateException error) {
                 log.debug("Removing closed SSE connection {}", id);
                 clients.remove(id);
                 client.emitter().complete();

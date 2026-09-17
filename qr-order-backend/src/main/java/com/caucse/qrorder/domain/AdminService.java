@@ -25,13 +25,15 @@ import java.util.UUID;
 @Service
 public class AdminService {
     private final JdbcTemplate jdbc;
+    private final TableVisitService visits;
     private final TableCatalogService catalog;
     private final QrOrderProperties properties;
     private final DomainEventService events;
     private final SecureRandom random = new SecureRandom();
 
-    public AdminService(JdbcTemplate jdbc, TableCatalogService catalog, QrOrderProperties properties, DomainEventService events) {
-        this.jdbc = jdbc; this.catalog = catalog; this.properties = properties; this.events = events;
+    public AdminService(JdbcTemplate jdbc, TableCatalogService catalog, QrOrderProperties properties, DomainEventService events, TableVisitService visits) {
+        this.jdbc = jdbc;
+        this.visits = visits; this.catalog = catalog; this.properties = properties; this.events = events;
     }
 
     public Map<String, Object> snapshot() {
@@ -53,6 +55,7 @@ public class AdminService {
 
     @Transactional
     public Void saveCategory(String id, Map<String, Object> body, StaffPrincipal staff) {
+        visits.lock();
         validateId(id);
         jdbc.update("""
                 INSERT INTO categories(category_id,label,heading,sort_order,active,updated_at) VALUES(?,?,?,?,?,now())
@@ -64,6 +67,7 @@ public class AdminService {
 
     @Transactional
     public Void saveMenu(String id, Map<String, Object> body, StaffPrincipal staff) {
+        visits.lock();
         validateId(id);
         int min = number(body, "minQuantity", 1), max = number(body, "maxQuantity", 10), price = number(body, "basePrice", -1);
         if (price < 0 || min < 1 || max < min) throw ApiException.invalid("가격과 수량 범위를 확인해 주세요.");
@@ -94,6 +98,7 @@ public class AdminService {
 
     @Transactional
     public Void saveSetting(String key, String value, StaffPrincipal staff) {
+        visits.lock();
         if (!Set.of("STORE_NAME", "EVENT_OPEN", "NOTICE", "ORDER_PREFIX", "STATUS_POLL_SECONDS",
                 "CALL_MIN_INTERVAL_SECONDS", "STAFF_TOKEN_EPOCH", "STAFF_SESSION_HOURS", "TABLE_DISCOUNT_RATE").contains(key)) {
             throw ApiException.invalid("변경할 수 없는 설정입니다.");
@@ -118,6 +123,7 @@ public class AdminService {
 
     @Transactional
     public Void saveTable(String tableId, Map<String, Object> body, StaffPrincipal staff) {
+        visits.lock();
         if (!tableId.matches("^T[0-9]{2,}$")) throw ApiException.invalid("테이블 ID를 확인해 주세요.");
         int updated = jdbc.update("UPDATE tables SET display_name=?,active=?,sort_order=?,updated_at=now() WHERE table_id=?",
                 required(body, "displayName"), bool(body, "active", true), number(body, "sortOrder", 0), tableId);
@@ -127,6 +133,7 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> createTable(String tableId, Map<String, Object> body, StaffPrincipal staff) {
+        visits.lock();
         if (!tableId.matches("^T[0-9]{2,}$")) throw ApiException.invalid("테이블 ID를 확인해 주세요.");
         String token = newToken();
         jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,token_version,active,sort_order) VALUES(?,?,?,1,true,?)",
@@ -137,6 +144,7 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> rotateTable(String tableId, StaffPrincipal staff) {
+        visits.lock();
         String token = newToken();
         int updated = jdbc.update("UPDATE tables SET token_hash=?,token_version=token_version+1,updated_at=now() WHERE table_id=?",
                 hashToken(token), tableId);
@@ -147,6 +155,7 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> importTables(String csv, StaffPrincipal staff) {
+        visits.lock();
         Integer activity = jdbc.queryForObject("SELECT (SELECT count(*) FROM orders)+(SELECT count(*) FROM calls)+(SELECT count(*) FROM table_sessions)", Integer.class);
         if (activity != null && activity > 0) throw ApiException.conflict("IMPORT_NOT_EMPTY", "운영 데이터가 있어 테이블을 가져올 수 없습니다.");
         int count = 0;
@@ -190,6 +199,7 @@ public class AdminService {
 
     @Transactional
     public Map<String, Object> importStaffMembers(String csv, StaffPrincipal staff) {
+        visits.lock();
         int count = 0;
         Set<String> seenIds = new java.util.HashSet<>();
         for (String rawLine : csv.split("\\R")) {

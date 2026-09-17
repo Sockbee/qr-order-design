@@ -29,6 +29,9 @@ public class DomainEventService {
 
     public long publish(String type, String entityId, String tableId, Map<String, Object> payload) {
         try {
+            // Numeric SSE cursors require event IDs to follow commit order. Acquire only at
+            // the end of a mutation, after business-row locks, and retain through commit.
+            jdbc.queryForObject("SELECT pg_advisory_xact_lock(7319024)", Object.class);
             Long id = jdbc.queryForObject("""
                     INSERT INTO domain_events(event_id, event_type, entity_id, table_id, revision, payload)
                     VALUES (nextval('domain_events_event_id_seq'), ?, ?, ?, currval('domain_events_event_id_seq'), ?::jsonb)

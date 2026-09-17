@@ -279,6 +279,127 @@ class QrOrderApiIntegrationTest {
         }
     }
 
+    @Autowired org.springframework.transaction.PlatformTransactionManager transactions;
+
+    @Autowired javax.sql.DataSource requestDataSource;
+
+    @Test
+    void exhaustedRequestPoolReturnsRetryable503AndSameRequestCanRecover() throws Exception {
+        var request = customerOrder("T01", TABLE_TOKEN, "cola");
+        var connections = new ArrayList<java.sql.Connection>();
+        try {
+            int size = requestDataSource.unwrap(com.zaxxer.hikari.HikariDataSource.class).getMaximumPoolSize();
+            for (int i = 0; i < size; i++) connections.add(requestDataSource.getConnection());
+            mvc.perform(post("/api/v1/customer/orders/create").contentType("application/json")
+                            .content(mapper.writeValueAsString(request)))
+                    .andExpect(status().isServiceUnavailable())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "1"))
+                    .andExpect(jsonPath("$.error.code", is("SERVER_BUSY")))
+                    .andExpect(jsonPath("$.error.retryable", is(true)));
+        } finally {
+            for (var connection : connections) connection.close();
+        }
+        orders.create(request, false);
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+    }
+
+    @Test
+    void simultaneousRetriesCreateOneOrderAndRollbackLeavesOnlyANumberGap() throws Exception {
+        var request = customerOrder("T01", TABLE_TOKEN, "cola");
+        try (var executor = Executors.newFixedThreadPool(12)) {
+            var start = new java.util.concurrent.CountDownLatch(1);
+            var results = new ArrayList<Future<Map<String, Object>>>();
+            for (int i = 0; i < 12; i++) results.add(executor.submit(() -> {
+                start.await();
+                return orders.create(request, false);
+            }));
+            start.countDown();
+            var ids = new HashSet<Object>();
+            for (var result : results) ids.add(result.get(10, java.util.concurrent.TimeUnit.SECONDS).get("orderId"));
+            assertEquals(1, ids.size());
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM table_sessions", Integer.class));
+        }
+        var modified = new HashMap<>(request);
+        modified.put("note", "different body");
+        assertEquals("IDEMPOTENCY_CONFLICT", assertThrows(ApiException.class, () -> orders.create(modified, false)).code());
+        long cursor = events.latestId();
+        var tx = new org.springframework.transaction.support.TransactionTemplate(transactions);
+        tx.executeWithoutResult(status -> {
+            orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+            status.setRollbackOnly();
+        });
+        assertEquals(cursor, events.latestId());
+        assertTrue(events.after(cursor, null, 100).isEmpty());
+        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+        var next = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        assertEquals(1044L, ((Number) next.get("displayNumber")).longValue());
+    }
+
+    @Test
+    void ordersRaceWithTopologyPaymentResetAndPreparationWithoutDeadlock() throws Exception {
+        var staff = new StaffPrincipal("카운터", Instant.now(), Instant.now().plusSeconds(3600), 1);
+        for (int i = 2; i <= 3; i++) jdbc.update(
+                "INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES(?,?,?,?)",
+                "T0" + i, "Race " + i, StaffTokenService.sha256Hex(PEPPER + ":" + String.valueOf(i).repeat(64)), i);
+        var original = orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false);
+        orders.create(customerOrder("T02", "2".repeat(64), "cola"), false);
+        race(() -> orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false),
+                () -> staffOperations.merge("T01", "T02", staff));
+        assertEquals(4500, staffOperations.billResponse("T02").get("finalAmount"));
+        race(() -> orders.create(customerOrder("T02", "2".repeat(64), "cola"), false),
+                () -> staffOperations.split("T01", staff));
+        assertEquals(3000, staffOperations.billResponse("T01").get("finalAmount"));
+        assertEquals(3000, staffOperations.billResponse("T02").get("finalAmount"));
+        race(() -> orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false),
+                () -> staffOperations.move("T01", "T03", staff));
+        assertEquals(4500, staffOperations.billResponse("T03").get("finalAmount"));
+        // Both the moved QR and its current table must serialize on one billing root.
+        race(() -> orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false),
+                () -> orders.create(customerOrder("T03", "3".repeat(64), "cola"), false));
+        assertEquals(7500, staffOperations.billResponse("T03").get("finalAmount"));
+        String item = jdbc.queryForObject("SELECT order_item_id::text FROM order_items WHERE order_id=?::uuid",
+                String.class, original.get("orderId"));
+        // Isolate a kitchen item without changing the shared menu fixture used by other tests.
+        jdbc.update("UPDATE order_items SET preparation_station='KITCHEN',preparation_status='PENDING' WHERE order_item_id=?::uuid", item);
+        race(() -> orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false),
+                () -> staffOperations.updateItemPreparation(item, true, staff));
+        var bill = staffOperations.billResponse("T03");
+        race(() -> orders.create(customerOrder("T01", TABLE_TOKEN, "cola"), false), () -> {
+            try {
+                staffOperations.confirmPayment("T03", bill.get("sessionId").toString(), UUID.randomUUID().toString(),
+                        (Integer) bill.get("finalAmount"), staff, "race payer");
+            } catch (ApiException error) {
+                assertEquals("BILL_AMOUNT_CHANGED", error.code()); // A newer order correctly invalidates the old quote.
+            }
+        });
+        String session = staffOperations.billResponse("T02").get("sessionId").toString();
+        race(() -> orders.create(customerOrder("T02", "2".repeat(64), "cola"), false),
+                () -> staffOperations.resetTable("T02", session, staff));
+        assertEquals(0, jdbc.queryForObject("""
+                SELECT count(*) FROM orders o LEFT JOIN table_sessions s ON s.session_id=o.session_id
+                WHERE s.session_id IS NULL
+                """, Integer.class));
+        assertEquals(0, jdbc.queryForObject("""
+                SELECT count(*) FROM (SELECT table_id FROM table_sessions WHERE status IN ('OPEN','PREPARED')
+                GROUP BY table_id HAVING count(*)>1) duplicate_visits
+                """, Integer.class));
+        assertEquals(0, jdbc.queryForObject("""
+                SELECT count(*) FROM orders o WHERE o.status<>'CANCELLED' AND o.total_amount <>
+                (SELECT COALESCE(sum(i.line_total),0) FROM order_items i WHERE i.order_id=o.order_id AND i.status='ACTIVE')
+                """, Integer.class));
+    }
+
+    private void race(Runnable first, Runnable second) throws Exception {
+        var start = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = Executors.newFixedThreadPool(2)) {
+            var a = executor.submit(() -> { start.await(); first.run(); return null; });
+            var b = executor.submit(() -> { start.await(); second.run(); return null; });
+            start.countDown();
+            a.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            b.get(10, java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+
     @Test
     void mergeSplitMoveAndPaymentStayAtomicAndKeepOriginQrSession() {
         jdbc.update("INSERT INTO tables(table_id,display_name,token_hash,sort_order) VALUES('T02','테이블 2',?,2)",

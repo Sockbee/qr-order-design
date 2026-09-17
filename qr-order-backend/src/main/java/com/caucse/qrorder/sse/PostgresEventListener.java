@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
+import com.caucse.qrorder.config.InfrastructureConnections;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.concurrent.ExecutorService;
@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 @Component
 public class PostgresEventListener {
     private static final Logger log = LoggerFactory.getLogger(PostgresEventListener.class);
-    private final DataSource dataSource;
+    private final InfrastructureConnections dataSource;
     private final DomainEventService events;
     private final SseHub hub;
     private final ExecutorService executor = Executors.newSingleThreadExecutor(Thread.ofVirtual().name("pg-events-").factory());
@@ -26,7 +26,7 @@ public class PostgresEventListener {
     private long lastEventId;
     private boolean initialized;
 
-    public PostgresEventListener(DataSource dataSource, DomainEventService events, SseHub hub) {
+    public PostgresEventListener(InfrastructureConnections dataSource, DomainEventService events, SseHub hub) {
         this.dataSource = dataSource;
         this.events = events;
         this.hub = hub;
@@ -39,7 +39,7 @@ public class PostgresEventListener {
 
     private void listenLoop() {
         while (running) {
-            try (Connection next = dataSource.getConnection(); Statement statement = next.createStatement()) {
+            try (Connection next = dataSource.connection(); Statement statement = next.createStatement()) {
                 connection = next;
                 next.setAutoCommit(true);
                 statement.execute("LISTEN qr_order_events");
