@@ -30,9 +30,15 @@ python3 -m venv .local-data/menu-images-venv
 .local-data/menu-images-venv/bin/python scripts/menu-images/prepare.py '/path/to/메뉴판(최종)'
 ```
 
-`prepare.py`는 NFC/NFD 한글 파일명을 정규화하고 명시적으로 매핑한 13개 메뉴만 처리합니다.
+`prepare.py`는 NFC/NFD 한글 파일명을 정규화하고 명시적으로 매핑한 메뉴 중 해당 폴더에 있는 이미지를 처리합니다.
 자르기·확대 없이 WebP로 인코딩하고 크기와 알파 채널을 검증합니다.
-현재 파일은 `assets/menu/manifest.json`에 기록하고 이전 WebP는 남깁니다.
+현재 파일은 `assets/menu/manifest.json`에 기록하고 이전 WebP와 이번에 처리하지 않은 메뉴 매핑은 남깁니다.
+
+추가 이미지 두 개만 처리하려면 메뉴 ID로 범위를 지정합니다. 지정한 파일이 없으면 중단합니다.
+
+```bash
+.local-data/menu-images-venv/bin/python scripts/menu-images/prepare.py /path/to/images --menus soju beer
+```
 
 ## GCP 배포
 
@@ -70,7 +76,8 @@ Content-Type, SHA-256 검증을 먼저 수행합니다.
   --project qr-order-507407 --environment staging --apply
 ```
 
-13개 메뉴의 존재를 확인한 뒤 한 transaction에서 `image_url`, `updated_at`만 바꿉니다.
+manifest에 포함된 메뉴의 존재를 확인한 뒤 한 transaction에서 `image_url`, `updated_at`만 바꿉니다.
+`--menus soju beer`를 붙이면 해당 메뉴만 검증하고 연결하며, 등록되지 않은 ID는 거부합니다.
 감사 로그와 기존 `menu.updated` 이벤트를 기록하고 `pg_notify`로 열린 고객 화면에 재조회를 알립니다.
 같은 URL이면 아무것도 쓰지 않으며, 해당 버킷 외부의 기존 URL이 있으면 덮어쓰지 않고 중단합니다.
 lock timeout 5초, statement timeout 30초이며 실패하면 전체 rollback합니다.

@@ -128,5 +128,25 @@
     "bytes": 40788,
     "sourceBytes": 365339,
     "sha256": "be8aa3a93bef3910dfe6ade927e4cbe326180c25daaf327d7cbce2fc563e7190"
+  },
+  {
+    "menuId": "soju",
+    "source": "소주.png",
+    "path": "soju/7b02ca17650ec610.webp",
+    "width": 640,
+    "height": 2168,
+    "bytes": 91044,
+    "sourceBytes": 1180323,
+    "sha256": "7b02ca17650ec610d96d9f132442fb1834921813cedc5a999c8094d43f53c1e4"
+  },
+  {
+    "menuId": "beer",
+    "source": "맥주.png",
+    "path": "beer/d2799fe859959570.webp",
+    "width": 208,
+    "height": 476,
+    "bytes": 12280,
+    "sourceBytes": 86147,
+    "sha256": "d2799fe8599595706566928e95fa25a68289a1b38db2761afbd5c6e9e5162121"
   }
 ]
