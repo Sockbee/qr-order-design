@@ -22,9 +22,15 @@ def main():
     parser.add_argument("--environment", choices=["staging", "prod"], required=True)
     parser.add_argument("--region", default="asia-northeast3")
     parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--menus", nargs="+", help="Link only these menu IDs")
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[2]
     manifest = json.loads((root / "assets/menu/manifest.json").read_text())
+    if args.menus:
+        unknown = set(args.menus) - {entry["menuId"] for entry in manifest}
+        if unknown:
+            raise SystemExit(f"Unknown menu IDs: {sorted(unknown)}")
+        manifest = [entry for entry in manifest if entry["menuId"] in args.menus]
     base = f"https://storage.googleapis.com/{args.project}-{args.environment}-menu-assets/menus/"
     ids = [entry["menuId"] for entry in manifest]
     if not ids or len(set(ids)) != len(ids):

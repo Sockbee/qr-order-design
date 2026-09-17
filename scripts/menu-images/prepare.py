@@ -22,20 +22,31 @@ SOURCES = {
     "짜계치.png": "jjapagetti-egg-cheese",
     "팥빙수.png": "red-bean-bingsu",
     "해장미역국밥.png": "seaweed-soup-rice",
+    "소주.png": "soju",
+    "맥주.png": "beer",
 }
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("source", type=Path)
+    parser.add_argument("--menus", nargs="+", choices=sorted(SOURCES.values()),
+                        help="Prepare only these menu IDs; otherwise use known images present in source")
     args = parser.parse_args()
     destination = Path(__file__).resolve().parents[2] / "assets/menu"
     source_files = {unicodedata.normalize("NFC", p.name): p for p in args.source.glob("*.png")}
-    missing = SOURCES.keys() - source_files.keys()
+    selected = {name: menu_id for name, menu_id in SOURCES.items()
+                if menu_id in args.menus} if args.menus else {
+                    name: menu_id for name, menu_id in SOURCES.items() if name in source_files}
+    if not selected:
+        raise SystemExit("No known menu images found")
+    missing = selected.keys() - source_files.keys()
     if missing:
         raise SystemExit(f"Missing source images: {sorted(missing)}")
-    manifest = []
-    for filename, menu_id in SOURCES.items():
+    manifest_path = destination / "manifest.json"
+    manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else []
+    prepared = []
+    for filename, menu_id in selected.items():
         source = source_files[filename]
         with Image.open(source) as original:
             rgba = original.convert("RGBA")
@@ -52,13 +63,16 @@ def main():
             with Image.open(output) as verified:
                 assert verified.size == original.size
                 assert verified.convert("RGBA").getchannel("A").tobytes() == rgba.getchannel("A").tobytes()
-            manifest.append({
+            prepared.append({
                 "menuId": menu_id, "source": filename, "path": relative,
                 "width": original.width, "height": original.height,
                 "bytes": len(data), "sourceBytes": source.stat().st_size, "sha256": digest,
             })
-    (destination / "manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
-    print(f"Prepared {len(manifest)} images: {sum(m['sourceBytes'] for m in manifest):,} → {sum(m['bytes'] for m in manifest):,} bytes")
+    replacements = {entry["menuId"]: entry for entry in prepared}
+    manifest = [replacements.pop(entry["menuId"], entry) for entry in manifest]
+    manifest.extend(replacements.values())
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n")
+    print(f"Prepared {len(prepared)} images: {sum(m['sourceBytes'] for m in prepared):,} → {sum(m['bytes'] for m in prepared):,} bytes; manifest contains {len(manifest)} menus")
 
 
 if __name__ == "__main__":
