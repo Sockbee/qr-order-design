@@ -15,15 +15,20 @@ describe('한신포차 배치와 합석 표시', () => {
     )
     expect(HANSHIN_TABLES.every((table) => table.capacity === 4)).toBe(true)
     const byId = (id: string) => HANSHIN_WINDOW_TABLES.find((table) => table.tableId === id)!
-    for (const ids of [['T03', 'T04', 'T05', 'T06'], ['T07', 'T08', 'T09', 'T10'], ['T11', 'T12', 'T13', 'T14']]) {
-      const column = ids.map(byId)
-      expect(new Set(column.map((table) => table.x)).size).toBe(1)
-      expect(column.map((table) => table.y)).toEqual([...column.map((table) => table.y)].sort((a, b) => a - b))
-      expect(column.map((table) => table.shape)).toEqual(['rect', 'round', 'round', 'rect'])
+    for (const ids of [['T03', 'T04', 'T05', 'T06', 'T07'], ['T08', 'T09', 'T10', 'T11'],
+      ['T12', 'T13', 'T14', 'T15'], ['T16', 'T17', 'T18']]) {
+      const row = ids.map(byId)
+      expect(new Set(row.map((table) => table.y)).size).toBe(1)
+      expect(row.map((table) => table.x)).toEqual([...row.map((table) => table.x)].sort((a, b) => a - b))
     }
-    expect(['T15', 'T16', 'T17'].map((id) => byId(id).shape)).toEqual(['diamond', 'diamond', 'diamond'])
+    expect(['T03', 'T04', 'T05', 'T16', 'T17', 'T18'].every((id) => byId(id).shape === 'rect')).toBe(true)
+    expect(HANSHIN_WINDOW_TABLES.filter((table) => table.shape === 'diamond').map((table) => table.tableId)).toEqual(['T11', 'T15'])
     expect(byId('T01').x).toBeLessThan(byId('T03').x)
-    expect(byId('T01').y).toBeLessThan(byId('T02').y)
+    expect(byId('T01').x).toBeLessThan(byId('T02').x)
+    expect(byId('T01').y).toBeGreaterThan(byId('T02').y)
+    expect(byId('T16').y).toBeLessThan(byId('T12').y)
+    expect(byId('T12').y).toBeLessThan(byId('T08').y)
+    expect(byId('T08').y).toBeLessThan(byId('T03').y)
     expect(['T19', 'T20', 'T21', 'T22', 'T23'].every((id) => byId(id).x > byId('T18').x)).toBe(true)
     expect(staffTables).toHaveLength(23)
     expect(staffTables.every((table) => !table.mergeLabel)).toBe(true)

@@ -95,6 +95,10 @@ public class StaffTokenService {
             return new StaffPrincipal(label, Instant.ofEpochSecond(issued), Instant.ofEpochSecond(expires), epoch);
         } catch (ApiException error) {
             throw error;
+        } catch (org.springframework.dao.DataAccessResourceFailureException error) {
+            // A valid token does not expire when the database pool is temporarily busy.
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "SERVER_BUSY",
+                    "서버가 혼잡합니다. 잠시 후 다시 시도해 주세요.", true);
         } catch (Exception error) {
             throw invalidToken();
         }

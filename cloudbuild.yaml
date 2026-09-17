@@ -10,7 +10,16 @@ steps:
     name: gradle:8.14.4-jdk21
     dir: qr-order-backend
     entrypoint: bash
-    args: ['-c', './gradlew --no-daemon test']
+    args:
+      - -c
+      - |
+        ./gradlew --no-daemon test
+        result=$$?
+        if [ "$$result" -ne 0 ]; then
+          # Preserve the full connection error and load-test measurements in CI logs.
+          cat build/test-results/test/TEST-*.xml
+        fi
+        exit "$$result"
 
   - id: frontend-install
     name: node:22.12.0
@@ -78,5 +87,8 @@ images:
 
 options:
   logging: CLOUD_LOGGING_ONLY
+  # Run the HTTP server, PostgreSQL and 100 SSE clients plus concurrent orders
+  # on a sized worker; the default worker exhausted the test's 3s DB pool wait.
+  machineType: E2_HIGHCPU_8
 
 timeout: 1800s

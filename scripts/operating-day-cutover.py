@@ -32,9 +32,12 @@ def status(conn):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--schedule', action='store_true')
-    parser.add_argument('--starts-at', help='Explicit ISO timestamp with timezone, e.g. 2026-09-17T18:00:00+09:00')
+    parser.add_argument('--starts-at', help='Explicit ISO timestamp with timezone, e.g. 2026-09-17T17:00:00+09:00')
+    parser.add_argument('--reschedule-from', help='Expected existing future timestamp; requires --schedule')
     parser.add_argument('--verify-after-start', action='store_true')
     args = parser.parse_args()
+    if args.reschedule_from and not args.schedule:
+        parser.error('--reschedule-from requires --schedule')
     password = subprocess.check_output(['gcloud', 'secrets', 'versions', 'access', 'latest',
                                         '--project=' + PROJECT, '--secret=qr-order-staging-db-password'], text=True).rstrip('\n')
     with psycopg.connect(host='127.0.0.1', port=15439, dbname='qr_order', user='qr_order',
@@ -46,12 +49,26 @@ def main():
             start = dt.datetime.fromisoformat(args.starts_at)
             if start.tzinfo is None:
                 parser.error('--starts-at requires an explicit timezone')
+            expected = dt.datetime.fromisoformat(args.reschedule_from) if args.reschedule_from else None
+            if expected is not None and expected.tzinfo is None:
+                parser.error('--reschedule-from requires an explicit timezone')
             conn.execute('SELECT pg_advisory_xact_lock(7319021)')
             current = conn.execute('SELECT starts_at,completed_at FROM operation_cutover WHERE id=1 FOR UPDATE').fetchone()
-            if current and current[0] != start:
+            now = conn.execute('SELECT clock_timestamp()').fetchone()[0]
+            if expected is not None:
+                if not current or current[0] != expected:
+                    raise RuntimeError('Existing cutover does not match --reschedule-from')
+                if current[1] is not None or current[0] <= now or start <= now:
+                    raise RuntimeError('Only an unstarted future cutover can be rescheduled to a future time')
+                conn.execute('UPDATE operation_cutover SET starts_at=%s WHERE id=1', (start,))
+                conn.execute("""INSERT INTO audit_logs(log_id,actor_type,actor_id,action,entity_type,entity_id,detail_json)
+                    VALUES(%s,'SYSTEM','operating-day-cutover-script','OPERATION_CUTOVER_RESCHEDULED',
+                    'OPERATING_PERIOD','1',%s::jsonb)""", (uuid.uuid4(), json.dumps({
+                        'previousStartsAt': expected.isoformat(), 'startsAt': start.isoformat()})))
+            elif current and current[0] != start:
                 raise RuntimeError('A different cutover already exists; refusing to change it')
-            if not current:
-                if start <= conn.execute('SELECT clock_timestamp()').fetchone()[0]:
+            elif not current:
+                if start <= now:
                     raise RuntimeError('Only a future cutover can be armed by this script')
                 conn.execute('INSERT INTO operation_cutover(id,starts_at) VALUES(1,%s)', (start,))
                 conn.execute("""INSERT INTO audit_logs(log_id,actor_type,actor_id,action,entity_type,entity_id,detail_json)

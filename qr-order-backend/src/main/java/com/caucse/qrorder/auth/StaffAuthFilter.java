@@ -49,6 +49,7 @@ public class StaffAuthFilter extends OncePerRequestFilter {
 
     private void writeError(HttpServletResponse response, ApiException error) throws IOException {
         response.setStatus(error.status().value());
+        if ("SERVER_BUSY".equals(error.code())) response.setHeader("Retry-After", "1");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(response.getOutputStream(), ApiEnvelope.failure(
                 error.code(), error.getMessage(), error.retryable(), error.details()));
