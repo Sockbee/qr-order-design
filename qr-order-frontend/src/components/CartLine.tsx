@@ -1,3 +1,4 @@
+import { menuImageClassName } from '../data/menuImages'
 import { QuantitySelector } from './customer/QuantitySelector'
 import { formatPrice } from '../utils/price'
 
@@ -22,7 +23,7 @@ export function CartLine({
   return (
     <div className="flex gap-3 items-start w-full">
       <div className="flex-none size-16 rounded-btn-lg bg-surface overflow-hidden">
-        {imageUrl && <img className="w-full h-full object-cover" src={imageUrl} alt="" />}
+        {imageUrl && <img className={menuImageClassName(imageUrl)} src={imageUrl} alt="" />}
       </div>
 
       <div className="flex flex-1 min-w-0 flex-col gap-1">

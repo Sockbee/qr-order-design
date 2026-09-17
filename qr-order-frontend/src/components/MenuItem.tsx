@@ -1,3 +1,4 @@
+import { menuImageClassName } from '../data/menuImages'
 import { Badge } from './Badge'
 import { formatPrice } from '../utils/price'
 import type { MenuItemSummary } from '../types/menu'
@@ -22,7 +23,7 @@ export function MenuItem({ item, onSelect }: MenuItemProps) {
           soldOut ? 'grayscale opacity-45' : ''
         }`}
       >
-        {imageUrl && <img className="w-full h-full object-cover" src={imageUrl} alt="" />}
+        {imageUrl && <img className={menuImageClassName(imageUrl)} src={imageUrl} alt="" />}
       </span>
       <span className="flex flex-1 min-w-0 flex-col gap-1">
         <span className="flex items-center gap-2 w-full min-w-0">

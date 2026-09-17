@@ -1,3 +1,4 @@
+import { menuImageClassName } from '../data/menuImages'
 import { useState } from 'react'
 import { AppBar } from '../components/AppBar'
 import { Button } from '../components/Button'
@@ -38,7 +39,7 @@ export function MenuDetailPage({
 
       <div className="flex-none mx-4 mt-2 h-[216px] rounded-[24px] bg-surface overflow-hidden">
         {item.imageUrl && (
-          <img className="w-full h-full object-cover" src={item.imageUrl} alt="" />
+          <img className={menuImageClassName(item.imageUrl)} src={item.imageUrl} alt="" />
         )}
       </div>
 
