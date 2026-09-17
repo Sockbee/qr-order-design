@@ -42,6 +42,6 @@ export function useMenuSales(startDate: string, endDate: string) {
   }, [configured, startDate, endDate, key, revision, attempt])
   if (!configured) return { rows: startDate <= koreaDate() && endDate >= koreaDate() ? demoMenuSales : [], loading: false, error: undefined, unauthorized: false, retry: () => {}, demo: true }
   const current = result?.key === key ? result : null
-  return { rows: current?.data?.rows ?? [], loading: !current, error: current?.error,
+  return { salesStartAt: current?.data?.salesStartAt, rows: current?.data?.rows ?? [], loading: !current, error: current?.error,
     unauthorized: current?.unauthorized, retry: () => setAttempt((n) => n + 1), demo: false }
 }

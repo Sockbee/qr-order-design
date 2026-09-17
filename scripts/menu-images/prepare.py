@@ -24,6 +24,8 @@ SOURCES = {
     "해장미역국밥.png": "seaweed-soup-rice",
     "소주.png": "soju",
     "맥주.png": "beer",
+    "콜라.png": "cola",
+    "사이다.png": "cider",
 }
 
 

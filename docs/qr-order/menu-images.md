@@ -40,6 +40,16 @@ python3 -m venv .local-data/menu-images-venv
 .local-data/menu-images-venv/bin/python scripts/menu-images/prepare.py /path/to/images --menus soju beer
 ```
 
+소주·맥주·콜라·사이다는 배경 제거가 끝난 `assets/menu-cutouts`의 PNG를 입력으로 사용합니다.
+`prepare.py`는 배경 제거를 하지 않고 WebP 인코딩만 수행합니다.
+
+```bash
+.local-data/menu-images-venv/bin/python scripts/menu-images/prepare.py assets/menu-cutouts --menus soju beer cola cider
+```
+
+현재 manifest는 메뉴 17개를 가리킵니다. 이전 소주·맥주 파일 두 개는 롤백용으로 남겨 두어
+Storage에 관리되는 객체 수는 19개입니다.
+
 ## GCP 배포
 
 리소스 정의는 `infra/menu-images.tf`입니다. 일반적으로 전체 Terraform plan을 검토한 뒤 적용합니다.

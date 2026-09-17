@@ -44,6 +44,9 @@ export function StaffSalesPage() {
         <p className="station-page__summary">{sales.demo ? '디자인 예시 · ' : ''}주문일 기준 · 한국 시간</p>
       </header>
       <div className="station-page__body sales-page">
+        {sales.salesStartAt && <p className="sales-policy">운영 집계 시작: {new Date(sales.salesStartAt).toLocaleString('ko-KR', {
+          timeZone: 'Asia/Seoul', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false,
+        })} (한국 시간) · 이전 테스트 기록 제외</p>}
         <div className="sales-filters">
           <label><span>시작일</span><input type="date" value={startDate} max={endDate} onChange={(e) => { if (e.target.value) setStartDate(e.target.value) }} /></label>
           <label><span>종료일</span><input type="date" value={endDate} min={startDate} onChange={(e) => { if (e.target.value) setEndDate(e.target.value) }} /></label>
