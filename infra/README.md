@@ -889,3 +889,13 @@ java -version
 - [Cloud Build 기본 서비스 계정](https://docs.cloud.google.com/build/docs/securing-builds/configure-access-for-cloud-build-service-account)
 - [Cloud Run과 Cloud SQL 연결](https://docs.cloud.google.com/sql/docs/postgres/connect-run)
 - [Cloud Run 롤백과 트래픽 전환](https://cloud.google.com/run/docs/rollouts-rollbacks-traffic-migration)
+
+## 예약 입장 전 처리 용량 준비
+
+서비스 최소/최대 인스턴스와 리비전 상한, 동시 요청은 `variables.tf`의
+`service_min_instances`, `service_max_instances`, `revision_max_instances`, `request_concurrency`로 관리한다.
+기본값은 1 / 5 / 5 / 100이다. 인스턴스당 요청 풀 10개와 인프라 풀 2개를 합쳐 DB 연결 예산을 계산한다.
+
+수동 준비·상태 확인·이전 값 복원은 `scripts/reservation-capacity.py`를 사용한다.
+[예약 운영 절차와 검증 상태](../docs/qr-order/reservation-capacity-implementation.md)를 먼저 확인한다.
+최소 인스턴스 설정 반영만으로 준비 완료로 판단하지 않으며, 현재 2개/3개 중 확정된 운영 수량은 없다.

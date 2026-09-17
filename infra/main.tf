@@ -115,20 +115,27 @@ resource "google_cloud_run_v2_service" "api" {
   deletion_protection = var.deletion_protection
   ingress             = "INGRESS_TRAFFIC_ALL"
 
+  lifecycle {
+    precondition {
+      condition     = var.service_min_instances <= var.service_max_instances && var.service_max_instances <= var.revision_max_instances
+      error_message = "Require service_min_instances <= service_max_instances <= revision_max_instances."
+    }
+  }
+
   scaling {
-    min_instance_count = 1
-    max_instance_count = 5
+    min_instance_count = var.service_min_instances
+    max_instance_count = var.service_max_instances
   }
 
   template {
     service_account = google_service_account.runtime.email
     timeout         = "1800s"
     # Long-lived SSE connections share capacity with regular API requests.
-    max_instance_request_concurrency = 100
+    max_instance_request_concurrency = var.request_concurrency
 
     scaling {
       min_instance_count = 0
-      max_instance_count = 5
+      max_instance_count = var.revision_max_instances
     }
 
     containers {
