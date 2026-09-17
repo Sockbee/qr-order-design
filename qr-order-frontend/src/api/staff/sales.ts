@@ -14,6 +14,6 @@ export interface MenuSaleRow {
   pendingCoins?: number
   unpaidQuantity: number
 }
-export interface MenuSalesReport { startDate: string; endDate: string; timeZone: string; rows: MenuSaleRow[] }
+export interface MenuSalesReport { salesStartAt?: string | null; startDate: string; endDate: string; timeZone: string; rows: MenuSaleRow[] }
 export const getMenuSales = (startDate: string, endDate: string, signal?: AbortSignal) =>
   callStaffApi<MenuSalesReport>('sales/menu', { startDate, endDate }, signal)

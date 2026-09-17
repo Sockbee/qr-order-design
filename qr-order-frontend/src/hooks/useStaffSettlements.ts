@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ApiClientError } from '../api/client'
+import { useStaffEventRevision } from './useStaffEvents'
 import { hasStaffApi, isStaffAuthError } from '../api/staff/client'
 import {
   confirmStaffSettlement,
@@ -37,9 +38,8 @@ function toApiError(caught: unknown): ApiClientError {
 }
 
 /**
- * §4.21/§4.22. Settlement is an end-of-event reconciliation, not a live
- * queue, so this is fetched on mount and after each confirm rather than
- * polled — nothing changes it but the treasurer standing at this screen.
+ * Settlement refreshes on service/order events and the operating-day cutover,
+ * as well as on mount and after each confirmation.
  *
  * `includeSettled` is always true here: the screen shows 미정산 and 정산 완료
  * as two sections, and the completed one is how the treasurer checks their
@@ -47,6 +47,7 @@ function toApiError(caught: unknown): ApiClientError {
  */
 export function useStaffSettlements(): StaffSettlementsState {
   const configured = hasStaffApi()
+  const revision = useStaffEventRevision()
   const [remote, setRemote] = useState<{
     members: StaffSettlement[]
     discountRate: number
@@ -82,7 +83,18 @@ export function useStaffSettlements(): StaffSettlementsState {
       disposed = true
       controller.abort()
     }
-  }, [attempt, configured])
+  }, [attempt, configured, revision])
+
+  useEffect(() => {
+    if (!configured) return
+    const refresh = () => { if (!document.hidden) setAttempt((current) => current + 1) }
+    const timer = window.setInterval(refresh, 15_000)
+    document.addEventListener('visibilitychange', refresh)
+    return () => {
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', refresh)
+    }
+  }, [configured])
 
   const fallback = useMemo(() => {
     const members = fallbackSettlements()
