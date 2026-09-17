@@ -126,13 +126,13 @@ public class CustomerOrderService {
         String displayCode = setting("ORDER_PREFIX") + displayNumber;
         UUID orderId = UUID.randomUUID();
         jdbc.update("""
-                INSERT INTO orders(order_id, display_number, display_code, client_request_id,
+                INSERT INTO live_orders(order_id, display_number, display_code, client_request_id,
                   idempotency_key, request_fingerprint, table_id, session_id, status, public_status,
                   payment_status, total_amount, note, note_audience)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'RECEIVED', 'accepted', 'UNPAID', ?, ?, 'GENERAL')
                 """, orderId, displayNumber, displayCode, clientRequestId, key, fingerprint,
                 tableId, sessionId, coin ? 0 : total, note);
-        if (coin) jdbc.update("UPDATE orders SET payment_method='COIN',coin_total=?,payment_status='WAIVED' WHERE order_id=?", total, orderId);
+        if (coin) jdbc.update("UPDATE live_orders SET payment_method='COIN',coin_total=?,payment_status='WAIVED' WHERE order_id=?", total, orderId);
 
         insertLines(orderId, lines);
         audit(staff ? "STAFF" : "CLIENT", staff ? "STAFF" : tableId, "ORDER_CREATED", "ORDER", orderId.toString(), null, displayCode);
@@ -179,7 +179,7 @@ public class CustomerOrderService {
         if (replay != null) return replay;
         UUID sessionId = openOrCreateSession(tableId);
         String sessionPaymentStatus = jdbc.queryForObject(
-                "SELECT payment_status FROM table_sessions WHERE session_id=?", String.class, sessionId);
+                "SELECT payment_status FROM live_table_sessions WHERE session_id=?", String.class, sessionId);
         if (!"UNPAID".equals(sessionPaymentStatus)) {
             throw ApiException.conflict("SESSION_ALREADY_PAID", "이미 결제 완료된 테이블입니다.");
         }
@@ -198,7 +198,7 @@ public class CustomerOrderService {
         String displayCode = setting("ORDER_PREFIX") + displayNumber;
         UUID orderId = UUID.randomUUID();
         jdbc.update("""
-                INSERT INTO orders(order_id, display_number, display_code, client_request_id,
+                INSERT INTO live_orders(order_id, display_number, display_code, client_request_id,
                   idempotency_key, request_fingerprint, table_id, session_id, status, public_status,
                   payment_status, total_amount, note, note_audience, order_kind, service_message,
                   charged_staff_id, staff_charge_amount, staff_discount_rate)
@@ -234,8 +234,8 @@ public class CustomerOrderService {
         if ((orderId == null) == (displayCode == null)) throw ApiException.invalid("orderId 또는 displayCode 중 하나가 필요합니다.");
         String sessions = orderScope.sessionIds(orderScope.forTable(tableId));
         UUID id = jdbc.query(orderId != null
-                        ? "SELECT order_id FROM orders WHERE order_id::text=? AND session_id = ANY(?::uuid[])"
-                        : "SELECT order_id FROM orders WHERE display_code=? AND session_id = ANY(?::uuid[])",
+                        ? "SELECT order_id FROM live_orders WHERE order_id::text=? AND session_id = ANY(?::uuid[])"
+                        : "SELECT order_id FROM live_orders WHERE display_code=? AND session_id = ANY(?::uuid[])",
                 rs -> rs.next() ? UUID.fromString(rs.getString(1)) : null,
                 orderId != null ? orderId : displayCode, sessions);
         if (id == null) throw ApiException.notFound("ORDER_NOT_FOUND", "주문 정보를 찾을 수 없습니다.");
@@ -257,7 +257,7 @@ public class CustomerOrderService {
         List<Map<String, Object>> orders = jdbc.query("""
                 SELECT o.order_id, o.display_code, o.status, o.public_status, o.total_amount,
                        o.order_kind, o.payment_method,o.coin_total,o.coin_received_at,o.service_message, sm.name AS charged_staff_name, o.created_at, o.table_id
-                FROM orders o
+                FROM live_orders o
                 LEFT JOIN staff_members sm ON sm.staff_id=o.charged_staff_id
                 WHERE o.session_id = ANY(?::uuid[]) ORDER BY o.created_at DESC,o.display_number DESC
                 """, (rs, index) -> {
@@ -279,7 +279,7 @@ public class CustomerOrderService {
         String latest = orders.stream().filter(row -> !"cancelled".equals(row.get("publicStatus")))
                 .map(row -> String.valueOf(row.get("publicStatus"))).findFirst().orElse(null);
         Integer total = jdbc.queryForObject("""
-                SELECT COALESCE(sum(total_amount),0)::integer FROM orders
+                SELECT COALESCE(sum(total_amount),0)::integer FROM live_orders
                 WHERE session_id = ANY(?::uuid[]) AND status <> 'CANCELLED'
                 """, Integer.class, sessionIds);
         return ApiEnvelope.map(
@@ -302,9 +302,10 @@ public class CustomerOrderService {
         visits.lockForTable(tableId);
         jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?, 0))", Object.class, requestId.toString());
         jdbc.queryForObject("SELECT table_id FROM tables WHERE table_id=? FOR UPDATE", String.class, tableId);
-        Map<String, Object> replay = jdbc.query("SELECT call_id,table_id,reason,created_at,status FROM calls WHERE client_request_id=?",
+        Map<String, Object> replay = jdbc.query("SELECT call_id,table_id,reason,created_at,status,deleted_at FROM calls WHERE client_request_id=?",
                 rs -> {
                     if (!rs.next()) return null;
+                    if (rs.getObject("deleted_at") != null) throw ApiException.conflict("TEST_DATA_ARCHIVED", "운영 시작 전 테스트 호출입니다. 새 호출로 다시 요청해 주세요.");
                     if (!tableId.equals(rs.getString("table_id")) || !reason.equals(rs.getString("reason"))) {
                         throw ApiException.conflict("DUPLICATE_REQUEST", "이전 호출 요청과 정보가 달라 처리할 수 없습니다.");
                     }
@@ -315,14 +316,14 @@ public class CustomerOrderService {
         if (replay != null) return replay;
         int minSeconds = Integer.parseInt(setting("CALL_MIN_INTERVAL_SECONDS"));
         Boolean tooSoon = jdbc.queryForObject("""
-                SELECT EXISTS(SELECT 1 FROM calls WHERE table_id=? AND created_at > now() - (? * interval '1 second'))
+                SELECT EXISTS(SELECT 1 FROM live_calls WHERE table_id=? AND created_at > now() - (? * interval '1 second'))
                 """, Boolean.class, tableId, minSeconds);
         if (Boolean.TRUE.equals(tooSoon)) {
             throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "CALL_TOO_FREQUENT",
                     "방금 호출했어요. 잠시 후 다시 시도해 주세요.", true);
         }
         UUID callId = UUID.randomUUID();
-        jdbc.update("INSERT INTO calls(call_id,table_id,reason,status,client_request_id) VALUES(?,?,?,'PENDING',?)",
+        jdbc.update("INSERT INTO live_calls(call_id,table_id,reason,status,client_request_id) VALUES(?,?,?,'PENDING',?)",
                 callId, tableId, reason, requestId);
         audit("CLIENT", tableId, "CALL_CREATED", "CALL", callId.toString(), null, reason);
         events.publish("call.created", callId.toString(), tableId, Map.of("reason", reason));
@@ -335,20 +336,22 @@ public class CustomerOrderService {
         String tableId = string(request, "tableId");
         catalog.requireTable(tableId, string(request, "tableToken"), false);
         UUID callId = parseUuid(string(request, "callId"), "callId");
-        String status = jdbc.query("SELECT status FROM calls WHERE call_id=? AND table_id=? FOR UPDATE",
+        visits.lockForTable(tableId);
+        String status = jdbc.query("SELECT status FROM live_calls WHERE call_id=? AND table_id=? FOR UPDATE",
                 rs -> rs.next() ? rs.getString(1) : null, callId, tableId);
         if (status == null) throw ApiException.notFound("CALL_NOT_FOUND", "호출 정보를 찾을 수 없습니다.");
         if (!"PENDING".equals(status)) throw ApiException.conflict("CALL_ALREADY_RESOLVED", "이미 직원이 확인한 호출입니다.");
-        jdbc.update("UPDATE calls SET status='CANCELLED',cancelled_at=now(),updated_at=now() WHERE call_id=?", callId);
+        jdbc.update("UPDATE live_calls SET status='CANCELLED',cancelled_at=now(),updated_at=now() WHERE call_id=?", callId);
         audit("CLIENT", tableId, "CALL_CANCELLED", "CALL", callId.toString(), null, tableId);
         events.publish("call.cancelled", callId.toString(), tableId, Map.of());
         return null;
     }
 
     private Map<String, Object> existingOrder(String key, String fingerprint) {
-        return jdbc.query("SELECT order_id,request_fingerprint FROM orders WHERE idempotency_key=?",
+        return jdbc.query("SELECT order_id,request_fingerprint,deleted_at FROM orders WHERE idempotency_key=?",
                 rs -> {
                     if (!rs.next()) return null;
+                    if (rs.getObject("deleted_at") != null) throw ApiException.conflict("TEST_DATA_ARCHIVED", "운영 시작 전 테스트 주문입니다. 새 주문으로 다시 요청해 주세요.");
                     if (!fingerprint.equals(rs.getString("request_fingerprint"))) {
                         throw ApiException.conflict("IDEMPOTENCY_CONFLICT", "동일 요청 ID에 다른 주문 정보가 사용되었습니다.");
                     }
@@ -357,9 +360,10 @@ public class CustomerOrderService {
     }
 
     private Map<String, Object> existingServiceOrder(String key, String fingerprint) {
-        return jdbc.query("SELECT order_id,request_fingerprint FROM orders WHERE idempotency_key=?",
+        return jdbc.query("SELECT order_id,request_fingerprint,deleted_at FROM orders WHERE idempotency_key=?",
                 rs -> {
                     if (!rs.next()) return null;
+                    if (rs.getObject("deleted_at") != null) throw ApiException.conflict("TEST_DATA_ARCHIVED", "운영 시작 전 테스트 주문입니다. 새 주문으로 다시 요청해 주세요.");
                     if (!fingerprint.equals(rs.getString("request_fingerprint"))) {
                         throw ApiException.conflict("IDEMPOTENCY_CONFLICT", "동일 요청 ID에 다른 서비스 정보가 사용되었습니다.");
                     }
@@ -373,7 +377,7 @@ public class CustomerOrderService {
                 SELECT o.service_message,o.staff_charge_amount,o.staff_discount_rate,
                        sm.staff_id,sm.name,
                        COALESCE(sum(i.line_total) FILTER (WHERE i.status='ACTIVE'),0)::integer AS gross_amount
-                FROM orders o
+                FROM live_orders o
                 JOIN staff_members sm ON sm.staff_id=o.charged_staff_id
                 LEFT JOIN order_items i ON i.order_id=o.order_id
                 WHERE o.order_id=? AND o.order_kind='SERVICE'
@@ -392,7 +396,7 @@ public class CustomerOrderService {
 
     private Map<String, Object> pendingCall(String tableId) {
         return jdbc.query("""
-                SELECT call_id,reason,created_at FROM calls
+                SELECT call_id,reason,created_at FROM live_calls
                 WHERE table_id=? AND status='PENDING'
                 ORDER BY created_at DESC LIMIT 1
                 """, rs -> rs.next() ? ApiEnvelope.map(
@@ -451,7 +455,7 @@ public class CustomerOrderService {
 
     private Map<String, Object> hydrateCreated(UUID orderId, boolean replay) {
         return jdbc.query("""
-                SELECT o.*,t.display_name FROM orders o JOIN tables t ON t.table_id=o.table_id WHERE o.order_id=?
+                SELECT o.*,t.display_name FROM live_orders o JOIN tables t ON t.table_id=o.table_id WHERE o.order_id=?
                 """, rs -> {
             if (!rs.next()) throw ApiException.notFound("ORDER_NOT_FOUND", "주문 정보를 찾을 수 없습니다.");
             return ApiEnvelope.map(

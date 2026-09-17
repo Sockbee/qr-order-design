@@ -17,7 +17,7 @@ public class TableOrderScope {
 
     public List<Session> forTable(String tableId) {
         UUID sessionId = jdbc.query("""
-                SELECT session_id FROM table_sessions
+                SELECT session_id FROM live_table_sessions
                 WHERE status='OPEN' AND (table_id=? OR origin_table_id=?)
                 ORDER BY CASE WHEN table_id=? THEN 0 ELSE 1 END, opened_at DESC, session_id
                 LIMIT 1
@@ -28,8 +28,8 @@ public class TableOrderScope {
     public List<Session> forSession(UUID sessionId) {
         return jdbc.query("""
                 SELECT member.session_id,member.table_id,member.origin_table_id
-                FROM table_sessions selected
-                JOIN table_sessions member ON
+                FROM live_table_sessions selected
+                JOIN live_table_sessions member ON
                   member.session_id=COALESCE(selected.merged_into_session_id,selected.session_id)
                   OR member.merged_into_session_id=COALESCE(selected.merged_into_session_id,selected.session_id)
                 WHERE selected.session_id=? AND selected.status='OPEN' AND member.status='OPEN'

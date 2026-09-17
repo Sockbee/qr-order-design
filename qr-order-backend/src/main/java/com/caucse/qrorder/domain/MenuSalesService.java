@@ -47,10 +47,11 @@ public class MenuSalesService {
                     CASE WHEN o.order_kind='SERVICE' THEN o.order_id
                          ELSE COALESCE(s.merged_into_session_id,s.session_id) END AS charge_group,
                     o.order_kind,o.payment_status,o.payment_method,o.coin_received_at,COALESCE(i.coin_unit_price,0)*i.quantity AS coins
-                  FROM order_items i JOIN orders o ON o.order_id=i.order_id
-                  JOIN table_sessions s ON s.session_id=o.session_id
+                  FROM order_items i JOIN live_orders o ON o.order_id=i.order_id
+                  JOIN live_table_sessions s ON s.session_id=o.session_id
                   LEFT JOIN menus m ON m.menu_id=i.menu_id LEFT JOIN categories c ON c.category_id=m.category_id
-                  WHERE i.status='ACTIVE' AND o.status<>'CANCELLED' AND o.payment_status<>'REFUNDED'
+                  WHERE o.created_at >= COALESCE((SELECT starts_at FROM operation_cutover WHERE id=1),'-infinity'::timestamptz)
+                    AND i.status='ACTIVE' AND o.status<>'CANCELLED' AND o.payment_status<>'REFUNDED'
                 ), allocated AS (
                   SELECT *, SUM(gross) OVER (
                     PARTITION BY charge_group,order_kind,payment_method ORDER BY created_at,order_id,line_no,order_item_id
@@ -74,6 +75,8 @@ public class MenuSalesService {
                 "receivedCoins",rs.getLong("received_coins"),"pendingCoins",rs.getLong("pending_coins"),
                 "unpaidQuantity", rs.getLong("unpaid_quantity")),
                 start.atStartOfDay(zone).toOffsetDateTime(), end.plusDays(1).atStartOfDay(zone).toOffsetDateTime());
-        return ApiEnvelope.map("startDate", startDate, "endDate", endDate, "timeZone", timeZone, "rows", rows);
+        var salesStart = jdbc.query("SELECT starts_at FROM operation_cutover WHERE id=1",
+                rs -> rs.next() ? rs.getObject(1, java.time.OffsetDateTime.class).toInstant().toString() : null);
+        return ApiEnvelope.map("salesStartAt", salesStart, "startDate", startDate, "endDate", endDate, "timeZone", timeZone, "rows", rows);
     }
 }

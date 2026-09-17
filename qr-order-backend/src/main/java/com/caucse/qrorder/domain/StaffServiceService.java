@@ -69,7 +69,10 @@ public class StaffServiceService {
                 rs.getString("settlement_status"), (Integer) rs.getObject("settled_amount"),
                 rs.getObject("settled_at", OffsetDateTime.class)));
 
-        List<Map<String, Object>> members = rows.stream().map(this::settlementResponse).toList();
+        boolean operating = Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS(SELECT 1 FROM operation_cutover WHERE completed_at IS NOT NULL)", Boolean.class));
+        List<Map<String, Object>> members = rows.stream().map(this::settlementResponse)
+                .filter(member -> !operating || (Integer) member.get("serviceOrderCount") > 0).toList();
         int totalChargeAmount = members.stream()
                 .filter(member -> "UNSETTLED".equals(member.get("settlementStatus")))
                 .mapToInt(member -> (Integer) member.get("chargeAmount"))
@@ -134,7 +137,7 @@ public class StaffServiceService {
         List<Map<String, Object>> orders = jdbc.query("""
                 SELECT o.order_id,o.display_code,o.table_id,o.service_message,o.staff_charge_amount,
                        o.created_at,COALESCE(sum(oi.line_total) FILTER (WHERE oi.status='ACTIVE'),0)::integer gross_amount
-                FROM orders o
+                FROM live_orders o
                 LEFT JOIN order_items oi ON oi.order_id=o.order_id
                 WHERE o.order_kind='SERVICE' AND o.status<>'CANCELLED' AND o.charged_staff_id=?
                 GROUP BY o.order_id,o.display_code,o.table_id,o.service_message,o.staff_charge_amount,o.created_at
@@ -166,7 +169,7 @@ public class StaffServiceService {
     private int chargeAmount(String staffId) {
         Integer amount = jdbc.queryForObject("""
                 SELECT COALESCE(sum(staff_charge_amount),0)::integer
-                FROM orders
+                FROM live_orders
                 WHERE order_kind='SERVICE' AND status<>'CANCELLED' AND charged_staff_id=?
                 """, Integer.class, staffId);
         return amount == null ? 0 : amount;
