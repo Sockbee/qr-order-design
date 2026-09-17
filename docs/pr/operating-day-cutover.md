@@ -1,6 +1,8 @@
 # 운영 시작 시 테스트 기록·통계 분리 및 음료 이미지 갱신
 
-테스트 주문이 실제 운영 화면과 매출에 남는 문제를 해결한다. 2026-09-17 18:00(Asia/Seoul)을 실제 운영의 시작점으로 사용해, 그 이전 주문·결제·서비스·정산·직원 호출·입장·합석 기록은 보존하면서 운영 화면에서 제외하고 이후 주문만 판매 통계에 포함한다. 소주·맥주 이미지를 투명 배경으로 교체하고 콜라·사이다 이미지도 추가한다.
+테스트 주문이 실제 운영 화면과 매출에 남는 문제를 해결한다. 2026-09-17 17:00(Asia/Seoul)을 실제 운영의 시작점으로 사용해, 그 이전 주문·결제·서비스·정산·직원 호출·입장·합석 기록은 보존하면서 운영 화면에서 제외하고 이후 주문만 판매 통계에 포함한다. 소주·맥주 이미지를 투명 배경으로 교체하고 콜라·사이다 이미지도 추가한다.
+
+초기 예약은 18:00이었으며 사용자 요청으로 17:00으로 앞당겼다. 최신 배치와 재배포 변경은 [17시 초기화·테이블 배치·배포 복구](operating-day-1700-layout-deploy.md)에 기록한다.
 
 - 대상 브랜치: `fix/operating-day-cutover` → `dev`.
 - `feat/menu-images`의 음료 이미지 변경을 병합해 하나의 PR에 포함한다.
@@ -61,12 +63,12 @@
 `scripts/operating-day-cutover.py`는 기본 읽기 전용이다. Cloud SQL 프록시와 `psycopg`, 인증된 gcloud가 필요하며 비밀번호는 Secret Manager에서 메모리로만 읽는다.
 
 ```sh
-python scripts/operating-day-cutover.py --schedule --starts-at '2026-09-17T18:00:00+09:00'
+python scripts/operating-day-cutover.py --schedule --starts-at '2026-09-17T17:00:00+09:00'
 python scripts/operating-day-cutover.py
 python scripts/operating-day-cutover.py --verify-after-start
 ```
 
-예약 명령은 미래 시각만 받으며, 기존 예약 시각을 덮어쓰지 않는다. 전환 결과는 `operation_cutover.completed_at`, `archived_counts`, `OPERATION_STARTED` 감사 로그로 확인한다. 전환 후 실제 주문이 있을 수 있으므로 모든 화면이 0건인지만으로 성공을 판정하지 않고, 운영 이전 기록이 활성 조회에 남아 있는지 검사한다.
+예약 명령은 미래 시각만 받으며, 기본적으로 기존 예약 시각을 덮어쓰지 않는다. 명시적으로 변경할 때는 `--reschedule-from`에 기존 시각을 지정해야 한다. 기존 시각이 일치하고 아직 시작하지 않은 예약만 미래 시각으로 변경할 수 있다. 전환 결과는 `operation_cutover.completed_at`, `archived_counts`, `OPERATION_STARTED` 감사 로그로 확인한다. 전환 후 실제 주문이 있을 수 있으므로 모든 화면이 0건인지만으로 성공을 판정하지 않고, 운영 이전 기록이 활성 조회에 남아 있는지 검사한다.
 
 복구가 필요한 경우 보존된 원본과 정산 스냅샷을 기준으로 검토한다. 운영 주문이 생긴 뒤 `deleted_at`을 일괄 해제하면 새 방문과 충돌할 수 있으므로 실행 중인 운영에 무조건 복원하지 않는다.
 
@@ -78,7 +80,7 @@ python scripts/operating-day-cutover.py --verify-after-start
 - Cloud Run: `qr-order-staging-00011-4bf`, 트래픽 100%, readiness `UP`.
 - 이미지: `asia-northeast3-docker.pkg.dev/qr-order-507407/qr-order/backend@sha256:40e8029476bf6efd05999b48c5de4199d9df9c291f9c8f7544665e04539a442f`.
 - Firebase Hosting: `qr-order-507407` 배포 완료.
-- DB 예약: `2026-09-17T09:00:00Z` = 한국 시간 18:00. 등록 당시 `completed_at`은 NULL이며 아직 실행 전이다.
+- 최초 DB 예약: `2026-09-17T09:00:00Z` = 한국 시간 18:00. 이후 17:00으로 변경했다. 등록 당시 `completed_at`은 NULL이며 아직 실행 전이다.
 - 예약 등록 당시 보존된 기록: 주문 71건, 방문 29건, 호출 2건. 메뉴 17개, 테이블 30개, 학생회 명단 30명 유지.
-- 한국 시간 18:01에 이 작업의 자동 후속 점검을 한 번 예약했다. 초기화 자체는 서버에서 실행하며 이 후속 점검은 결과 확인용이다.
+- 자동 후속 점검은 최초 한국 시간 18:01에서 17:01로 변경했다. 초기화 자체는 서버에서 실행하며 이 후속 점검은 결과 확인용이다.
 - 이미 열어 둔 POS는 새 정산 갱신 동작을 받도록 운영 시작 전에 한 번 새로고침한다.

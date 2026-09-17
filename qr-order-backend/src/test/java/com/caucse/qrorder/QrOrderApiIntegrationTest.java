@@ -392,6 +392,7 @@ class QrOrderApiIntegrationTest {
     @Test
     void exhaustedRequestPoolReturnsRetryable503AndSameRequestCanRecover() throws Exception {
         var request = customerOrder("T01", TABLE_TOKEN, "cola");
+        String token = staffToken();
         var connections = new ArrayList<java.sql.Connection>();
         try {
             int size = requestDataSource.unwrap(com.zaxxer.hikari.HikariDataSource.class).getMaximumPoolSize();
@@ -402,11 +403,23 @@ class QrOrderApiIntegrationTest {
                     .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "1"))
                     .andExpect(jsonPath("$.error.code", is("SERVER_BUSY")))
                     .andExpect(jsonPath("$.error.retryable", is(true)));
+            mvc.perform(post("/api/v1/staff/orders/queue").header("Authorization", "Bearer " + token)
+                            .contentType("application/json").content("{}"))
+                    .andExpect(status().isServiceUnavailable())
+                    .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.header().string("Retry-After", "1"))
+                    .andExpect(jsonPath("$.error.code", is("SERVER_BUSY")))
+                    .andExpect(jsonPath("$.error.retryable", is(true)));
+            mvc.perform(post("/api/v1/staff/orders/queue").header("Authorization", "Bearer invalid")
+                            .contentType("application/json").content("{}"))
+                    .andExpect(status().isUnauthorized());
         } finally {
             for (var connection : connections) connection.close();
         }
         orders.create(request, false);
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM orders", Integer.class));
+        mvc.perform(post("/api/v1/staff/orders/queue").header("Authorization", "Bearer " + token)
+                        .contentType("application/json").content("{}"))
+                .andExpect(status().isOk());
     }
 
     @Test
