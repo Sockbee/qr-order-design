@@ -67,3 +67,7 @@ infra/*.auto.tfvars
 # 사용 종료한 Netlify 배포 설정 및 로컬 캐시
 /netlify.toml
 .netlify/
+
+# PR 문서는 로컬 전용 (PR 본문에 붙여 넣고 저장소에는 커밋하지 않음)
+/docs/pr/
+/qr-order-frontend/docs/pr/
