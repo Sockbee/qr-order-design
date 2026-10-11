@@ -57,8 +57,8 @@ export function TableFloorPlan({
         <label className="table-floor-plan__view">
           보기 방향
           <select value={view} onChange={(event) => setView(event.target.value === 'window' ? 'window' : 'pos')}>
-            <option value="pos">POS → 입구</option>
-            <option value="window">창문 쪽에서 보기</option>
+            <option value="window">현재 QR 배치 · 창문 쪽에서 보기</option>
+            <option value="pos">POS → 입구 · 180° 회전</option>
           </select>
         </label>
       </header>
