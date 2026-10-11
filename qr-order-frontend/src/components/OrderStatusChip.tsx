@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { OrderStatus } from '../types/order'
 
 const LABELS: Record<OrderStatus, string> = {
@@ -31,12 +32,24 @@ interface OrderStatusChipProps {
  * so it reads without relying on colour.
  */
 export function OrderStatusChip({ status }: OrderStatusChipProps) {
+  // transitions.dev "text states swap": when the round moves on, the new
+  // label rises in through a short blur and the tint eases across. The first
+  // render stays still.
+  const [shown, setShown] = useState({ status, swaps: 0 })
+  if (shown.status !== status) setShown({ status, swaps: shown.swaps + 1 })
+
   return (
     <span
-      className={`inline-flex items-center gap-1.5 h-[22px] px-2 rounded-[6px] text-[12px] leading-none font-bold whitespace-nowrap ${STATUS_CLASSES[status]}`}
+      className={`inline-flex items-center gap-1.5 h-[22px] px-2 rounded-[6px] text-[12px] leading-none font-bold whitespace-nowrap transition-colors duration-(--motion-duration-base) ease-out-soft motion-reduce:transition-none ${STATUS_CLASSES[status]}`}
     >
       <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
-      {LABELS[status]}
+      <span
+        key={shown.swaps}
+        // inline-block: transforms do not apply to an inline span.
+        className={`inline-block ${shown.swaps > 0 ? 'animate-text-swap motion-reduce:animate-none' : ''}`}
+      >
+        {LABELS[status]}
+      </span>
     </span>
   )
 }

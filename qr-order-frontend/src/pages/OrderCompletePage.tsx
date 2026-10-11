@@ -21,12 +21,17 @@ export function OrderCompletePage({
           aria-hidden="true"
         >
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+            {/* transitions.dev "success check": the tick draws itself once
+                the disc has popped in. pathLength 1 keeps the dash maths exact. */}
             <path
+              className="animate-check-draw motion-reduce:animate-none"
               d="M5 12.5l4.5 4.5L19 7.5"
               stroke="currentColor"
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
+              pathLength={1}
+              strokeDasharray={1}
             />
           </svg>
         </p>

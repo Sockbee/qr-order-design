@@ -161,6 +161,8 @@
   --animate-pop-in: pop-in var(--motion-duration-base) var(--motion-ease-bounce) both;
   --animate-pop-in-slow: pop-in var(--motion-duration-slow) var(--motion-ease-bounce) both;
   --animate-pulse-ring: pulse-ring 1600ms cubic-bezier(0.23, 1, 0.32, 1) infinite;
+  --animate-text-swap: text-swap var(--motion-duration-quick) var(--motion-ease-out-soft) both;
+  --animate-check-draw: check-draw var(--motion-duration-slow) var(--motion-ease-out-soft) 160ms both;
 
   @keyframes button-spin {
     to {
@@ -258,6 +260,24 @@
     to {
       transform: scale(1);
       opacity: 1;
+    }
+  }
+
+  @keyframes text-swap {
+    from {
+      transform: translateY(4px);
+      opacity: 0;
+      filter: blur(2px);
+    }
+  }
+
+  /* Pair with pathLength="1" and stroke-dasharray="1" on the path. */
+  @keyframes check-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
     }
   }
 

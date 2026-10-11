@@ -129,3 +129,17 @@
 }
 
 .staff-home__grid:has(.table-floor-plan) { display: block; padding: 0; overflow: hidden; }
+
+/*
+ * transitions.dev "skeleton reveal": the floor plan replaces the skeleton
+ * cards by resolving in through a short blur rather than popping in.
+ */
+.staff-home__grid > .table-floor-plan {
+  animation: motion-reveal var(--motion-duration-slow) var(--motion-ease-out-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-home__grid > .table-floor-plan {
+    animation: none;
+  }
+}
