@@ -9,6 +9,7 @@
   padding: var(--space-5);
   /* Scrim, not shadow — DESIGN.md §6. */
   background: rgb(0 0 0 / 40%);
+  animation: staff-dialog-scrim-in var(--motion-duration-base) var(--motion-ease-out-soft) both;
 }
 
 .staff-dialog__card {
@@ -22,6 +23,32 @@
   border-radius: var(--radius-sheet);
   background: var(--color-bg-canvas);
   overflow-y: auto;
+  /* Same open as the customer Dialog (dialog-in), from the shared tokens. */
+  animation: staff-dialog-card-in var(--motion-duration-base) var(--motion-ease-out-soft) both;
+}
+
+/*
+ * Open only. These dialogs unmount with their route or operation state, so
+ * there is nothing left to render for an exit; closing stays instant.
+ */
+@keyframes staff-dialog-scrim-in {
+  from {
+    background-color: transparent;
+  }
+}
+
+@keyframes staff-dialog-card-in {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staff-dialog,
+  .staff-dialog__card {
+    animation: none;
+  }
 }
 
 .staff-dialog__card--wide {

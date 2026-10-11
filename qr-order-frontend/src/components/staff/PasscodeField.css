@@ -22,6 +22,43 @@
   padding: 0 15px;
 }
 
+/*
+ * Wrong passcode: transitions.dev "error state shake" — four legs with
+ * overshoot, each on its own ease. Stops are cumulative leg durations
+ * (80 · 60 · 80 · 60 = 280ms).
+ */
+.passcode-field--shaking {
+  animation: passcode-shake 280ms linear;
+}
+
+@keyframes passcode-shake {
+  0% {
+    transform: translateX(0);
+    animation-timing-function: var(--motion-ease-out-soft);
+  }
+  28.57% {
+    transform: translateX(6px);
+    animation-timing-function: var(--motion-ease-out-soft);
+  }
+  57.14% {
+    transform: translateX(-6px);
+    animation-timing-function: var(--motion-ease-out-soft);
+  }
+  78.57% {
+    transform: translateX(4px);
+    animation-timing-function: var(--motion-ease-out-soft);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passcode-field--shaking {
+    animation: none;
+  }
+}
+
 .passcode-field--disabled {
   background: var(--color-bg-surface);
 }

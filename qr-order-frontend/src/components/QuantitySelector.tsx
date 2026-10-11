@@ -1,3 +1,4 @@
+import { NumberPop } from './NumberPop'
 import './QuantitySelector.css'
 
 interface QuantitySelectorProps {
@@ -38,7 +39,7 @@ export function QuantitySelector({
         −
       </button>
       <span className="quantity-selector__value" aria-live="polite">
-        {value}
+        <NumberPop value={value} />
       </span>
       <button
         type="button"

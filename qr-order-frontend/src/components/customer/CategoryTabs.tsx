@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useSlidingIndicator } from '../../hooks/useSlidingIndicator'
 import type { MenuCategory } from '../../types/menu'
 
 interface CategoryTabsProps {
@@ -16,6 +17,13 @@ export function CategoryTabs({
   panelId,
 }: CategoryTabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
+  const indicatorRef = useRef<HTMLSpanElement>(null)
+  useSlidingIndicator(
+    listRef,
+    indicatorRef,
+    '[aria-selected="true"] [data-tab-indicator]',
+    selectedId,
+  )
 
   const focusTabAt = (index: number) => {
     const wrapped = (index + categories.length) % categories.length
@@ -67,13 +75,16 @@ export function CategoryTabs({
             <span className="text-base leading-[22px] font-normal text-muted whitespace-nowrap transition-colors duration-150 ease-out-soft motion-reduce:transition-none group-aria-selected:font-bold group-aria-selected:text-strong">
               {category.label}
             </span>
-            <span
-              className="w-full h-[3px] rounded-[2px] bg-transparent transition-colors duration-150 ease-out-soft motion-reduce:transition-none group-aria-selected:bg-primary"
-              aria-hidden="true"
-            />
+            {/* Holds the underline's slot; the bar itself slides over it. */}
+            <span className="w-full h-[3px]" aria-hidden="true" data-tab-indicator />
           </button>
         )
       })}
+      <span
+        ref={indicatorRef}
+        className="absolute top-0 left-0 rounded-[2px] bg-primary pointer-events-none transition-[transform,width] duration-(--motion-duration-base) ease-out-soft motion-reduce:transition-none"
+        aria-hidden="true"
+      />
     </div>
   )
 }

@@ -26,12 +26,21 @@ export function PasscodeField({
 }: PasscodeFieldProps) {
   const [revealed, setRevealed] = useState(false)
   const inputId = useId()
+  // Shake on each rejection. useStaffAuth clears the error on every submit, so
+  // `invalid` rises once per failed attempt and the shake replays each time.
+  const [wasInvalid, setWasInvalid] = useState(invalid)
+  const [shaking, setShaking] = useState(false)
+  if (invalid !== wasInvalid) {
+    setWasInvalid(invalid)
+    setShaking(invalid)
+  }
 
   return (
     <div
       className={`passcode-field${invalid ? ' passcode-field--invalid' : ''}${
         disabled ? ' passcode-field--disabled' : ''
-      }`}
+      }${shaking ? ' passcode-field--shaking' : ''}`}
+      onAnimationEnd={() => setShaking(false)}
     >
       <input
         id={inputId}

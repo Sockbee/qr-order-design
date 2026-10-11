@@ -144,22 +144,22 @@
   --radius-btn-xl: var(--radius-btn-xl);
   --radius-row: var(--radius-row);
 
-  /* Motion: 150 press/exit · 250 enter · 300 sheet. Pair every use with motion-reduce:*-none. */
-  --ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
-  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --ease-bounce: cubic-bezier(0.34, 1.36, 0.64, 1);
+  /* Motion values live in tokens.css (--motion-*), shared with the staff app. */
+  --ease-out-soft: var(--motion-ease-out-soft);
+  --ease-drawer: var(--motion-ease-drawer);
+  --ease-bounce: var(--motion-ease-bounce);
 
   --animate-spin-slow: button-spin 800ms linear infinite;
-  --animate-fade-in: fade-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-fade-out: fade-out 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-sheet-rise: sheet-rise 300ms cubic-bezier(0.32, 0.72, 0, 1) both;
-  --animate-sheet-drop: sheet-drop 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-dialog-in: dialog-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-dialog-out: dialog-out 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-panel-in: panel-in 250ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-rise: rise 300ms cubic-bezier(0.23, 1, 0.32, 1) both;
-  --animate-pop-in: pop-in 250ms cubic-bezier(0.34, 1.36, 0.64, 1) both;
-  --animate-pop-in-slow: pop-in 400ms cubic-bezier(0.34, 1.36, 0.64, 1) both;
+  --animate-fade-in: fade-in var(--motion-duration-base) var(--motion-ease-out-soft) both;
+  --animate-fade-out: fade-out var(--motion-duration-quick) var(--motion-ease-out-soft) both;
+  --animate-sheet-rise: sheet-rise var(--motion-duration-sheet) var(--motion-ease-drawer) both;
+  --animate-sheet-drop: sheet-drop var(--motion-duration-quick) var(--motion-ease-out-soft) both;
+  --animate-dialog-in: dialog-in var(--motion-duration-base) var(--motion-ease-out-soft) both;
+  --animate-dialog-out: dialog-out var(--motion-duration-quick) var(--motion-ease-out-soft) both;
+  --animate-panel-in: panel-in var(--motion-duration-base) var(--motion-ease-out-soft) both;
+  --animate-rise: rise var(--motion-duration-sheet) var(--motion-ease-out-soft) both;
+  --animate-pop-in: pop-in var(--motion-duration-base) var(--motion-ease-bounce) both;
+  --animate-pop-in-slow: pop-in var(--motion-duration-slow) var(--motion-ease-bounce) both;
   --animate-pulse-ring: pulse-ring 1600ms cubic-bezier(0.23, 1, 0.32, 1) infinite;
 
   @keyframes button-spin {

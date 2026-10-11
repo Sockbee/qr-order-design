@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react'
+import { NumberPop } from './NumberPop'
 
 type ButtonSize = 'small' | 'medium' | 'large' | 'xlarge'
 type ButtonVariant = 'fill' | 'weak'
@@ -72,13 +73,17 @@ export function Button({
       >
         {showCount && (
           <span className="flex-none inline-flex items-center justify-center size-6 rounded-full bg-badge text-badge-fg text-[13px] leading-none font-bold animate-pop-in motion-reduce:animate-none">
-            {count}
+            <NumberPop value={count} />
           </span>
         )}
         <span className={`min-w-0 truncate ${amount ? 'flex-1 text-left' : 'flex-1 text-center'}`}>
           {label}
         </span>
-        {amount && <span className="flex-none tracking-[-0.3px]">{amount}</span>}
+        {amount && (
+          <span className="flex-none tracking-[-0.3px]">
+            <NumberPop value={amount} />
+          </span>
+        )}
       </span>
     </button>
   )

@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useSlidingIndicator } from '../hooks/useSlidingIndicator'
 import type { MenuCategory } from '../types/menu'
 import './CategoryTabs.css'
 
@@ -24,6 +25,16 @@ export function CategoryTabs({
   variant = 'underline',
 }: CategoryTabsProps) {
   const listRef = useRef<HTMLDivElement>(null)
+  const indicatorRef = useRef<HTMLSpanElement>(null)
+  // The underline slides between indicator slots; the pill covers the tab.
+  useSlidingIndicator(
+    listRef,
+    indicatorRef,
+    variant === 'pill'
+      ? '[aria-selected="true"]'
+      : '[aria-selected="true"] .category-tab__indicator',
+    selectedId,
+  )
 
   const focusTabAt = (index: number) => {
     const wrapped = (index + categories.length) % categories.length
@@ -77,6 +88,7 @@ export function CategoryTabs({
           </button>
         )
       })}
+      <span className="category-tabs__slider" ref={indicatorRef} aria-hidden="true" />
     </div>
   )
 }

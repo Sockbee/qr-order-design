@@ -46,14 +46,31 @@
   color: var(--color-text-strong);
 }
 
+/* Holds the underline's slot; .category-tabs__slider is the visible bar. */
 .category-tab__indicator {
   width: 100%;
   height: 2px;
-  background: transparent;
 }
 
-.category-tab[aria-selected='true'] .category-tab__indicator {
+/*
+ * transitions.dev "tabs sliding": one bar (or pill) that glides to the
+ * selected tab. useSlidingIndicator writes its size and position.
+ */
+.category-tabs__slider {
+  position: absolute;
+  top: 0;
+  left: 0;
   background: var(--color-bg-primary);
+  pointer-events: none;
+  transition:
+    transform var(--motion-duration-base) var(--motion-ease-out-soft),
+    width var(--motion-duration-base) var(--motion-ease-out-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .category-tabs__slider {
+    transition: none;
+  }
 }
 
 .category-tab:focus-visible {
@@ -65,7 +82,10 @@
  * underlined: it sits inside a scrolling panel, so it scrolls with it.
  */
 .category-tabs--pill {
-  position: static;
+  /* Not sticky, but still the slider's offsetParent. `top` undoes the sticky
+     offset, which would otherwise shift a relative box down. */
+  position: relative;
+  top: auto;
   /*
    * Both staff hosts are column flex containers whose content overflows, so
    * without this the strip is the item that gets shrunk — to exactly 0px,
@@ -86,12 +106,28 @@
   background: var(--color-bg-canvas);
 }
 
-.category-tabs--pill .category-tab[aria-selected='true'] {
-  border-color: var(--color-border-selected);
+/*
+ * The selected look is the slider, painted above the tab's own white box and
+ * below its label — so it reads correctly over the grey panel mid-slide.
+ */
+.category-tabs--pill .category-tabs__slider {
+  z-index: 1;
+  box-sizing: border-box;
+  border: 1px solid var(--color-border-selected);
+  border-radius: var(--radius-btn-md);
   background: var(--color-bg-weak);
 }
 
+/* The slider sits over the selected tab, so its focus ring moves onto it. */
+.category-tabs--pill:has(.category-tab[aria-selected='true']:focus-visible)
+  .category-tabs__slider {
+  outline: 2px solid var(--color-bg-primary);
+  outline-offset: -2px;
+}
+
 .category-tabs--pill .category-tab__label {
+  position: relative;
+  z-index: 2;
   font: var(--type-caption-strong);
   color: var(--color-text-body);
 }

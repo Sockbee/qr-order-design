@@ -1,0 +1,56 @@
+/*
+ * NumberPop — transitions.dev "number pop-in" on the shared motion tokens.
+ * Plain CSS because the staff app (no Tailwind) uses it too.
+ */
+.number-pop {
+  --number-pop-distance: 8px;
+  --number-pop-stagger: 70ms;
+  --number-pop-dir: 1;
+  display: inline-flex;
+}
+
+.number-pop--down {
+  --number-pop-dir: -1;
+}
+
+/* Visually hidden: what assistive tech reads instead of the split characters. */
+.number-pop__text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.number-pop__chars {
+  display: inline-flex;
+}
+
+.number-pop__char {
+  display: inline-block;
+  white-space: pre;
+}
+
+.number-pop__char--in {
+  animation: number-pop-in var(--motion-duration-slow) var(--motion-ease-bounce) both;
+}
+
+@keyframes number-pop-in {
+  from {
+    transform: translateY(calc(var(--number-pop-distance) * var(--number-pop-dir)));
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .number-pop__char--in {
+    animation: none;
+  }
+}
