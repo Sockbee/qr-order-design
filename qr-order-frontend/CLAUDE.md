@@ -300,6 +300,13 @@ two drift apart in behavior — only in styling mechanism. Do not add a third
 shared component this way without a real reason; fork only when a component
 genuinely needs both a customer (Tailwind) and staff (plain CSS) consumer.
 
+**Motion.** Durations and easings are `--motion-*` tokens in `tokens.css`, so
+both apps share one scale; `tailwind.css` only re-exposes them as `ease-*` /
+`animate-*`. `NumberPop` (`src/components/NumberPop.tsx`) is a motion
+primitive with no visual style of its own, so it is one plain-CSS component
+used by both apps rather than a fork. The two `CategoryTabs` share
+`useSlidingIndicator` so their indicator behaves the same.
+
 Prefer, for both apps:
 
 * semantic class names / utility composition

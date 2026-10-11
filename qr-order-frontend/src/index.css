@@ -71,3 +71,15 @@ img {
   max-width: 100%;
   display: block;
 }
+
+/*
+ * Shared reveal (transitions.dev "skeleton reveal"): loaded content resolves
+ * in through a short blur. Both apps import this file, so the keyframes live
+ * here once; timing comes from the --motion-* tokens at each use.
+ */
+@keyframes motion-reveal {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+}

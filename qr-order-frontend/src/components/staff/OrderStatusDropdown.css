@@ -60,6 +60,15 @@
   font: var(--type-body-strong);
 }
 
+/* One glyph that flips, rather than swapping ▾ for ▴. */
+.status-dropdown__caret {
+  transition: transform var(--motion-duration-base) var(--motion-ease-out-soft);
+}
+
+.status-dropdown--open .status-dropdown__caret {
+  transform: rotate(180deg);
+}
+
 .status-dropdown--success .status-dropdown__control,
 .status-dropdown--success .status-dropdown__check {
   color: var(--color-staff-status-ready-fg);
@@ -113,6 +122,42 @@
   border-radius: var(--radius-btn-md);
   background: var(--color-bg-canvas);
   list-style: none;
+  /*
+   * transitions.dev "menu dropdown": grows from the control it hangs off,
+   * and leaves faster and smaller than it came.
+   */
+  transform-origin: top center;
+  animation: status-dropdown-open var(--motion-duration-base) var(--motion-ease-out-soft) both;
+}
+
+.status-dropdown__options--closing {
+  pointer-events: none;
+  animation: status-dropdown-close var(--motion-duration-quick) var(--motion-ease-out-soft) both;
+}
+
+@keyframes status-dropdown-open {
+  from {
+    transform: scale(0.97);
+    opacity: 0;
+  }
+}
+
+@keyframes status-dropdown-close {
+  to {
+    transform: scale(0.99);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-dropdown__caret {
+    transition: none;
+  }
+
+  .status-dropdown__options,
+  .status-dropdown__options--closing {
+    animation: none;
+  }
 }
 
 .status-dropdown__option {

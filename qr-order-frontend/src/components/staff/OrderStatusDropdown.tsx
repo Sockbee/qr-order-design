@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { usePresence } from '../../hooks/usePresence'
 import './OrderStatusDropdown.css'
 import {
   STAFF_ORDER_STATUS_LABELS,
@@ -40,6 +41,8 @@ export function OrderStatusDropdown({
   const rootRef = useRef<HTMLDivElement>(null)
 
   const locked = disabled || phase === 'updating'
+  // Keeps the list mounted for its 150ms close (transitions.dev "menu dropdown").
+  const options = usePresence(open && !locked)
 
   useEffect(() => {
     if (!open) return
@@ -99,13 +102,18 @@ export function OrderStatusDropdown({
         )}
         {phase === 'idle' && (
           <span className="status-dropdown__caret" aria-hidden="true">
-            {open ? '▴' : '▾'}
+            ▾
           </span>
         )}
       </button>
 
-      {open && !locked && (
-        <ul className="status-dropdown__options" role="listbox">
+      {options.mounted && (
+        <ul
+          className={`status-dropdown__options${
+            options.closing ? ' status-dropdown__options--closing' : ''
+          }`}
+          role="listbox"
+        >
           {STATUSES.map((status) => {
             const selected = status === value
             return (

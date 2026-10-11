@@ -7,7 +7,7 @@
 .sales-search { flex: 1; min-width: 160px; }
 .sales-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .sales-summary > div { display: flex; flex-direction: column; gap: 4px; padding: 12px 20px; background: var(--color-bg-canvas); border: 1px solid var(--color-border-default); border-radius: 12px; }
-.sales-summary span, .sales-summary small { font-size: 12px; color: var(--color-text-body); }
+.sales-summary > div > span, .sales-summary small { font-size: 12px; color: var(--color-text-body); }
 .sales-summary strong { font-size: clamp(20px, 2.2vw, 28px); font-variant-numeric: tabular-nums; color: var(--color-text-strong); }
 .sales-list { border: 1px solid var(--color-border-default); border-radius: 12px; background: var(--color-bg-canvas); overflow: hidden; flex-shrink: 0; }
 .sales-list__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 20px; }
@@ -22,6 +22,11 @@
 .sales-table button { min-height: 46px; border: 0; padding: 0; background: transparent; font: inherit; color: inherit; cursor: pointer; }
 .sales-menu-toggle { display: flex; align-items: center; width: 100%; gap: 28px; text-align: left; }
 .sales-menu-toggle span { font-size: 22px; width: 12px; }
+.sales-menu-toggle__chevron { display: inline-block; text-align: center; transition: transform var(--motion-duration-base) var(--motion-ease-out-soft); }
+.sales-menu-toggle[aria-expanded='true'] .sales-menu-toggle__chevron { transform: rotate(90deg); }
+/* Rows resolve in each time their group opens (display: none → shown restarts the animation). */
+.sales-table__detail { animation: motion-reveal var(--motion-duration-base) var(--motion-ease-out-soft); }
+@media (prefers-reduced-motion: reduce) { .sales-menu-toggle__chevron { transition: none; } .sales-table__detail { animation: none; } }
 .sales-table__selected { background: var(--color-bg-weak); color: var(--color-text-weak); }
 .sales-table__detail th { padding-left: 60px; font-weight: 400; }
 .sales-table__detail td { color: var(--color-text-body); }

@@ -1,3 +1,5 @@
+import { NumberPop } from '../NumberPop'
+
 interface QuantitySelectorProps {
   value: number
   onChange: (next: number) => void
@@ -68,7 +70,7 @@ export function QuantitySelector({
         className={`text-center font-bold text-strong ${classes.value}`}
         aria-live="polite"
       >
-        {value}
+        <NumberPop value={value} />
       </span>
       <button
         type="button"

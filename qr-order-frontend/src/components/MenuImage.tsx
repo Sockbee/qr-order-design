@@ -12,18 +12,38 @@ export function MenuImage(props: MenuImageProps) {
   return <MenuImageContent key={props.src ?? 'empty'} {...props} />
 }
 
+/**
+ * transitions.dev "skeleton reveal": the surface tile is the placeholder, and
+ * the artwork resolves in through a short blur once it has loaded. An image
+ * already in cache when it mounts shows at once instead of fading every visit.
+ */
+const IMAGE_STATE_CLASSES = {
+  pending: 'opacity-0 blur-[2px]',
+  loaded:
+    'transition-[opacity,filter] duration-(--motion-duration-slow) ease-out-soft motion-reduce:transition-none',
+  cached: '',
+} as const
+
 function MenuImageContent({ src, className = '', loading = 'lazy' }: MenuImageProps) {
   const [failed, setFailed] = useState(false)
+  const [state, setState] = useState<keyof typeof IMAGE_STATE_CLASSES>('pending')
 
   return (
     <span className={`flex items-center justify-center overflow-hidden bg-surface ${className}`} aria-hidden="true">
       {src && !failed ? (
         <img
-          className={menuImageClassName(src)}
+          ref={(image) => {
+            // Runs on every render; only the first, still-pending one decides.
+            if (image?.complete && image.naturalWidth > 0) {
+              setState((current) => (current === 'pending' ? 'cached' : current))
+            }
+          }}
+          className={`${menuImageClassName(src)} ${IMAGE_STATE_CLASSES[state]}`}
           src={src}
           alt=""
           loading={loading}
           decoding="async"
+          onLoad={() => setState((current) => (current === 'pending' ? 'loaded' : current))}
           onError={() => setFailed(true)}
         />
       ) : (

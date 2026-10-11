@@ -210,3 +210,18 @@
   padding-top: var(--space-2);
   border-top: 1px solid var(--color-border-default);
 }
+
+/*
+ * transitions.dev "skeleton reveal": once the detail arrives, its sections
+ * resolve in where the loading placeholder was. Sections that stay mounted
+ * across live refreshes do not replay; the placeholder itself never animates.
+ */
+.detail-panel > :not(.detail-panel__placeholder) {
+  animation: motion-reveal var(--motion-duration-slow) var(--motion-ease-out-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-panel > :not(.detail-panel__placeholder) {
+    animation: none;
+  }
+}

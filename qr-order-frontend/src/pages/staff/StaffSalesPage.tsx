@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { StaffNavigation } from '../../components/staff/StaffNavigation'
 import { staffNavItems } from '../../components/staff/staffNavItems'
 import { StaffInlineAlert } from '../../components/staff/StaffInlineAlert'
+import { NumberPop } from '../../components/NumberPop'
 import { StaffEmptyState } from '../../components/staff/StaffEmptyState'
 import { useMenuSales } from '../../hooks/useMenuSales'
 import { groupMenuSales, koreaDate, SALE_LABELS, SALE_TYPES, saleBreakdown } from '../../utils/menuSales'
@@ -58,9 +59,9 @@ export function StaffSalesPage() {
         {sales.loading ? <StaffEmptyState title="판매 통계를 불러오는 중이에요" body="주문별 수량과 할인 금액을 확인하고 있습니다" /> : sales.error ?
           <StaffInlineAlert title="판매 통계를 불러오지 못했어요" detail={sales.error.message} actionLabel="다시 시도" onAction={sales.retry} /> : <>
           <div className="sales-summary" aria-label="조회 결과 합계">
-            <div><span>총 판매량</span><strong>{quantity.toLocaleString()}개</strong><small>서비스 {service.toLocaleString()}개 포함</small></div>
-            <div><span>판매금액 합계</span><strong>{formatStaffAmount(amount)}</strong><small>할인 반영 · 미결제 일반가 포함</small></div>
-            <div><span>엽전 사용량</span><strong>{coins.receivedCoins}개</strong><small>미수령 {coins.pendingCoins}개 · 원화 매출 별도</small></div>
+            <div><span>총 판매량</span><strong><NumberPop value={`${quantity.toLocaleString()}개`} /></strong><small>서비스 {service.toLocaleString()}개 포함</small></div>
+            <div><span>판매금액 합계</span><strong><NumberPop value={formatStaffAmount(amount)} /></strong><small>할인 반영 · 미결제 일반가 포함</small></div>
+            <div><span>엽전 사용량</span><strong><NumberPop value={`${coins.receivedCoins}개`} /></strong><small>미수령 {coins.pendingCoins}개 · 원화 매출 별도</small></div>
           </div>
           <section className="sales-list" aria-label="메뉴별 판매 현황">
             <div className="sales-list__head"><h2>메뉴별 판매 현황</h2><p>메뉴를 누르면 유형별 내역을 볼 수 있어요</p></div>
@@ -72,7 +73,7 @@ export function StaffSalesPage() {
                   const detailId = `sales-${encodeURIComponent(group.menuId)}`
                   return <Fragment key={group.menuId}>
                     <tbody><tr className={open ? 'sales-table__selected' : ''}>
-                      <th scope="row"><button className="sales-menu-toggle" aria-expanded={open} aria-controls={detailId} onClick={() => toggle(group.menuId)}><span aria-hidden="true">{open ? '⌄' : '›'}</span>{group.name}</button></th>
+                      <th scope="row"><button className="sales-menu-toggle" aria-expanded={open} aria-controls={detailId} onClick={() => toggle(group.menuId)}><span className="sales-menu-toggle__chevron" aria-hidden="true">›</span>{group.name}</button></th>
                       <td>{group.quantity.toLocaleString()}개</td><td>{formatStaffAmount(group.amount)}<br /><small>엽전 {saleBreakdown(group.rows, 'COIN').receivedCoins}개 수령 · {saleBreakdown(group.rows, 'COIN').pendingCoins}개 미수령</small></td><td>일반 · 납부자 · 서비스 · 엽전 합계</td>
                     </tr></tbody>
                     <tbody id={detailId} hidden={!open}>{SALE_TYPES.map((type) => {
