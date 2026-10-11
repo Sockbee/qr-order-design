@@ -1,0 +1,12 @@
+{
+  "branch": "feat/qr-welcome-embers",
+  "commit": "44a61677047e6109f65b76376154878ba026772d",
+  "initial_changes": [
+    "qr-order-frontend/src/components/staff/TableFloorPlan.tsx",
+    "qr-order-frontend/src/hooks/useFloorPlanView.ts",
+    "qr-order-frontend/src/hooks/useFloorPlanView.test.tsx"
+  ],
+  "user_file_hashes": "f3b99b48833c2ffcbd5f96df7d461d039447194d  qr-order-frontend/src/components/staff/TableFloorPlan.tsx\na3b2e045f798ef14cfe1bcb7ce8fb87b645020ec  qr-order-frontend/src/hooks/useFloorPlanView.ts\n2c2f8fd61fda2a89c944722c204f9dd024226266  qr-order-frontend/src/hooks/useFloorPlanView.test.tsx\n",
+  "product_code_modified_by_qa": false,
+  "credential_scan": "PASS"
+}

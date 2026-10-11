@@ -1,0 +1,22 @@
+ version |                description                 | success 
+---------+--------------------------------------------+---------
+ 1       | initial schema                             | t
+ 2       | staff service and settlements              | t
+ 3       | add utensil call reason                    | t
+ 4       | visit notes reset and item preparation     | t
+ 5       | payment idempotency and service snapshots  | t
+ 6       | payer and sales discount snapshots         | t
+ 7       | event orders and table visits              | t
+ 8       | preserve sales when deleting menus         | t
+ 9       | individual preparation and serving batches | t
+ 10      | operating day cutover                      | t
+(10 rows)
+
+    entity     | count 
+---------------+-------
+ tables        |    30
+ orders        |    23
+ calls         |     3
+ staff_members |     1
+(4 rows)
+

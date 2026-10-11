@@ -2,9 +2,11 @@ import { useSyncExternalStore } from 'react'
 import type { FloorPlanView } from '../data/hanshinFloorPlan'
 import { readStoredString, writeStoredString } from '../utils/storage'
 
-const STORAGE_KEY = 'qr-order:staff:floor-plan-view'
+// Start existing devices on the current QR drawing once; keep subsequent choices.
+const STORAGE_KEY = 'qr-order:staff:floor-plan-view:qr-layout-20260917'
 const CHANGE_EVENT = 'floor-plan-view-change'
-let memoryView: FloorPlanView = 'pos'
+const DEFAULT_VIEW: FloorPlanView = 'window'
+let memoryView: FloorPlanView = DEFAULT_VIEW
 
 function getSnapshot(): FloorPlanView {
   const saved = readStoredString(STORAGE_KEY)
@@ -14,7 +16,7 @@ function getSnapshot(): FloorPlanView {
 function subscribe(onChange: () => void) {
   const onStorage = (event: StorageEvent) => {
     if (event.key === STORAGE_KEY || event.key === null) {
-      memoryView = 'pos'
+      memoryView = DEFAULT_VIEW
       onChange()
     }
   }
@@ -34,6 +36,6 @@ function setView(view: FloorPlanView) {
 
 /** All visible maps, including the map behind a dialog, share the device preference. */
 export function useFloorPlanView() {
-  const view = useSyncExternalStore(subscribe, getSnapshot, () => 'pos' as const)
+  const view = useSyncExternalStore(subscribe, getSnapshot, () => DEFAULT_VIEW)
   return [view, setView] as const
 }

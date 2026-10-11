@@ -1,0 +1,12 @@
+ table_id | orders |  krw  | coins 
+----------+--------+-------+-------
+ T20      |      2 | 10000 |     9
+ T21      |      1 | 10000 |     0
+(2 rows)
+
+ table_id | final_amount | payment_status |   payer_name   
+----------+--------------+----------------+----------------
+ T20      |         8000 | PAID           | QA 가상 입금자
+ T20      |              | UNPAID         | 
+(2 rows)
+

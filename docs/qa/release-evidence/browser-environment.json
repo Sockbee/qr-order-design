@@ -1,0 +1,46 @@
+{
+  "browser": "Codex In-app Browser",
+  "engineVersion": "not exposed / not verified",
+  "actualDevice": false,
+  "viewports": [
+    {
+      "purpose": "customer",
+      "width": 390,
+      "height": 844
+    },
+    {
+      "purpose": "staff tablet",
+      "width": 1024,
+      "height": 768
+    },
+    {
+      "purpose": "staff desktop settings",
+      "width": 1440,
+      "height": 900
+    }
+  ],
+  "screenshots": {
+    "mobile-order.png": [
+      390,
+      844
+    ],
+    "lost-response.png": [
+      390,
+      844
+    ],
+    "closed-order.png": [
+      390,
+      844
+    ],
+    "tablet-payment.png": [
+      1024,
+      768
+    ]
+  },
+  "build": "production Vite preview; localhost:4179 -> 127.0.0.1:18082 fault proxy -> 127.0.0.1:18081 Spring -> PostgreSQL17.11",
+  "notes": [
+    "Viewport emulation, no OS virtual keyboard or camera QR scan",
+    "Customer/staff console capture returned zero warn/error entries; proxy HTTP failures recorded separately",
+    "Browser evidence precedes a fresh database reset for the final API run"
+  ]
+}

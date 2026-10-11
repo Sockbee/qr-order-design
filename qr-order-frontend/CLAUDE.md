@@ -542,6 +542,10 @@ Example:
 
 qr-order-frontend/docs/pr/feat-menu-page.md
 
+PR documents are **local only**: both `qr-order-frontend/docs/pr/` and the root
+`docs/pr/` are git-ignored, so never commit a PR document or link to one from a
+tracked file. Paste its content into the pull request description instead.
+
 PR documents are written in **Korean**, following `docs/pr/feat-menu-page.md`.
 Section headings in that document are the template:
 

@@ -1,0 +1,88 @@
+[
+  {
+    "path": "/api/v1/admin/menus/qa-overflow-order",
+    "method": "PUT",
+    "request": {
+      "categoryId": "main",
+      "name": "QA 검증 메뉴",
+      "description": "QA only",
+      "basePrice": 4294967296,
+      "available": true,
+      "minQuantity": 1,
+      "maxQuantity": 10,
+      "sortOrder": 99
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "42965792-d5b6-42a2-bb4a-7692c879c7b3",
+        "serverTime": "2026-09-22T09:22:05.846468Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T27",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "92a1f542-496b-437d-afda-bc14972f2757",
+      "expectedTotalAmount": 0,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "qa-overflow-order",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "4b9e098e-cf98-492f-a44f-f14ad68b7560",
+        "displayNumber": 1064,
+        "displayCode": "A-1064",
+        "table": {
+          "tableId": "T27",
+          "displayName": "QA 27"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 0,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:22:05.850256Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "qa-overflow-order",
+            "name": "QA 검증 메뉴",
+            "basePrice": 0,
+            "unitPrice": 0,
+            "quantity": 1,
+            "lineTotal": 0,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "019bbdc7-c742-4782-b3aa-d2eeb8512524",
+        "serverTime": "2026-09-22T09:22:05.868760Z"
+      }
+    }
+  }
+]

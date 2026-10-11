@@ -1,0 +1,171 @@
+- navigation "운영 메뉴":
+  - list:
+    - link "테이블":
+      - /url: /staff/tables
+      - generic: 테이블
+    - link "주방":
+      - /url: /staff/kitchen
+      - generic: 주방
+    - link "서빙":
+      - /url: /staff/serving
+      - generic: 서빙
+    - link "결제":
+      - /url: /staff/payment
+      - generic: 결제
+    - link "서비스":
+      - /url: /staff/service
+      - generic: 서비스
+    - link "품절":
+      - /url: /staff/availability
+      - generic: 품절
+    - link "판매 통계":
+      - /url: /staff/sales
+      - generic: 판매 통계
+    - link "설정":
+      - /url: /staff/settings
+      - generic: 설정
+- main:
+  - heading "운영 설정" [level=1]
+  - paragraph: 변경 내용은 고객과 운영 화면에 즉시 반영됩니다.
+  - button "새로고침"
+  - heading "매장 설정" [level=2]
+  - strong: CALL_MIN_INTERVAL_SECONDS
+  - generic: 호출 최소 간격
+  - textbox "CALL_MIN_INTERVAL_SECONDS 호출 최소 간격 저장": "60"
+  - button "저장"
+  - strong: EVENT_OPEN
+  - generic: 영업 상태
+  - textbox "EVENT_OPEN 영업 상태 저장": "true"
+  - button "저장"
+  - strong: NOTICE
+  - generic: 테이블 안내
+  - textbox "NOTICE 테이블 안내 저장": 주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요.
+  - button "저장"
+  - strong: ORDER_PREFIX
+  - generic: 주문번호 접두사
+  - textbox "ORDER_PREFIX 주문번호 접두사 저장": A-
+  - button "저장"
+  - strong: STORE_NAME
+  - generic: 매장명
+  - textbox "STORE_NAME 매장명 저장": 행복식당 본점
+  - button "저장"
+  - strong: TABLE_DISCOUNT_RATE
+  - generic: 테이블 할인율
+  - textbox "TABLE_DISCOUNT_RATE 테이블 할인율 저장": "20"
+  - button "저장"
+  - heading "카테고리" [level=2]
+  - button "카테고리 추가"
+  - code: main
+  - textbox "main 이름": 메인
+  - textbox "main 제목": 메인 메뉴
+  - spinbutton "정렬": "10"
+  - checkbox "활성" [checked]
+  - text: 활성
+  - button "저장"
+  - code: side
+  - textbox "side 이름": 사이드
+  - textbox "side 제목": 사이드 메뉴
+  - spinbutton "정렬": "20"
+  - checkbox "활성" [checked]
+  - text: 활성
+  - button "저장"
+  - code: alcohol
+  - textbox "alcohol 이름": 주류
+  - textbox "alcohol 제목": 주류
+  - spinbutton "정렬": "30"
+  - checkbox "활성" [checked]
+  - text: 활성
+  - button "저장"
+  - code: beverage
+  - textbox "beverage 이름": 음료
+  - textbox "beverage 제목": 음료
+  - spinbutton "정렬": "40"
+  - checkbox "활성" [checked]
+  - text: 활성
+  - button "저장"
+  - heading "메뉴와 가격" [level=2]
+  - button "메뉴 추가"
+  - paragraph: 판매 중을 해제하면 품절로 표시됩니다. 메뉴 영구 삭제는 목록에서 제거하며, 기존 주문과 판매 통계는 유지됩니다.
+  - code: chicken-feet
+  - textbox "chicken-feet 이름": 닭발
+  - textbox "chicken-feet 설명":
+    - /placeholder: 메뉴 설명
+    - text: 닭발
+  - textbox "chicken-feet 이미지 URL":
+    - /placeholder: https://… 이미지 URL
+  - combobox:
+    - option "메인" [selected]
+    - option "사이드"
+    - option "주류"
+    - option "음료"
+  - spinbutton "가격": "0"
+  - spinbutton "정렬": "10"
+  - checkbox "판매 중" [checked]
+  - text: 판매 중
+  - checkbox "이벤트 주문 허용"
+  - text: 이벤트 주문 허용
+  - text: 엽전 가격
+  - spinbutton "닭발 엽전 가격" [disabled]
+  - text: 개
+  - button "저장"
+  - button "메뉴 영구 삭제"
+  - code: frozen-sikhye
+  - textbox "frozen-sikhye 이름": 살얼음 식혜
+  - textbox "frozen-sikhye 설명":
+    - /placeholder: 메뉴 설명
+    - text: 살얼음 식혜
+  - textbox "frozen-sikhye 이미지 URL":
+    - /placeholder: https://… 이미지 URL
+  - combobox:
+    - option "메인"
+    - option "사이드"
+    - option "주류"
+    - option "음료" [selected]
+  - spinbutton "가격": "3000"
+  - spinbutton "정렬": "10"
+  - checkbox "판매 중" [checked]
+  - text: 판매 중
+  - checkbox "이벤트 주문 허용" [checked]
+  - text: 이벤트 주문 허용
+  - text: 엽전 가격
+  - spinbutton "살얼음 식혜 엽전 가격": "8"
+  - text: 개
+  - button "저장"
+  - button "메뉴 영구 삭제"
+  - code: seaweed-soup-rice
+  - textbox "seaweed-soup-rice 이름": 해장미역국밥
+  - textbox "seaweed-soup-rice 설명":
+    - /placeholder: 메뉴 설명
+    - text: 해장미역국밥
+  - textbox "seaweed-soup-rice 이미지 URL":
+    - /placeholder: https://… 이미지 URL
+  - combobox:
+    - option "메인"
+    - option "사이드" [selected]
+    - option "주류"
+    - option "음료"
+  - spinbutton "가격": "7000"
+  - spinbutton "정렬": "10"
+  - checkbox "판매 중" [checked]
+  - text: 판매 중
+  - checkbox "이벤트 주문 허용"
+  - text: 이벤트 주문 허용
+  - text: 엽전 가격
+  - spinbutton "해장미역국밥 엽전 가격" [disabled]
+  - text: 개
+  - button "저장"
+  - button "메뉴 영구 삭제"
+  - code: soju
+  - textbox "soju 이름": 소주
+  - textbox "soju 설명":
+    - /placeholder: 메뉴 설명
+    - text: 소주
+  - textbox "soju 이미지 URL":
+    - /placeholder: https://… 이미지 URL
+  - combobox:
+    - option "메인"
+    - option "사이드"
+    - option "주류" [selected]
+    - option "음료"
+  - spinbutton "가격": "4500"
+  - spinbutton

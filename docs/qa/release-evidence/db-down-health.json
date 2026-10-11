@@ -1,0 +1,16 @@
+[
+  {
+    "db": "stopped",
+    "probe": "liveness",
+    "status": 200,
+    "body": "{\"status\":\"UP\"}",
+    "seconds": 0.01
+  },
+  {
+    "db": "stopped",
+    "probe": "readiness",
+    "status": 503,
+    "body": "{\"status\":\"DOWN\"}",
+    "seconds": 3.02
+  }
+]
