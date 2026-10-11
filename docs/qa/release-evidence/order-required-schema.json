@@ -1,0 +1,49 @@
+{
+  "type": "object",
+  "properties": {
+    "paymentMethod": {
+      "type": "string",
+      "default": "KRW",
+      "enum": [
+        "KRW",
+        "COIN"
+      ]
+    },
+    "tableId": {
+      "type": "string",
+      "example": "T01"
+    },
+    "tableToken": {
+      "type": "string"
+    },
+    "clientRequestId": {
+      "type": "string",
+      "format": "uuid",
+      "example": "d15dbcd6-c262-4d6f-a962-832f2a8d49e0"
+    },
+    "expectedTotalAmount": {
+      "type": "integer",
+      "format": "int32",
+      "example": 20000,
+      "minimum": 0
+    },
+    "note": {
+      "type": "string",
+      "example": "덜 맵게 부탁드립니다",
+      "maxLength": 200
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/components/schemas/CustomerOrderItemRequest"
+      }
+    }
+  },
+  "required": [
+    "clientRequestId",
+    "expectedTotalAmount",
+    "items",
+    "tableId",
+    "tableToken"
+  ]
+}

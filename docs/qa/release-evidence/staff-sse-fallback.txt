@@ -1,0 +1,53 @@
+- navigation "운영 메뉴":
+  - list:
+    - link "테이블 1":
+      - /url: /staff/tables
+      - generic: 테이블
+      - generic: "1"
+    - link "주방 18":
+      - /url: /staff/kitchen
+      - generic: 주방
+      - generic: "18"
+    - link "서빙 2":
+      - /url: /staff/serving
+      - generic: 서빙
+      - generic: "2"
+    - link "결제 15":
+      - /url: /staff/payment
+      - generic: 결제
+      - generic: "15"
+    - link "서비스":
+      - /url: /staff/service
+      - generic: 서비스
+    - link "품절":
+      - /url: /staff/availability
+      - generic: 품절
+    - link "판매 통계":
+      - /url: /staff/sales
+      - generic: 판매 통계
+    - link "설정":
+      - /url: /staff/settings
+      - generic: 설정
+- main:
+  - heading "서빙" [level=1]
+  - paragraph: 서빙 대기 2 · 지연 1
+  - paragraph: 18:17
+  - heading "서빙 대기" [level=2]
+  - generic: "2"
+  - article "T20 주문":
+    - heading "T20" [level=3]
+    - generic: 26분 지연
+    - paragraph: 엽전 주문 · 9개 · 수령 대기
+    - list:
+      - generic: 소주
+      - generic: ×1
+    - button "엽전 수령 확인":
+      - generic: 엽전 수령 확인
+  - article "T30 주문":
+    - heading "T30" [level=3]
+    - generic: 방금
+    - list:
+      - generic: 콜라
+      - generic: ×1
+    - button "서빙 완료":
+      - generic: 서빙 완료

@@ -1,0 +1,6843 @@
+[
+  {
+    "path": "/actuator/health/readiness",
+    "method": "GET",
+    "request": null,
+    "status": 200,
+    "response": {
+      "status": "UP"
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/list",
+    "method": "POST",
+    "request": null,
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "88892659-c30a-4925-b6bd-253ca383b18a",
+        "serverTime": "2026-09-22T09:20:36.336766Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/queue",
+    "method": "POST",
+    "request": null,
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "b244f600-a764-4d35-a009-aa2c39ee1834",
+        "serverTime": "2026-09-22T09:20:36.340038Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/events",
+    "method": "POST",
+    "request": null,
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "d97acc12-7acc-4b19-a049-c914b6f11b6f",
+        "serverTime": "2026-09-22T09:20:36.341064Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/snapshot",
+    "method": "POST",
+    "request": null,
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "b7467d3f-cf63-43b6-8366-8e7d9eec471a",
+        "serverTime": "2026-09-22T09:20:36.341870Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa",
+    "method": "POST",
+    "request": null,
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_AUTH_REQUIRED",
+        "message": "운영 인증이 필요합니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "50d864df-c1ba-48fe-8cbe-883fd68ea3ad",
+        "serverTime": "2026-09-22T09:20:36.342798Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/login",
+    "method": "POST",
+    "request": {
+      "passcode": "[REDACTED]",
+      "deviceLabel": "카운터"
+    },
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_PASSCODE_MISMATCH",
+        "message": "passcode가 올바르지 않습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "456c708b-5fc9-4d4c-b651-ce48b69dfafb",
+        "serverTime": "2026-09-22T09:20:36.359412Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/login",
+    "method": "POST",
+    "request": {
+      "passcode": "[REDACTED]",
+      "deviceLabel": "카운터"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "expiresAt": "2026-09-22T23:20:36.379194Z",
+        "deviceLabel": "카운터",
+        "staffToken": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "6dc9fd11-e8f1-458a-a5de-ccb12799407a",
+        "serverTime": "2026-09-22T09:20:36.382409Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T01",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 01",
+      "sortOrder": 1
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T01",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T01?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ef1562d2-4bd7-492c-a472-9a49bc8a750d",
+        "serverTime": "2026-09-22T09:20:36.406662Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T02",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 02",
+      "sortOrder": 2
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T02",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T02?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "eed3aee5-9c0d-4d37-800d-d70c1b5c1f91",
+        "serverTime": "2026-09-22T09:20:36.423730Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T03",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 03",
+      "sortOrder": 3
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T03",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T03?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c0c14e91-2442-42d8-a050-0b3dc7c41424",
+        "serverTime": "2026-09-22T09:20:36.442460Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T04",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 04",
+      "sortOrder": 4
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T04",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T04?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0bbfc883-36f3-4e8a-8e9e-b9db4d52a8ee",
+        "serverTime": "2026-09-22T09:20:36.454210Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T05",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 05",
+      "sortOrder": 5
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T05",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T05?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "582acd9f-fd5d-4fae-8688-fa51521d76d6",
+        "serverTime": "2026-09-22T09:20:36.467450Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T06",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 06",
+      "sortOrder": 6
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T06",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T06?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "93370030-08ab-409e-9031-47edfcb79b3a",
+        "serverTime": "2026-09-22T09:20:36.483250Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T07",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 07",
+      "sortOrder": 7
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T07",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T07?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "19dbdfe3-b3ac-464e-9089-805a9a20ea84",
+        "serverTime": "2026-09-22T09:20:36.492600Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T08",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 08",
+      "sortOrder": 8
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T08",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T08?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1f499a1f-2bd1-4ac0-b972-94e3e2d040b7",
+        "serverTime": "2026-09-22T09:20:36.502004Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T09",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 09",
+      "sortOrder": 9
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T09",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T09?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "630d75a0-8e86-46de-a45b-5a753472ff5c",
+        "serverTime": "2026-09-22T09:20:36.514463Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T10",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 10",
+      "sortOrder": 10
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T10",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T10?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1be006b3-fc11-40dd-988d-604e83a7160a",
+        "serverTime": "2026-09-22T09:20:36.525070Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T11",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 11",
+      "sortOrder": 11
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T11",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T11?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "585a1682-efbd-4fe2-991d-c6e33fd41a30",
+        "serverTime": "2026-09-22T09:20:36.535370Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T12",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 12",
+      "sortOrder": 12
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T12",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T12?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "12805033-99f2-4a35-93dc-25608c82a5f1",
+        "serverTime": "2026-09-22T09:20:36.547077Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T13",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 13",
+      "sortOrder": 13
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T13",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T13?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "175b195a-79e3-4fe1-95ee-1232aa8110d2",
+        "serverTime": "2026-09-22T09:20:36.560094Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T14",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 14",
+      "sortOrder": 14
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T14",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T14?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "d8ec546e-3f89-4517-8d77-dddad678a1b8",
+        "serverTime": "2026-09-22T09:20:36.571931Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T15",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 15",
+      "sortOrder": 15
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T15",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T15?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "32c78644-25ca-47eb-adf0-2ece2b4e0701",
+        "serverTime": "2026-09-22T09:20:36.585087Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T16",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 16",
+      "sortOrder": 16
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T16",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T16?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "f2a8c8fc-345c-40f2-8d46-0c069a58f9ad",
+        "serverTime": "2026-09-22T09:20:36.594731Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T17",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 17",
+      "sortOrder": 17
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T17",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T17?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "d8ab8295-a8cf-487f-89ac-e0d07888165f",
+        "serverTime": "2026-09-22T09:20:36.606409Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T18",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 18",
+      "sortOrder": 18
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T18",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T18?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "00513bf7-c715-4460-b3c7-c019be6f6b32",
+        "serverTime": "2026-09-22T09:20:36.615304Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T19",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 19",
+      "sortOrder": 19
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T19",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T19?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "05811d9f-8e4a-47cb-8fe9-6dfe2dbb01ea",
+        "serverTime": "2026-09-22T09:20:36.622671Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T20",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 20",
+      "sortOrder": 20
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T20",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T20?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "be804eb0-e812-4135-9fc6-a094a12b043c",
+        "serverTime": "2026-09-22T09:20:36.630449Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T21",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 21",
+      "sortOrder": 21
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T21",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T21?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "a593a612-b85d-4eec-8d44-53fc535a9b69",
+        "serverTime": "2026-09-22T09:20:36.637591Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T22",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 22",
+      "sortOrder": 22
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T22",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T22?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e825922e-36d3-48c8-82bf-61ba90c0eab2",
+        "serverTime": "2026-09-22T09:20:36.646376Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T23",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 23",
+      "sortOrder": 23
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T23",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T23?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1f8c515e-aba5-46ea-9b23-1f0353f90d65",
+        "serverTime": "2026-09-22T09:20:36.653815Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T24",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 24",
+      "sortOrder": 24
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T24",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T24?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e48f39e1-079f-4939-85fb-bd4dba030f13",
+        "serverTime": "2026-09-22T09:20:36.661204Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T25",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 25",
+      "sortOrder": 25
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T25",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T25?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "a43f93de-71d2-4c4b-a0e6-c324f70de1ed",
+        "serverTime": "2026-09-22T09:20:36.668490Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T26",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 26",
+      "sortOrder": 26
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T26",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T26?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "bb4f4f86-4941-4bf0-8478-f9c0e4b6f2fb",
+        "serverTime": "2026-09-22T09:20:36.675355Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T27",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 27",
+      "sortOrder": 27
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T27",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T27?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "da3a7bad-7902-4f6d-907d-17d10245ee4f",
+        "serverTime": "2026-09-22T09:20:36.682036Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T28",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 28",
+      "sortOrder": 28
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T28",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T28?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "6bc72db5-78e1-496a-93d1-3c8eca9aa739",
+        "serverTime": "2026-09-22T09:20:36.688425Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T29",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 29",
+      "sortOrder": 29
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T29",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T29?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "35132f44-600f-474c-a741-8fb51da41c88",
+        "serverTime": "2026-09-22T09:20:36.694768Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T30",
+    "method": "POST",
+    "request": {
+      "displayName": "QA 30",
+      "sortOrder": 30
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T30",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T30?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "3c02fb81-d0a8-455b-9e0b-a291f8b3e1ca",
+        "serverTime": "2026-09-22T09:20:36.701360Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "store": {
+          "name": "행복식당 본점",
+          "open": true,
+          "notice": "주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요."
+        },
+        "statusPollSeconds": 15,
+        "categories": [
+          {
+            "categoryId": "main",
+            "label": "메인",
+            "heading": "메인 메뉴"
+          },
+          {
+            "categoryId": "side",
+            "label": "사이드",
+            "heading": "사이드 메뉴"
+          },
+          {
+            "categoryId": "alcohol",
+            "label": "주류",
+            "heading": "주류"
+          },
+          {
+            "categoryId": "beverage",
+            "label": "음료",
+            "heading": "음료"
+          }
+        ],
+        "items": [
+          {
+            "menuId": "chicken-feet",
+            "categoryId": "main",
+            "name": "닭발",
+            "description": "닭발",
+            "basePrice": 10000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "tteokbokki-egg-fried-set",
+            "categoryId": "main",
+            "name": "국물 떡볶이 + 계란 + 튀김 SET",
+            "description": "국물 떡볶이 + 계란 + 튀김 SET",
+            "basePrice": 10000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "jjapagetti-egg-cheese",
+            "categoryId": "main",
+            "name": "짜계치 (짜파게티 + 계란 + 치즈)",
+            "description": "짜계치 (짜파게티 + 계란 + 치즈)",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "spicy-pork",
+            "categoryId": "main",
+            "name": "제육볶음",
+            "description": "제육볶음",
+            "basePrice": 9000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "perilla-egg-fry-sikhye-set",
+            "categoryId": "main",
+            "name": "꼬소들기름계란후라이 + 식혜 SET",
+            "description": "꼬소들기름계란후라이 + 식혜 SET",
+            "basePrice": 8000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "seaweed-soup-rice",
+            "categoryId": "side",
+            "name": "해장미역국밥",
+            "description": "해장미역국밥",
+            "basePrice": 7000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "tuna-mayo-rice-ball",
+            "categoryId": "side",
+            "name": "참치마요주먹밥",
+            "description": "참치마요주먹밥",
+            "basePrice": 6000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "cheese-egg-custard",
+            "categoryId": "side",
+            "name": "폭탄치즈대왕 계란찜",
+            "description": "폭탄치즈대왕 계란찜",
+            "basePrice": 9000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "dried-snack-platter",
+            "categoryId": "side",
+            "name": "마른 안주 (뻥튀기 / 쥐포 / 오징어)",
+            "description": "마른 안주 (뻥튀기 / 쥐포 / 오징어)",
+            "basePrice": 7000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "red-bean-bingsu",
+            "categoryId": "side",
+            "name": "옛날팥빙수",
+            "description": "옛날팥빙수",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "soju",
+            "categoryId": "alcohol",
+            "name": "소주",
+            "description": "소주",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 9,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "beer",
+            "categoryId": "alcohol",
+            "name": "맥주",
+            "description": "맥주",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 9,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "banana-milk-highball",
+            "categoryId": "alcohol",
+            "name": "바나나 우유 하이볼",
+            "description": "바나나 우유 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 10,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "mix-coffee-highball",
+            "categoryId": "alcohol",
+            "name": "믹스 커피 하이볼",
+            "description": "믹스 커피 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 10,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "classic-highball",
+            "categoryId": "alcohol",
+            "name": "기본 하이볼",
+            "description": "기본 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "frozen-sikhye",
+            "categoryId": "beverage",
+            "name": "살얼음 식혜",
+            "description": "살얼음 식혜",
+            "basePrice": 3000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 8,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "eolbaksa",
+            "categoryId": "beverage",
+            "name": "얼박사",
+            "description": "얼박사",
+            "basePrice": 3000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 8,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "cola",
+            "categoryId": "beverage",
+            "name": "콜라",
+            "description": "콜라",
+            "basePrice": 1500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "cider",
+            "categoryId": "beverage",
+            "name": "사이다",
+            "description": "사이다",
+            "basePrice": 1500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          }
+        ],
+        "generatedAt": "2026-09-22T09:20:36.708880Z"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "954b490e-bd29-4b86-b3fc-01176edb1e3a",
+        "serverTime": "2026-09-22T09:20:36.708898Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "tableToken 값을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "b3bca285-fcbd-4536-92dc-da1f3f1ff156",
+        "serverTime": "2026-09-22T09:20:36.712892Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "b04f7395-58f1-40fd-96ae-ee3a8cca05af",
+        "serverTime": "2026-09-22T09:20:36.715214Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "d971e566-8c71-4de8-a44e-80894bbb0286",
+        "serverTime": "2026-09-22T09:20:36.718012Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T99",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c1534769-28bf-4068-88d3-9434c39ca1df",
+        "serverTime": "2026-09-22T09:20:36.721198Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T03",
+    "method": "PUT",
+    "request": {
+      "displayName": "QA inactive",
+      "active": false
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "3ed44839-4778-4d96-a072-4dd99cfb981a",
+        "serverTime": "2026-09-22T09:20:36.731495Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T03",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 410,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INACTIVE_TABLE",
+        "message": "현재 사용할 수 없는 테이블입니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0fe470e8-9660-4c89-9e92-3580c9eb49c7",
+        "serverTime": "2026-09-22T09:20:36.734734Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/settings/EVENT_OPEN",
+    "method": "PUT",
+    "request": {
+      "value": "false"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "2cd1610a-52f5-484d-aed7-fee8644e040a",
+        "serverTime": "2026-09-22T09:20:36.744359Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "store": {
+          "name": "행복식당 본점",
+          "open": false,
+          "notice": "주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요."
+        },
+        "statusPollSeconds": 15,
+        "categories": [
+          {
+            "categoryId": "main",
+            "label": "메인",
+            "heading": "메인 메뉴"
+          },
+          {
+            "categoryId": "side",
+            "label": "사이드",
+            "heading": "사이드 메뉴"
+          },
+          {
+            "categoryId": "alcohol",
+            "label": "주류",
+            "heading": "주류"
+          },
+          {
+            "categoryId": "beverage",
+            "label": "음료",
+            "heading": "음료"
+          }
+        ],
+        "items": [
+          {
+            "menuId": "chicken-feet",
+            "categoryId": "main",
+            "name": "닭발",
+            "description": "닭발",
+            "basePrice": 10000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "tteokbokki-egg-fried-set",
+            "categoryId": "main",
+            "name": "국물 떡볶이 + 계란 + 튀김 SET",
+            "description": "국물 떡볶이 + 계란 + 튀김 SET",
+            "basePrice": 10000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "jjapagetti-egg-cheese",
+            "categoryId": "main",
+            "name": "짜계치 (짜파게티 + 계란 + 치즈)",
+            "description": "짜계치 (짜파게티 + 계란 + 치즈)",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "spicy-pork",
+            "categoryId": "main",
+            "name": "제육볶음",
+            "description": "제육볶음",
+            "basePrice": 9000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "perilla-egg-fry-sikhye-set",
+            "categoryId": "main",
+            "name": "꼬소들기름계란후라이 + 식혜 SET",
+            "description": "꼬소들기름계란후라이 + 식혜 SET",
+            "basePrice": 8000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "seaweed-soup-rice",
+            "categoryId": "side",
+            "name": "해장미역국밥",
+            "description": "해장미역국밥",
+            "basePrice": 7000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "tuna-mayo-rice-ball",
+            "categoryId": "side",
+            "name": "참치마요주먹밥",
+            "description": "참치마요주먹밥",
+            "basePrice": 6000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "cheese-egg-custard",
+            "categoryId": "side",
+            "name": "폭탄치즈대왕 계란찜",
+            "description": "폭탄치즈대왕 계란찜",
+            "basePrice": 9000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "dried-snack-platter",
+            "categoryId": "side",
+            "name": "마른 안주 (뻥튀기 / 쥐포 / 오징어)",
+            "description": "마른 안주 (뻥튀기 / 쥐포 / 오징어)",
+            "basePrice": 7000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "red-bean-bingsu",
+            "categoryId": "side",
+            "name": "옛날팥빙수",
+            "description": "옛날팥빙수",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "soju",
+            "categoryId": "alcohol",
+            "name": "소주",
+            "description": "소주",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 9,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "beer",
+            "categoryId": "alcohol",
+            "name": "맥주",
+            "description": "맥주",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 9,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "banana-milk-highball",
+            "categoryId": "alcohol",
+            "name": "바나나 우유 하이볼",
+            "description": "바나나 우유 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 10,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "mix-coffee-highball",
+            "categoryId": "alcohol",
+            "name": "믹스 커피 하이볼",
+            "description": "믹스 커피 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 10,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "classic-highball",
+            "categoryId": "alcohol",
+            "name": "기본 하이볼",
+            "description": "기본 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "frozen-sikhye",
+            "categoryId": "beverage",
+            "name": "살얼음 식혜",
+            "description": "살얼음 식혜",
+            "basePrice": 3000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 8,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "eolbaksa",
+            "categoryId": "beverage",
+            "name": "얼박사",
+            "description": "얼박사",
+            "basePrice": 3000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 8,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "cola",
+            "categoryId": "beverage",
+            "name": "콜라",
+            "description": "콜라",
+            "basePrice": 1500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "cider",
+            "categoryId": "beverage",
+            "name": "사이다",
+            "description": "사이다",
+            "basePrice": 1500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          }
+        ],
+        "generatedAt": "2026-09-22T09:20:36.749472Z"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "f8c10cf5-771d-43de-9262-4e403149f25b",
+        "serverTime": "2026-09-22T09:20:36.749491Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8592bee1-bbd9-4f6c-9389-02bdf0b34033",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "EVENT_CLOSED",
+        "message": "현재 주문을 받고 있지 않습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ca212cba-321a-4c68-9ba5-5de131ee84e4",
+        "serverTime": "2026-09-22T09:20:36.760667Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/settings/EVENT_OPEN",
+    "method": "PUT",
+    "request": {
+      "value": "true"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "96fbb8b4-32bd-44e3-87b4-46500f3f0dc0",
+        "serverTime": "2026-09-22T09:20:36.766678Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "42f84a98-4351-4755-a477-fec565a7744d",
+        "serverTime": "2026-09-22T09:20:36.802230Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "3448e095-c60e-42b1-8ebf-305dd1013d0a",
+        "serverTime": "2026-09-22T09:20:36.809542Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 2
+        }
+      ]
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "IDEMPOTENCY_CONFLICT",
+        "message": "동일 요청 ID에 다른 주문 정보가 사용되었습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "79ae63be-01c5-4e94-82c9-25d619d1a122",
+        "serverTime": "2026-09-22T09:20:36.814718Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "2bc7f1ab-6f30-4a0d-bd72-78e20d21e863",
+        "serverTime": "2026-09-22T09:20:36.828232Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "68321678-d6a4-4c0e-ab98-cd597c8dd291",
+        "serverTime": "2026-09-22T09:20:36.832779Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c6261c8f-4ec8-4d26-b237-31c19b00b948",
+        "serverTime": "2026-09-22T09:20:36.837714Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "09b7c768-7d03-456f-aa49-daececa3a9d1",
+        "serverTime": "2026-09-22T09:20:36.841825Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T02",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "40069452-c6f0-4b55-83eb-3d35f24a3cb4",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "a2dd5a20-726a-4547-aa7b-0abd5a5f9e78",
+        "displayNumber": 1043,
+        "displayCode": "A-1043",
+        "table": {
+          "tableId": "T02",
+          "displayName": "QA 02"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.846191Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4add7d24-8774-4716-b028-d7dd4c655099",
+        "serverTime": "2026-09-22T09:20:36.863598Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T02",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "cf651862-0533-463d-81f6-9ee4e5cd2bc8",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "d800cf4c-ce61-4f36-8680-277411a013ec",
+        "displayNumber": 1044,
+        "displayCode": "A-1044",
+        "table": {
+          "tableId": "T02",
+          "displayName": "QA 02"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.846194Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "fe90f653-8c6e-4acf-8d26-fa74985304e4",
+        "serverTime": "2026-09-22T09:20:36.877149Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T02",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "2e0e5b24-b7de-42f8-a18d-767c315944eb",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "98ca0ae3-e4e6-4dbc-8a00-5a18c9408799",
+        "displayNumber": 1045,
+        "displayCode": "A-1045",
+        "table": {
+          "tableId": "T02",
+          "displayName": "QA 02"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.846185Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5185ef1a-1702-4a28-ae64-d411b59fc98d",
+        "serverTime": "2026-09-22T09:20:36.890148Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T02",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "fc5271e2-342c-4c17-94de-ed7272aea6ec",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "2b9f7cb4-634d-43e4-8bbd-5bd1b573e243",
+        "displayNumber": 1046,
+        "displayCode": "A-1046",
+        "table": {
+          "tableId": "T02",
+          "displayName": "QA 02"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.848079Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e42fb558-d19f-4c2e-967e-ddbaa3c8231f",
+        "serverTime": "2026-09-22T09:20:36.900201Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/get",
+    "method": "POST",
+    "request": {
+      "tableId": "T02",
+      "tableToken": "[REDACTED]",
+      "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2"
+    },
+    "status": 404,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "ORDER_NOT_FOUND",
+        "message": "주문 정보를 찾을 수 없습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "59fe0a68-f891-4855-958d-bdbec97a899a",
+        "serverTime": "2026-09-22T09:20:36.905059Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "71bd4963-efd9-4e6e-a527-dab9fc7264e9",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 0
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "메뉴 수량을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "f0c673fe-be55-448f-8d81-fb73af682286",
+        "serverTime": "2026-09-22T09:20:36.911976Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "d4fadaa3-1997-4a84-8a4b-d1a7c9b0261a",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": -1
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "메뉴 수량을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "14e142f7-f133-4945-8b71-4b5371ae747d",
+        "serverTime": "2026-09-22T09:20:36.919608Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "fe1e5ad7-0a65-4d04-a063-2b8e6645a26f",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 11
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "메뉴 수량을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "750ea714-1ea9-4ff9-a8ec-62888a00f24e",
+        "serverTime": "2026-09-22T09:20:36.927324Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "a9bdaffd-259f-4a4d-8495-5847215e2c4a",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1.5
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "quantity 값을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5f5aa93c-8408-483d-a8d3-8e9d3ce7442f",
+        "serverTime": "2026-09-22T09:20:36.931477Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "2a37d48a-257f-4872-8c38-17a843e90cf1",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": "2"
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "quantity 값을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1e188f24-f84b-440c-87cd-e11dcdf84ae9",
+        "serverTime": "2026-09-22T09:20:36.934170Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "738be64e-ece8-4c70-b3aa-6754f1f54a7a",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 2147483648
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "quantity 값을 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "f7083818-ae63-4967-84aa-452a1d5ac179",
+        "serverTime": "2026-09-22T09:20:36.936663Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T04",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "7428700f-8008-4644-b85c-03d899eccfa0",
+      "expectedTotalAmount": 100000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 10
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "e2a65b28-fbe9-49d3-b94d-de4cee7647dd",
+        "displayNumber": 1047,
+        "displayCode": "A-1047",
+        "table": {
+          "tableId": "T04",
+          "displayName": "QA 04"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 100000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.939196Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 10,
+            "lineTotal": 100000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4245ef4f-e863-45ef-9bd7-308b54faca26",
+        "serverTime": "2026-09-22T09:20:36.951982Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "9da3bbe5-33cd-4d08-be04-c764e4503428",
+      "expectedTotalAmount": 10000,
+      "note": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "요청사항은 200자 이하여야 합니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "00a2583c-2cc7-45f0-8605-f49c51df3b35",
+        "serverTime": "2026-09-22T09:20:36.954653Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "fdd4e944-8f79-4d97-9d0f-86d1658b5d78",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": []
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "주문 항목 수를 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "073a2854-20c8-408d-b948-7e1588120f77",
+        "serverTime": "2026-09-22T09:20:36.958863Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "77f420d1-4ff0-46c1-b65e-b5aa6d342227",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1,
+          "selectedOptionIds": []
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "지원하지 않는 주문 정보가 포함되어 있습니다.",
+        "retryable": false,
+        "details": {
+          "fields": [
+            "selectedOptionIds"
+          ],
+          "location": "items"
+        }
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c6e73ff1-8123-42a8-842b-6554e3e36b2f",
+        "serverTime": "2026-09-22T09:20:36.961695Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "7629d7df-716b-450a-949d-9cd1d081196a",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "missing",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "MENU_NOT_FOUND",
+        "message": "메뉴 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "menuIds": [
+            "missing"
+          ]
+        }
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e36e092f-80b6-4833-999c-ddfd8003b144",
+        "serverTime": "2026-09-22T09:20:36.969816Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/menu/availability",
+    "method": "POST",
+    "request": {
+      "itemId": "chicken-feet",
+      "soldOut": true
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "8389699e-4472-48be-9a6e-32aec947b1e3",
+        "serverTime": "2026-09-22T09:20:36.975728Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "e28f462e-0ecf-4b7a-8e85-980746d14930",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "MENU_UNAVAILABLE",
+        "message": "품절된 메뉴가 포함되어 있습니다.",
+        "retryable": false,
+        "details": {
+          "menuIds": [
+            "chicken-feet"
+          ]
+        }
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "939ead8e-2d36-4db5-af4c-6637effc310b",
+        "serverTime": "2026-09-22T09:20:36.987434Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/menu/availability",
+    "method": "POST",
+    "request": {
+      "itemId": "chicken-feet",
+      "soldOut": false
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "f1e48cda-56d5-4440-9f21-80b06726dffd",
+        "serverTime": "2026-09-22T09:20:36.991645Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa-price",
+    "method": "PUT",
+    "request": {
+      "categoryId": "main",
+      "name": "QA 검증 메뉴",
+      "description": "QA only",
+      "basePrice": 10000,
+      "available": true,
+      "minQuantity": 1,
+      "maxQuantity": 10,
+      "sortOrder": 99
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5cc3fbdd-eac1-4a1e-b3d3-1a999ff98e47",
+        "serverTime": "2026-09-22T09:20:36.996730Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T05",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "3f97ff4b-2870-4b64-ba94-998ecb98e731",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "qa-price",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "1561da33-8a38-40b8-b544-dc6599fdac70",
+        "displayNumber": 1048,
+        "displayCode": "A-1048",
+        "table": {
+          "tableId": "T05",
+          "displayName": "QA 05"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.999342Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "qa-price",
+            "name": "QA 검증 메뉴",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "712300ad-6558-4ea9-a6a3-787de2a1511f",
+        "serverTime": "2026-09-22T09:20:37.011415Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa-price",
+    "method": "PUT",
+    "request": {
+      "categoryId": "main",
+      "name": "QA 검증 메뉴",
+      "description": "QA only",
+      "basePrice": 12000,
+      "available": true,
+      "minQuantity": 1,
+      "maxQuantity": 10,
+      "sortOrder": 99
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "7cecc1ec-3398-4a98-8980-3fe2288bc31a",
+        "serverTime": "2026-09-22T09:20:37.017621Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T05",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "0077a6ae-8bc1-45b1-8234-d1875d8de442",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "qa-price",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "ORDER_PRICE_CHANGED",
+        "message": "메뉴 가격이 변경되었습니다. 변경된 금액을 다시 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "expectedTotalAmount": 10000,
+          "actualTotalAmount": 12000,
+          "items": [
+            {
+              "lineNo": 1,
+              "unitPrice": 12000,
+              "lineTotal": 12000
+            }
+          ]
+        }
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "b9f1ab49-7e22-48f0-a82d-b0f24d929ef2",
+        "serverTime": "2026-09-22T09:20:37.024577Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/get",
+    "method": "POST",
+    "request": {
+      "tableId": "T05",
+      "tableToken": "[REDACTED]",
+      "orderId": "1561da33-8a38-40b8-b544-dc6599fdac70"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "1561da33-8a38-40b8-b544-dc6599fdac70",
+        "displayNumber": 1048,
+        "displayCode": "A-1048",
+        "table": {
+          "tableId": "T05",
+          "displayName": "QA 05"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.999342Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "qa-price",
+            "name": "QA 검증 메뉴",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1439809f-f019-4611-a2c3-2d3e05cd1943",
+        "serverTime": "2026-09-22T09:20:37.029143Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/settings/EVENT_OPEN",
+    "method": "PUT",
+    "request": {
+      "value": "false"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "231f439a-f9ab-4540-9340-4d0b2ad864b7",
+        "serverTime": "2026-09-22T09:20:37.033161Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8472f66d-3ea5-4310-8be9-aefd58edd591",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+        "displayNumber": 1042,
+        "displayCode": "A-1042",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:36.769488Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "24d322bd-c4cb-4f6e-b0f9-b62b236025f5",
+        "serverTime": "2026-09-22T09:20:37.039508Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/settings/EVENT_OPEN",
+    "method": "PUT",
+    "request": {
+      "value": "true"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ae3086e7-2d46-4785-b6be-64a1b531b13e",
+        "serverTime": "2026-09-22T09:20:37.043931Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "80f826ec-c787-48fd-8abb-82650e3d92e4",
+      "reason": "UTENSIL"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "callId": "dd10896a-9a2f-42db-9036-fd9134399cf8",
+        "createdAt": "2026-09-22T09:20:37.050177Z",
+        "status": "PENDING",
+        "idempotentReplay": false
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "8516837d-2a8f-417a-8b0b-f54643e2eca2",
+        "serverTime": "2026-09-22T09:20:37.050698Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "80f826ec-c787-48fd-8abb-82650e3d92e4",
+      "reason": "UTENSIL"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "callId": "dd10896a-9a2f-42db-9036-fd9134399cf8",
+        "createdAt": "2026-09-22T09:20:37.046574Z",
+        "status": "PENDING",
+        "idempotentReplay": true
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5d84170b-3c1a-4e4f-ae07-5ead20a98d15",
+        "serverTime": "2026-09-22T09:20:37.055643Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "80f826ec-c787-48fd-8abb-82650e3d92e4",
+      "reason": "OTHER"
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "DUPLICATE_REQUEST",
+        "message": "이전 호출 요청과 정보가 달라 처리할 수 없습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "90b1a32d-6beb-4cdc-af7f-55c2a57d8337",
+        "serverTime": "2026-09-22T09:20:37.060204Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "a6147703-c050-4827-a029-509ad03dfadd",
+      "reason": "UTENSIL"
+    },
+    "status": 429,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "CALL_TOO_FREQUENT",
+        "message": "방금 호출했어요. 잠시 후 다시 시도해 주세요.",
+        "retryable": true,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "a398ea68-d894-4136-9bdd-5335ba2fb34a",
+        "serverTime": "2026-09-22T09:20:37.066360Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/cancel",
+    "method": "POST",
+    "request": {
+      "tableId": "T02",
+      "tableToken": "[REDACTED]",
+      "callId": "dd10896a-9a2f-42db-9036-fd9134399cf8"
+    },
+    "status": 404,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "CALL_NOT_FOUND",
+        "message": "호출 정보를 찾을 수 없습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4efbbac0-ec5b-40b8-b938-966ccc265309",
+        "serverTime": "2026-09-22T09:20:37.071260Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/cancel",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "callId": "dd10896a-9a2f-42db-9036-fd9134399cf8"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "fa36a2b3-30a2-4bc8-9e85-30787960c2df",
+        "serverTime": "2026-09-22T09:20:37.076483Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T06",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "99bcbe24-a6a3-4c30-b72a-6941883ae69d",
+      "reason": "UTENSIL"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "callId": "37e8bc66-adc6-4079-b2c2-160ad47a937b",
+        "createdAt": "2026-09-22T09:20:37.084070Z",
+        "status": "PENDING",
+        "idempotentReplay": false
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "61e97f8f-c655-4938-9f48-ae2cf2bfd426",
+        "serverTime": "2026-09-22T09:20:37.084472Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/calls/acknowledge",
+    "method": "POST",
+    "request": {
+      "tableId": "T06"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T06",
+        "acknowledgedCount": 1,
+        "acknowledgedAt": "2026-09-22T09:20:37.088851Z"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "22b192a5-ec43-4d78-b3c5-3af2b633be51",
+        "serverTime": "2026-09-22T09:20:37.090232Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T06",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T06",
+          "displayName": "QA 06"
+        },
+        "orders": [],
+        "groupTableIds": [],
+        "latestPublicStatus": null,
+        "sessionTotalAmount": 0,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "6d76f02a-aa94-4073-b843-a29666ec9407",
+        "serverTime": "2026-09-22T09:20:37.094849Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+        "tableId": "T01",
+        "originTableId": "T01",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "77a392f0-de79-4036-82ab-5b3d415595a8",
+        "serverTime": "2026-09-22T09:20:37.100866Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "orders": [
+          {
+            "orderId": "8862bb3b-b837-45d4-a40b-7a61854b7ed2",
+            "displayCode": "A-1042",
+            "tableId": "T01",
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "totalAmount": 10000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:36.769488Z",
+            "items": [
+              {
+                "name": "닭발",
+                "quantity": 1,
+                "lineTotal": 10000,
+                "preparationStatus": "PENDING",
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN"
+              }
+            ]
+          }
+        ],
+        "groupTableIds": [
+          "T01"
+        ],
+        "latestPublicStatus": "accepted",
+        "sessionTotalAmount": 10000,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "091c813f-9258-4cf2-bf25-b9e13a75cf74",
+        "serverTime": "2026-09-22T09:20:37.106473Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/discount",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "discountRate": 20
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "49a06109-d7f4-4280-938d-afab663c0ae0",
+        "serverTime": "2026-09-22T09:20:37.117520Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+        "tableId": "T01",
+        "originTableId": "T01",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 20,
+        "discountAmount": 2000,
+        "finalAmount": 8000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "86d19b3f-8985-4eb9-b001-4b3937f7f82f",
+        "serverTime": "2026-09-22T09:20:37.122931Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+        "tableId": "T01",
+        "originTableId": "T01",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 20,
+        "discountAmount": 2000,
+        "finalAmount": 8000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5c3b74dc-d0ea-4fec-a442-ddd131678db3",
+        "serverTime": "2026-09-22T09:20:37.128180Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+        "tableId": "T01",
+        "displayName": "QA 01",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:36.769488Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 20,
+        "discountAmount": 2000,
+        "finalAmount": 8000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T01",
+            "amount": 8000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T01",
+            "itemId": "9bfc9b2b-8eb6-4d50-b86f-31e9b114f7ef",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "9bb4e78d-18bb-4bb3-9202-b7b5d7d4e402",
+        "serverTime": "2026-09-22T09:20:37.135922Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "expectedSessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+      "clientRequestId": "44162352-52c2-479d-a570-71b9d00b4cbc",
+      "expectedFinalAmount": 10000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "BILL_AMOUNT_CHANGED",
+        "message": "결제 금액이 변경되었습니다. 다시 확인해 주세요.",
+        "retryable": false,
+        "details": {
+          "expectedFinalAmount": 10000,
+          "actualFinalAmount": 8000
+        }
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "2062e635-d263-42c3-bf3c-aeadf74c8850",
+        "serverTime": "2026-09-22T09:20:37.142084Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "expectedSessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+      "clientRequestId": "44162352-52c2-479d-a570-71b9d00b4cbc",
+      "expectedFinalAmount": 8000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "3e45c7f3-a899-4dfe-8eb1-fb019347ea6c",
+        "serverTime": "2026-09-22T09:20:37.151225Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "expectedSessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+      "clientRequestId": "44162352-52c2-479d-a570-71b9d00b4cbc",
+      "expectedFinalAmount": 8000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "35535919-7939-4fdb-a852-fe216eac2389",
+        "serverTime": "2026-09-22T09:20:37.152755Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "orders": [],
+        "groupTableIds": [],
+        "latestPublicStatus": null,
+        "sessionTotalAmount": 0,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4e086f5b-0cb0-4527-95e8-0cfb8627c91f",
+        "serverTime": "2026-09-22T09:20:37.156707Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "orders": [],
+        "groupTableIds": [],
+        "latestPublicStatus": null,
+        "sessionTotalAmount": 0,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1ead0ef6-0ade-46cf-83b4-55468b342ccd",
+        "serverTime": "2026-09-22T09:20:37.160485Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "6282f256-4698-483b-842d-e48b8b76abe7",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "d258342a-964f-4202-80fe-24fe8bf9bb1d",
+        "displayNumber": 1049,
+        "displayCode": "A-1049",
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.163029Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ea1fb858-92a5-4ed3-911b-6068d7ae41eb",
+        "serverTime": "2026-09-22T09:20:37.175358Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "5d79b125-a54d-4933-b0e0-408cf8cbaccf",
+        "tableId": "T01",
+        "displayName": "QA 01",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.163029Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T01",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T01",
+            "itemId": "fe0c36a9-c3a2-45d6-9c6b-9f66b30ad466",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "72caeebd-6b55-4e36-92f6-addd792ba256",
+        "serverTime": "2026-09-22T09:20:37.182354Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "expectedSessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+      "clientRequestId": "44162352-52c2-479d-a570-71b9d00b4cbc",
+      "expectedFinalAmount": 8000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0d9c69a5-20a8-4493-afad-44a22f22e615",
+        "serverTime": "2026-09-22T09:20:37.185717Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "5d79b125-a54d-4933-b0e0-408cf8cbaccf",
+        "tableId": "T01",
+        "displayName": "QA 01",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.163029Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T01",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T01",
+            "itemId": "fe0c36a9-c3a2-45d6-9c6b-9f66b30ad466",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "65fdab05-3696-413c-b283-5e0039a41e63",
+        "serverTime": "2026-09-22T09:20:37.193773Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T01"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "5d79b125-a54d-4933-b0e0-408cf8cbaccf",
+        "tableId": "T01",
+        "originTableId": "T01",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "be69537b-44b8-4e44-86a1-c16b1841fce4",
+        "serverTime": "2026-09-22T09:20:37.198346Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "expectedSessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+      "clientRequestId": "389633d8-edf3-4733-bb62-6235978afaa8",
+      "expectedFinalAmount": 8000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "TABLE_SESSION_CHANGED",
+        "message": "방문 정보가 변경되었습니다. 결제 금액을 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "8092c6ae-cf8d-4ec9-a4ab-6017e5660629",
+        "serverTime": "2026-09-22T09:20:37.204119Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "expectedSessionId": "d61be521-c417-4ed2-a3ab-781cedacde8e",
+      "clientRequestId": "44162352-52c2-479d-a570-71b9d00b4cbc",
+      "expectedFinalAmount": 8000,
+      "payerName": "different"
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "IDEMPOTENCY_CONFLICT",
+        "message": "동일 요청 ID에 다른 결제 정보가 사용되었습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "2ae970e0-edbc-4361-88e6-3c14f1dddeac",
+        "serverTime": "2026-09-22T09:20:37.207339Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T07",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "37fcb374-d099-4f04-a2e9-f36f38550c0a",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "1bb3e9c1-06f4-4677-8940-58eb722f0c5e",
+        "displayNumber": 1050,
+        "displayCode": "A-1050",
+        "table": {
+          "tableId": "T07",
+          "displayName": "QA 07"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.209723Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1909e382-1a0b-4fb4-b6a1-e13b2e33a4c8",
+        "serverTime": "2026-09-22T09:20:37.219836Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T08",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "89c3fa86-62eb-4f07-b918-d955ba17544a",
+      "expectedTotalAmount": 20000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 2
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "9967aed8-67f5-4e23-9aa6-e9d322899daa",
+        "displayNumber": 1051,
+        "displayCode": "A-1051",
+        "table": {
+          "tableId": "T08",
+          "displayName": "QA 08"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 20000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.223444Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 2,
+            "lineTotal": 20000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ca134a60-ef64-4cff-bac2-579da072f218",
+        "serverTime": "2026-09-22T09:20:37.234399Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/merge",
+    "method": "POST",
+    "request": {
+      "primaryTableId": "T07",
+      "secondaryTableId": "T08"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0f13a92f-df77-458f-9989-0caa2daa9fa2",
+        "serverTime": "2026-09-22T09:20:37.252778Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T08"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "7471bbad-4397-41b1-b42a-075b02bb05a3",
+        "tableId": "T08",
+        "originTableId": "T07",
+        "mergedTableIds": [
+          "T08"
+        ],
+        "subtotalAmount": 30000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 30000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 2,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c5edb066-18a3-4d12-9dd5-df9d6dc89458",
+        "serverTime": "2026-09-22T09:20:37.257655Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T07",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T07",
+          "displayName": "QA 07"
+        },
+        "orders": [
+          {
+            "orderId": "9967aed8-67f5-4e23-9aa6-e9d322899daa",
+            "displayCode": "A-1051",
+            "tableId": "T08",
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "totalAmount": 20000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:37.223444Z",
+            "items": [
+              {
+                "name": "닭발",
+                "quantity": 2,
+                "lineTotal": 20000,
+                "preparationStatus": "PENDING",
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN"
+              }
+            ]
+          },
+          {
+            "orderId": "1bb3e9c1-06f4-4677-8940-58eb722f0c5e",
+            "displayCode": "A-1050",
+            "tableId": "T07",
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "totalAmount": 10000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:37.209723Z",
+            "items": [
+              {
+                "name": "닭발",
+                "quantity": 1,
+                "lineTotal": 10000,
+                "preparationStatus": "PENDING",
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN"
+              }
+            ]
+          }
+        ],
+        "groupTableIds": [
+          "T07",
+          "T08"
+        ],
+        "latestPublicStatus": "accepted",
+        "sessionTotalAmount": 30000,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c3d3df62-7454-49d4-be76-b707c5ee54a0",
+        "serverTime": "2026-09-22T09:20:37.262664Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/discount",
+    "method": "POST",
+    "request": {
+      "tableId": "T07",
+      "discountRate": 20
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ebcb91c9-c302-4427-a1a6-a2269d5e5d45",
+        "serverTime": "2026-09-22T09:20:37.270487Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T08"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "7471bbad-4397-41b1-b42a-075b02bb05a3",
+        "tableId": "T08",
+        "originTableId": "T07",
+        "mergedTableIds": [
+          "T08"
+        ],
+        "subtotalAmount": 30000,
+        "discountRate": 20,
+        "discountAmount": 6000,
+        "finalAmount": 24000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 2,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e8a7e4bf-c159-445d-9c49-c1d9aa5e8d36",
+        "serverTime": "2026-09-22T09:20:37.276525Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/split",
+    "method": "POST",
+    "request": {
+      "tableId": "T08"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "d2c7fe72-b38c-4b32-8a6e-e05c6c6223dd",
+        "serverTime": "2026-09-22T09:20:37.285936Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T07"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "7471bbad-4397-41b1-b42a-075b02bb05a3",
+        "tableId": "T07",
+        "originTableId": "T07",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 20,
+        "discountAmount": 2000,
+        "finalAmount": 8000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0234f683-d9c6-4ee9-a843-05bf4e095956",
+        "serverTime": "2026-09-22T09:20:37.291739Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T08"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "e14adb18-761d-4db2-9137-de96499b7bf0",
+        "tableId": "T08",
+        "originTableId": "T08",
+        "mergedTableIds": [],
+        "subtotalAmount": 20000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 20000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4b9ac8dc-9532-4b14-9c90-d6c8167fd065",
+        "serverTime": "2026-09-22T09:20:37.296614Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/move",
+    "method": "POST",
+    "request": {
+      "fromTableId": "T08",
+      "toTableId": "T09"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "463db5d8-f43f-425e-bb0f-16cbb2dd53a0",
+        "serverTime": "2026-09-22T09:20:37.308208Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T08",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T08",
+          "displayName": "QA 08"
+        },
+        "orders": [
+          {
+            "orderId": "9967aed8-67f5-4e23-9aa6-e9d322899daa",
+            "displayCode": "A-1051",
+            "tableId": "T08",
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "totalAmount": 20000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:37.223444Z",
+            "items": [
+              {
+                "name": "닭발",
+                "quantity": 2,
+                "lineTotal": 20000,
+                "preparationStatus": "PENDING",
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN"
+              }
+            ]
+          }
+        ],
+        "groupTableIds": [
+          "T09"
+        ],
+        "latestPublicStatus": "accepted",
+        "sessionTotalAmount": 20000,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "6f3bad60-eb76-4e58-946f-2f0f99e0d1f1",
+        "serverTime": "2026-09-22T09:20:37.312549Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T09",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T09",
+          "displayName": "QA 09"
+        },
+        "orders": [
+          {
+            "orderId": "9967aed8-67f5-4e23-9aa6-e9d322899daa",
+            "displayCode": "A-1051",
+            "tableId": "T08",
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "totalAmount": 20000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:37.223444Z",
+            "items": [
+              {
+                "name": "닭발",
+                "quantity": 2,
+                "lineTotal": 20000,
+                "preparationStatus": "PENDING",
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN"
+              }
+            ]
+          }
+        ],
+        "groupTableIds": [
+          "T09"
+        ],
+        "latestPublicStatus": "accepted",
+        "sessionTotalAmount": 20000,
+        "activeCall": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "da65b97b-7885-4e22-bbf6-7960d35f8b51",
+        "serverTime": "2026-09-22T09:20:37.316779Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T10",
+      "clientRequestId": "ffa19903-3b4f-477a-96cb-186475387a59",
+      "items": [
+        {
+          "itemId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "e3e78229-d545-4618-a3f5-39f987dcf05f",
+        "displayCode": "A-1052"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e885750f-a723-4c4d-811e-22bc1a047835",
+        "serverTime": "2026-09-22T09:20:37.331161Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T10",
+      "clientRequestId": "ffa19903-3b4f-477a-96cb-186475387a59",
+      "items": [
+        {
+          "itemId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "e3e78229-d545-4618-a3f5-39f987dcf05f",
+        "displayCode": "A-1052"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "b86e4c69-353e-412c-8cab-3bdbb7e0a3f8",
+        "serverTime": "2026-09-22T09:20:37.337745Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T10"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b422a5b8-35bd-4d5c-9973-a8078b1c19a9",
+        "tableId": "T10",
+        "displayName": "QA 10",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.321097Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T10",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T10",
+            "itemId": "5338103b-2c13-42a5-aa8b-38d3f7cf0359",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": null,
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1c7ad2c8-8ae7-4c84-ae9a-9e6fc4b545b6",
+        "serverTime": "2026-09-22T09:20:37.344979Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/update",
+    "method": "POST",
+    "request": {
+      "operation": "quantity",
+      "itemId": "5338103b-2c13-42a5-aa8b-38d3f7cf0359",
+      "quantity": 3
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "2a14e352-f33d-4db1-84c6-e9eff7859200",
+        "serverTime": "2026-09-22T09:20:37.357182Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T10"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b422a5b8-35bd-4d5c-9973-a8078b1c19a9",
+        "tableId": "T10",
+        "originTableId": "T10",
+        "mergedTableIds": [],
+        "subtotalAmount": 30000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 30000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "86be8bb9-d39d-4c1f-aa5d-da8fbce276a5",
+        "serverTime": "2026-09-22T09:20:37.363992Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/update",
+    "method": "POST",
+    "request": {
+      "operation": "quantity",
+      "itemId": "5338103b-2c13-42a5-aa8b-38d3f7cf0359",
+      "quantity": 1.9
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "11bacb9c-2061-4173-8e93-8e997baa352a",
+        "serverTime": "2026-09-22T09:20:37.375730Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T10"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b422a5b8-35bd-4d5c-9973-a8078b1c19a9",
+        "tableId": "T10",
+        "originTableId": "T10",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "89966d74-98c9-4a45-84a7-f5c2faf845be",
+        "serverTime": "2026-09-22T09:20:37.382103Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/update",
+    "method": "POST",
+    "request": {
+      "operation": "cancel-item",
+      "itemId": "5338103b-2c13-42a5-aa8b-38d3f7cf0359"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "49e80610-ad14-4ed5-b1fb-0d55c4577d88",
+        "serverTime": "2026-09-22T09:20:37.390815Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T10"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b422a5b8-35bd-4d5c-9973-a8078b1c19a9",
+        "tableId": "T10",
+        "originTableId": "T10",
+        "mergedTableIds": [],
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 0,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "eeededae-ff8f-48f2-b6cc-5d8f95613193",
+        "serverTime": "2026-09-22T09:20:37.395874Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T11",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "519eee1c-fbf4-4a62-bf41-190c7b74761e",
+      "expectedTotalAmount": 18,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "soju",
+          "quantity": 2
+        }
+      ],
+      "paymentMethod": "COIN"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "9c86c29f-6485-4d0d-82d6-b38e10e0aca1",
+        "displayNumber": 1053,
+        "displayCode": "A-1053",
+        "table": {
+          "tableId": "T11",
+          "displayName": "QA 11"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "WAIVED",
+        "totalAmount": 0,
+        "orderKind": "GUEST",
+        "paymentMethod": "COIN",
+        "coinTotal": 18,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.399242Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "soju",
+            "name": "소주",
+            "basePrice": 4500,
+            "unitPrice": 0,
+            "quantity": 2,
+            "lineTotal": 0,
+            "coinUnitPrice": 9,
+            "preparationStation": "SERVING",
+            "preparationStatus": "READY",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "bb0da56a-d02f-49a0-90a3-59bc5c657dd0",
+        "serverTime": "2026-09-22T09:20:37.411376Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T11"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+        "tableId": "T11",
+        "originTableId": "T11",
+        "mergedTableIds": [],
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1942ad10-c097-4ea2-8dc6-669ba3f17148",
+        "serverTime": "2026-09-22T09:20:37.417159Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/status",
+    "method": "POST",
+    "request": {
+      "orderId": "9c86c29f-6485-4d0d-82d6-b38e10e0aca1",
+      "status": "SERVED"
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "COINS_NOT_RECEIVED",
+        "message": "엽전을 먼저 수령해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "536dadae-1aa0-4af2-9905-180244b58776",
+        "serverTime": "2026-09-22T09:20:37.420659Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T11"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+        "tableId": "T11",
+        "originTableId": "T11",
+        "mergedTableIds": [],
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "cf4b70fb-e6c7-4670-bf76-5b34fdf74dba",
+        "serverTime": "2026-09-22T09:20:37.426800Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T11"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+        "tableId": "T11",
+        "displayName": "QA 11",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.399242Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T11",
+            "amount": 0,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T11",
+            "itemId": "47445208-4455-46d7-9b31-e31efe70a47b",
+            "name": "소주",
+            "quantity": 2,
+            "lineTotal": 0,
+            "status": "ACTIVE",
+            "preparationStatus": "READY",
+            "note": "QA synthetic",
+            "paymentMethod": "COIN",
+            "coinAmount": 18,
+            "coinReceived": false,
+            "preparationStation": "SERVING",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "8a202ae4-90af-4a46-9ad7-b3dd9fb342aa",
+        "serverTime": "2026-09-22T09:20:37.436815Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T11",
+      "expectedSessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+      "clientRequestId": "9c6ff317-576a-43c9-98a0-bee144cd960e",
+      "expectedFinalAmount": 0,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "COINS_NOT_RECEIVED",
+        "message": "미수령 엽전 주문을 먼저 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ab82283d-0bb2-4fa7-ad36-fbf9f2790f99",
+        "serverTime": "2026-09-22T09:20:37.442459Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/coins/receive",
+    "method": "POST",
+    "request": {
+      "orderId": "9c86c29f-6485-4d0d-82d6-b38e10e0aca1",
+      "expectedCoinTotal": 18
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "8d406cea-c045-40a9-b8d9-67ad1bf155b1",
+        "serverTime": "2026-09-22T09:20:37.448716Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/coins/receive",
+    "method": "POST",
+    "request": {
+      "orderId": "9c86c29f-6485-4d0d-82d6-b38e10e0aca1",
+      "expectedCoinTotal": 18
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "27ef906e-9450-48ce-9551-985cbf3a54e4",
+        "serverTime": "2026-09-22T09:20:37.449699Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/status",
+    "method": "POST",
+    "request": {
+      "orderId": "9c86c29f-6485-4d0d-82d6-b38e10e0aca1",
+      "status": "SERVED"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "493f78c4-e764-4d71-9c52-20d277683106",
+        "serverTime": "2026-09-22T09:20:37.458836Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T11"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+        "tableId": "T11",
+        "originTableId": "T11",
+        "mergedTableIds": [],
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "01909c86-9c33-4f29-a372-3f6a970f6ed7",
+        "serverTime": "2026-09-22T09:20:37.464321Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T11"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+        "tableId": "T11",
+        "displayName": "QA 11",
+        "orderStatus": "SERVED",
+        "openedAt": "2026-09-22T09:20:37.399242Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T11",
+            "amount": 0,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T11",
+            "itemId": "47445208-4455-46d7-9b31-e31efe70a47b",
+            "name": "소주",
+            "quantity": 2,
+            "lineTotal": 0,
+            "status": "ACTIVE",
+            "preparationStatus": "SERVED",
+            "note": "QA synthetic",
+            "paymentMethod": "COIN",
+            "coinAmount": 18,
+            "coinReceived": true,
+            "preparationStation": "SERVING",
+            "preparationLocked": true
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4370d7c3-a6cc-4f5f-8cb2-a0bb73030fa2",
+        "serverTime": "2026-09-22T09:20:37.471835Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T11",
+      "expectedSessionId": "1e489080-90eb-4178-a3d3-09a958527dac",
+      "clientRequestId": "cf4d7dad-62c9-4865-9e04-1ebe21271de1",
+      "expectedFinalAmount": 0,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "59bb0219-556c-4a79-8c8e-aecb80b64930",
+        "serverTime": "2026-09-22T09:20:37.481460Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T11"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": null,
+        "tableId": "T11",
+        "displayName": "QA 11",
+        "orderStatus": null,
+        "openedAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": null,
+        "orderCount": 0,
+        "items": [],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "e79224f3-2294-4343-9546-7fb056fe4407",
+        "serverTime": "2026-09-22T09:20:37.485344Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/staff-members/import",
+    "method": "POST",
+    "request": {
+      "csv": "staff_id,name,affiliation,active,sort_order\nS-001,QA 직원,QA,true,1\n"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "importedCount": 1
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4ac35c17-45ee-426b-a84e-6e8f711fda02",
+        "serverTime": "2026-09-22T09:20:37.489573Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/members/list",
+    "method": "POST",
+    "request": null,
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "members": [
+          {
+            "staffId": "S-001",
+            "name": "QA 직원",
+            "affiliation": "QA",
+            "active": true
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "bda2e9f7-4e61-4dda-8db6-f6e1755fcc29",
+        "serverTime": "2026-09-22T09:20:37.491772Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/service",
+    "method": "POST",
+    "request": {
+      "tableId": "T12",
+      "clientRequestId": "e2fa913e-8bdd-4679-a9e5-96747c458b4f",
+      "chargedStaffId": "S-001",
+      "serviceMessage": "QA service",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "43fb7a44-3aa8-40d3-a425-20902d3c709e",
+        "displayNumber": 1054,
+        "displayCode": "A-1054",
+        "table": {
+          "tableId": "T12",
+          "displayName": "QA 12"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "WAIVED",
+        "totalAmount": 0,
+        "orderKind": "SERVICE",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.495464Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ],
+        "serviceMessage": "QA service",
+        "staffChargeAmount": 8000,
+        "staffDiscountRate": 20,
+        "serviceGrossAmount": 10000,
+        "chargedStaff": {
+          "staffId": "S-001",
+          "name": "QA 직원"
+        }
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "7c35893e-15d1-4cb5-8cc4-4a80fbe8b5f6",
+        "serverTime": "2026-09-22T09:20:37.509282Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T12"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "ff6c8f2b-2e45-4866-9c41-27e671a1c130",
+        "tableId": "T12",
+        "originTableId": "T12",
+        "mergedTableIds": [],
+        "subtotalAmount": 0,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 0,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 1,
+        "serviceGrossAmount": 10000,
+        "serviceLines": [
+          {
+            "displayCode": "A-1054",
+            "serviceMessage": "QA service",
+            "grossAmount": 10000,
+            "chargedStaffName": "QA 직원"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "62cbbf77-2611-4ea7-971d-3583d70da29b",
+        "serverTime": "2026-09-22T09:20:37.517728Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/service",
+    "method": "POST",
+    "request": {
+      "tableId": "T12",
+      "clientRequestId": "e2fa913e-8bdd-4679-a9e5-96747c458b4f",
+      "chargedStaffId": "S-001",
+      "serviceMessage": "QA service",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "43fb7a44-3aa8-40d3-a425-20902d3c709e",
+        "displayNumber": 1054,
+        "displayCode": "A-1054",
+        "table": {
+          "tableId": "T12",
+          "displayName": "QA 12"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "WAIVED",
+        "totalAmount": 0,
+        "orderKind": "SERVICE",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.495464Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ],
+        "serviceMessage": "QA service",
+        "staffChargeAmount": 8000,
+        "staffDiscountRate": 20,
+        "serviceGrossAmount": 10000,
+        "chargedStaff": {
+          "staffId": "S-001",
+          "name": "QA 직원"
+        }
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "62fe5b13-4e32-4836-be9e-c8a92ac51c98",
+        "serverTime": "2026-09-22T09:20:37.524470Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/service",
+    "method": "POST",
+    "request": {
+      "tableId": "T12",
+      "clientRequestId": "e2fa913e-8bdd-4679-a9e5-96747c458b4f",
+      "chargedStaffId": "S-001",
+      "serviceMessage": "changed",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 409,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "IDEMPOTENCY_CONFLICT",
+        "message": "동일 요청 ID에 다른 서비스 정보가 사용되었습니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "4e7b84e4-74d5-417d-9b52-6e829e5c0653",
+        "serverTime": "2026-09-22T09:20:37.530125Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/settlements/list",
+    "method": "POST",
+    "request": {
+      "includeSettled": true
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "staffDiscountRate": 20,
+        "members": [
+          {
+            "staffId": "S-001",
+            "name": "QA 직원",
+            "affiliation": "QA",
+            "serviceOrderCount": 1,
+            "grossAmount": 10000,
+            "chargeAmount": 8000,
+            "settlementStatus": "UNSETTLED",
+            "settledAmount": null,
+            "settledAt": null,
+            "orders": [
+              {
+                "orderId": "43fb7a44-3aa8-40d3-a425-20902d3c709e",
+                "displayCode": "A-1054",
+                "tableId": "T12",
+                "serviceMessage": "QA service",
+                "grossAmount": 10000,
+                "chargeAmount": 8000,
+                "createdAt": "2026-09-22T09:20:37.495464Z"
+              }
+            ]
+          }
+        ],
+        "totalChargeAmount": 8000,
+        "unsettledStaffCount": 1,
+        "canResetBeforeStart": false,
+        "revision": "26d2ae9a0c1e9e4ed8cd5263d362f7bd"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "ea2226ab-1d45-4a34-9254-63177eafc3e2",
+        "serverTime": "2026-09-22T09:20:37.534975Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/settlements/confirm",
+    "method": "POST",
+    "request": {
+      "staffId": "S-001",
+      "expectedChargeAmount": 8000
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "staffId": "S-001",
+        "name": "QA 직원",
+        "settlementStatus": "SETTLED",
+        "settledAmount": 8000,
+        "settledAt": "2026-09-22T09:20:37.538285Z"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "1be75e00-b231-4894-9a84-e0a8db550b35",
+        "serverTime": "2026-09-22T09:20:37.540128Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/tables/T18/rotate-token",
+    "method": "POST",
+    "request": {},
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T18",
+        "tableToken": "[REDACTED]",
+        "url": "http://localhost:4179/t/T18?token=[REDACTED]",
+        "qrSvg": "[REDACTED]"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "c1813b6d-9125-4747-83d4-b03b81768528",
+        "serverTime": "2026-09-22T09:20:37.544539Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T18",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_TABLE_TOKEN",
+        "message": "테이블 QR 정보를 다시 확인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "48b542c7-4635-4bad-a5b3-378a6576ff31",
+        "serverTime": "2026-09-22T09:20:37.546681Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T01",
+          "displayName": "QA 01"
+        },
+        "store": {
+          "name": "행복식당 본점",
+          "open": true,
+          "notice": "주문은 이 테이블로 전달됩니다. 결제는 식사 후 카운터에서 진행해 주세요."
+        },
+        "statusPollSeconds": 15,
+        "categories": [
+          {
+            "categoryId": "main",
+            "label": "메인",
+            "heading": "메인 메뉴"
+          },
+          {
+            "categoryId": "side",
+            "label": "사이드",
+            "heading": "사이드 메뉴"
+          },
+          {
+            "categoryId": "alcohol",
+            "label": "주류",
+            "heading": "주류"
+          },
+          {
+            "categoryId": "beverage",
+            "label": "음료",
+            "heading": "음료"
+          }
+        ],
+        "items": [
+          {
+            "menuId": "chicken-feet",
+            "categoryId": "main",
+            "name": "닭발",
+            "description": "닭발",
+            "basePrice": 10000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "tteokbokki-egg-fried-set",
+            "categoryId": "main",
+            "name": "국물 떡볶이 + 계란 + 튀김 SET",
+            "description": "국물 떡볶이 + 계란 + 튀김 SET",
+            "basePrice": 10000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "jjapagetti-egg-cheese",
+            "categoryId": "main",
+            "name": "짜계치 (짜파게티 + 계란 + 치즈)",
+            "description": "짜계치 (짜파게티 + 계란 + 치즈)",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "spicy-pork",
+            "categoryId": "main",
+            "name": "제육볶음",
+            "description": "제육볶음",
+            "basePrice": 9000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "perilla-egg-fry-sikhye-set",
+            "categoryId": "main",
+            "name": "꼬소들기름계란후라이 + 식혜 SET",
+            "description": "꼬소들기름계란후라이 + 식혜 SET",
+            "basePrice": 8000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "qa-price",
+            "categoryId": "main",
+            "name": "QA 검증 메뉴",
+            "description": "QA only",
+            "basePrice": 12000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "seaweed-soup-rice",
+            "categoryId": "side",
+            "name": "해장미역국밥",
+            "description": "해장미역국밥",
+            "basePrice": 7000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "tuna-mayo-rice-ball",
+            "categoryId": "side",
+            "name": "참치마요주먹밥",
+            "description": "참치마요주먹밥",
+            "basePrice": 6000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "cheese-egg-custard",
+            "categoryId": "side",
+            "name": "폭탄치즈대왕 계란찜",
+            "description": "폭탄치즈대왕 계란찜",
+            "basePrice": 9000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "dried-snack-platter",
+            "categoryId": "side",
+            "name": "마른 안주 (뻥튀기 / 쥐포 / 오징어)",
+            "description": "마른 안주 (뻥튀기 / 쥐포 / 오징어)",
+            "basePrice": 7000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "red-bean-bingsu",
+            "categoryId": "side",
+            "name": "옛날팥빙수",
+            "description": "옛날팥빙수",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "KITCHEN"
+          },
+          {
+            "menuId": "soju",
+            "categoryId": "alcohol",
+            "name": "소주",
+            "description": "소주",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 9,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "beer",
+            "categoryId": "alcohol",
+            "name": "맥주",
+            "description": "맥주",
+            "basePrice": 4500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 9,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "banana-milk-highball",
+            "categoryId": "alcohol",
+            "name": "바나나 우유 하이볼",
+            "description": "바나나 우유 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 10,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "mix-coffee-highball",
+            "categoryId": "alcohol",
+            "name": "믹스 커피 하이볼",
+            "description": "믹스 커피 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 10,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "classic-highball",
+            "categoryId": "alcohol",
+            "name": "기본 하이볼",
+            "description": "기본 하이볼",
+            "basePrice": 5000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "frozen-sikhye",
+            "categoryId": "beverage",
+            "name": "살얼음 식혜",
+            "description": "살얼음 식혜",
+            "basePrice": 3000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 8,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "eolbaksa",
+            "categoryId": "beverage",
+            "name": "얼박사",
+            "description": "얼박사",
+            "basePrice": 3000,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": 8,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "cola",
+            "categoryId": "beverage",
+            "name": "콜라",
+            "description": "콜라",
+            "basePrice": 1500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          },
+          {
+            "menuId": "cider",
+            "categoryId": "beverage",
+            "name": "사이다",
+            "description": "사이다",
+            "basePrice": 1500,
+            "imageUrl": null,
+            "available": true,
+            "minQuantity": 1,
+            "maxQuantity": 10,
+            "allergens": [],
+            "origin": null,
+            "badgeTags": [],
+            "coinPrice": null,
+            "preparationStation": "SERVING"
+          }
+        ],
+        "generatedAt": "2026-09-22T09:20:37.553288Z"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "a533b6a3-c4e0-424d-be87-e7cf86b51d5a",
+        "serverTime": "2026-09-22T09:20:37.553318Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/bootstrap",
+    "method": "POST",
+    "request": {
+      "tableId": "T01",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 403,
+    "response": {
+      "raw": "Invalid CORS request"
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/list",
+    "method": "POST",
+    "request": null,
+    "status": 401,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "STAFF_TOKEN_EXPIRED",
+        "message": "인증이 만료되었습니다. 다시 로그인해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "7398b543-bf27-4ddb-be1a-ee0df6e30afa",
+        "serverTime": "2026-09-22T09:20:37.554954Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T13",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "8d31e5ef-d29d-4d5e-9ed5-40ab2b919507",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "a81cc44e-9c1b-43e0-9079-146f4e034ec7",
+        "displayNumber": 1055,
+        "displayCode": "A-1055",
+        "table": {
+          "tableId": "T13",
+          "displayName": "QA 13"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.557193Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "208bbf10-ed61-441b-a920-cbe89ca73e17",
+        "serverTime": "2026-09-22T09:20:37.568286Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/calls/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T13",
+      "tableToken": "[REDACTED]",
+      "reason": "PAYMENT_REQUEST",
+      "clientRequestId": "1cc9419a-0e74-4181-936b-40febf4873a3"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "callId": "5af084b0-64c2-4a05-ab60-526fc1c6f5cb",
+        "createdAt": "2026-09-22T09:20:37.576412Z",
+        "status": "PENDING",
+        "idempotentReplay": false
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "34c63513-0f1f-4a60-bd5a-4276d3b57154",
+        "serverTime": "2026-09-22T09:20:37.576885Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T13"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "5901b1a5-75e6-48d0-870c-0508792e43ff",
+        "tableId": "T13",
+        "originTableId": "T13",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0f4a7a17-54bb-41e2-885d-6b9fb6a57896",
+        "serverTime": "2026-09-22T09:20:37.581236Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T13"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "5901b1a5-75e6-48d0-870c-0508792e43ff",
+        "tableId": "T13",
+        "displayName": "QA 13",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.557193Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T13",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T13",
+            "itemId": "6d1c06bf-bc21-4221-932d-c1bf8f2ec0a6",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": {
+          "count": 1,
+          "reasons": [
+            "PAYMENT_REQUEST"
+          ],
+          "firstCalledAt": "2026-09-22T09:20:37.570846Z",
+          "lastCalledAt": "2026-09-22T09:20:37.570846Z",
+          "callIds": [
+            "5af084b0-64c2-4a05-ab60-526fc1c6f5cb"
+          ]
+        }
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "880be778-e64a-48d4-a403-b0d6dbc081f9",
+        "serverTime": "2026-09-22T09:20:37.587957Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T13",
+      "expectedSessionId": "5901b1a5-75e6-48d0-870c-0508792e43ff",
+      "clientRequestId": "fb69d98f-255c-4df7-a4b4-71733f9ffbb0",
+      "expectedFinalAmount": 10000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "7bb25bd9-70b4-4686-89c9-a602f35c8d94",
+        "serverTime": "2026-09-22T09:20:37.595304Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/list",
+    "method": "POST",
+    "request": {
+      "tableId": "T13",
+      "tableToken": "[REDACTED]"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "table": {
+          "tableId": "T13",
+          "displayName": "QA 13"
+        },
+        "orders": [],
+        "groupTableIds": [],
+        "latestPublicStatus": null,
+        "sessionTotalAmount": 0,
+        "activeCall": {
+          "callId": "5af084b0-64c2-4a05-ab60-526fc1c6f5cb",
+          "reason": "PAYMENT_REQUEST",
+          "createdAt": "2026-09-22T09:20:37.570846Z"
+        }
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5087a692-dbb2-46a6-b261-e322d4ec63a6",
+        "serverTime": "2026-09-22T09:20:37.599557Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa-fractional",
+    "method": "PUT",
+    "request": {
+      "categoryId": "main",
+      "name": "QA 검증 메뉴",
+      "description": "QA only",
+      "basePrice": 1000.9,
+      "available": true,
+      "minQuantity": 1,
+      "maxQuantity": 10,
+      "sortOrder": 99
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5284ca07-f964-4501-b35a-c41b84936468",
+        "serverTime": "2026-09-22T09:20:37.604165Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T14",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "a716b388-6656-4e8f-b4c2-abbad5e406eb",
+      "expectedTotalAmount": 10000,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "chicken-feet",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "c13c8f37-54b2-4d82-af3e-4584fc363634",
+        "displayNumber": 1056,
+        "displayCode": "A-1056",
+        "table": {
+          "tableId": "T14",
+          "displayName": "QA 14"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 10000,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.606535Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "chicken-feet",
+            "name": "닭발",
+            "basePrice": 10000,
+            "unitPrice": 10000,
+            "quantity": 1,
+            "lineTotal": 10000,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "d2a47a6e-62b5-43de-a4ff-0059cd4186de",
+        "serverTime": "2026-09-22T09:20:37.619199Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/bill",
+    "method": "POST",
+    "request": {
+      "tableId": "T14"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b91396b1-aa0e-4dec-819a-0560f65db62e",
+        "tableId": "T14",
+        "originTableId": "T14",
+        "mergedTableIds": [],
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "serviceOrderCount": 0,
+        "serviceGrossAmount": 0,
+        "serviceLines": []
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "86c49956-ccf9-46f4-afb8-bc4471aa4b64",
+        "serverTime": "2026-09-22T09:20:37.625093Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T14"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b91396b1-aa0e-4dec-819a-0560f65db62e",
+        "tableId": "T14",
+        "displayName": "QA 14",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.606535Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T14",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T14",
+            "itemId": "8921d86c-8daf-4c00-bdf5-2e467db6a249",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "6d3a8268-adb5-4290-ad04-9a9aaa7d26c0",
+        "serverTime": "2026-09-22T09:20:37.631227Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/detail",
+    "method": "POST",
+    "request": {
+      "tableId": "T14"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "sessionId": "b91396b1-aa0e-4dec-819a-0560f65db62e",
+        "tableId": "T14",
+        "displayName": "QA 14",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.606535Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T14",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T14",
+            "itemId": "8921d86c-8daf-4c00-bdf5-2e467db6a249",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "022797b8-7c21-4f26-8a7b-5b15309d9ba0",
+        "serverTime": "2026-09-22T09:20:37.638643Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/tables/confirm-payment",
+    "method": "POST",
+    "request": {
+      "tableId": "T14",
+      "expectedSessionId": "b91396b1-aa0e-4dec-819a-0560f65db62e",
+      "clientRequestId": "417716fa-d9c5-48d0-898c-360553225701",
+      "expectedFinalAmount": 10000,
+      "payerName": "QA synthetic payer"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "14a5ce10-b3f0-4953-8899-9f5a554d2a85",
+        "serverTime": "2026-09-22T09:20:37.647303Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/staff/orders/update",
+    "method": "POST",
+    "request": {
+      "operation": "quantity",
+      "itemId": "8921d86c-8daf-4c00-bdf5-2e467db6a249",
+      "quantity": 2
+    },
+    "status": 404,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "OPEN_SESSION_NOT_FOUND",
+        "message": "사용 중인 테이블이 아닙니다.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "fdfa57cf-2db1-47c5-9736-10428cae3605",
+        "serverTime": "2026-09-22T09:20:37.648979Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa-delete",
+    "method": "PUT",
+    "request": {
+      "categoryId": "main",
+      "name": "QA 검증 메뉴",
+      "description": "QA only",
+      "basePrice": 1234,
+      "available": true,
+      "minQuantity": 1,
+      "maxQuantity": 10,
+      "sortOrder": 99
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "0fc348d9-443b-4fe6-963f-ea3051b0251a",
+        "serverTime": "2026-09-22T09:20:37.653339Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/create",
+    "method": "POST",
+    "request": {
+      "tableId": "T15",
+      "tableToken": "[REDACTED]",
+      "clientRequestId": "21a81e01-48a7-4a3b-9e24-c1009ab4eb1a",
+      "expectedTotalAmount": 1234,
+      "note": "QA synthetic",
+      "items": [
+        {
+          "menuId": "qa-delete",
+          "quantity": 1
+        }
+      ]
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "02558c6f-d9e0-4fd9-affe-2dcacb0af0b4",
+        "displayNumber": 1057,
+        "displayCode": "A-1057",
+        "table": {
+          "tableId": "T15",
+          "displayName": "QA 15"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 1234,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.655876Z",
+        "idempotentReplay": false,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "qa-delete",
+            "name": "QA 검증 메뉴",
+            "basePrice": 1234,
+            "unitPrice": 1234,
+            "quantity": 1,
+            "lineTotal": 1234,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "df6a0512-4c3a-45cc-8f1b-602c13e498f7",
+        "serverTime": "2026-09-22T09:20:37.667091Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa-delete",
+    "method": "DELETE",
+    "request": {},
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": null,
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "fe9ec4cc-9f76-4b9d-bdd2-e54c6b7811cd",
+        "serverTime": "2026-09-22T09:20:37.670902Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/customer/orders/get",
+    "method": "POST",
+    "request": {
+      "tableId": "T15",
+      "tableToken": "[REDACTED]",
+      "orderId": "02558c6f-d9e0-4fd9-affe-2dcacb0af0b4"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "orderId": "02558c6f-d9e0-4fd9-affe-2dcacb0af0b4",
+        "displayNumber": 1057,
+        "displayCode": "A-1057",
+        "table": {
+          "tableId": "T15",
+          "displayName": "QA 15"
+        },
+        "status": "RECEIVED",
+        "publicStatus": "accepted",
+        "paymentStatus": "UNPAID",
+        "totalAmount": 1234,
+        "orderKind": "GUEST",
+        "paymentMethod": "KRW",
+        "coinTotal": 0,
+        "coinReceived": false,
+        "createdAt": "2026-09-22T09:20:37.655876Z",
+        "idempotentReplay": true,
+        "items": [
+          {
+            "lineNo": 1,
+            "menuId": "qa-delete",
+            "name": "QA 검증 메뉴",
+            "basePrice": 1234,
+            "unitPrice": 1234,
+            "quantity": 1,
+            "lineTotal": 1234,
+            "coinUnitPrice": 0,
+            "preparationStation": "KITCHEN",
+            "preparationStatus": "PENDING",
+            "status": "ACTIVE"
+          }
+        ]
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "232656b3-7328-4a13-a00c-90934435417b",
+        "serverTime": "2026-09-22T09:20:37.675070Z"
+      }
+    }
+  },
+  {
+    "path": "/api/v1/admin/menus/qa-delete",
+    "method": "PUT",
+    "request": {
+      "categoryId": "main",
+      "name": "QA 검증 메뉴",
+      "description": "QA only",
+      "basePrice": 1234,
+      "available": true,
+      "minQuantity": 1,
+      "maxQuantity": 10,
+      "sortOrder": 99
+    },
+    "status": 400,
+    "response": {
+      "success": false,
+      "data": null,
+      "error": {
+        "code": "INVALID_REQUEST",
+        "message": "삭제한 메뉴 ID는 다시 사용할 수 없습니다. 새 ID로 추가해 주세요.",
+        "retryable": false,
+        "details": null
+      },
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "cfdf148b-a412-4c1f-9a5a-f3433366b3cc",
+        "serverTime": "2026-09-22T09:20:37.677846Z"
+      }
+    }
+  }
+]

@@ -1,0 +1,336 @@
+[
+  {
+    "name": "edit/payment DB invariant T14",
+    "result": "PASS",
+    "actual": "0"
+  },
+  {
+    "name": "edit/payment accepted serial outcomes",
+    "result": "PASS",
+    "actual": [
+      [
+        404,
+        {
+          "success": false,
+          "data": null,
+          "error": {
+            "code": "OPEN_SESSION_NOT_FOUND",
+            "message": "사용 중인 테이블이 아닙니다.",
+            "retryable": false,
+            "details": null
+          },
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "92299259-0c4b-4ba3-96d8-2d1317b8b2c4",
+            "serverTime": "2026-09-22T09:20:37.829106Z"
+          }
+        }
+      ],
+      [
+        200,
+        {
+          "success": true,
+          "data": null,
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "20856ca1-3492-4da0-9802-602336a06069",
+            "serverTime": "2026-09-22T09:20:37.827186Z"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "order/payment no server error",
+    "result": "PASS",
+    "actual": [
+      [
+        200,
+        {
+          "success": true,
+          "data": {
+            "orderId": "1eab6964-7b21-46f5-9b9c-92c5214d9632",
+            "displayNumber": 1060,
+            "displayCode": "A-1060",
+            "table": {
+              "tableId": "T17",
+              "displayName": "QA 17"
+            },
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "paymentStatus": "UNPAID",
+            "totalAmount": 10000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:37.858729Z",
+            "idempotentReplay": false,
+            "items": [
+              {
+                "lineNo": 1,
+                "menuId": "chicken-feet",
+                "name": "닭발",
+                "basePrice": 10000,
+                "unitPrice": 10000,
+                "quantity": 1,
+                "lineTotal": 10000,
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN",
+                "preparationStatus": "PENDING",
+                "status": "ACTIVE"
+              }
+            ]
+          },
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "2d668673-8ba9-4752-8080-133085cd6c6a",
+            "serverTime": "2026-09-22T09:20:37.875826Z"
+          }
+        }
+      ],
+      [
+        200,
+        {
+          "success": true,
+          "data": null,
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "e629d7d9-b844-44f2-a355-fbcfd7ffd5ab",
+            "serverTime": "2026-09-22T09:20:37.864644Z"
+          }
+        }
+      ]
+    ]
+  },
+  {
+    "name": "race paid amounts match snapshots",
+    "result": "PASS",
+    "actual": "0"
+  },
+  {
+    "name": "staff overflow quantity rejected",
+    "result": "FAIL",
+    "actual": {
+      "response": [
+        200,
+        {
+          "success": true,
+          "data": null,
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "0b35473b-aca1-4d11-9ae2-0505f681c9a0",
+            "serverTime": "2026-09-22T09:20:37.952916Z"
+          }
+        }
+      ],
+      "detail": {
+        "sessionId": "d8587fa9-24a8-4aab-aa45-d5b9d9617519",
+        "tableId": "T19",
+        "displayName": "QA 19",
+        "orderStatus": "RECEIVED",
+        "openedAt": "2026-09-22T09:20:37.925604Z",
+        "departureAt": null,
+        "mergedTableIds": [],
+        "originTableId": null,
+        "subtotalAmount": 10000,
+        "discountRate": 0,
+        "discountAmount": 0,
+        "finalAmount": 10000,
+        "paymentStatus": "UNPAID",
+        "orderCount": 1,
+        "mergeMembers": [
+          {
+            "tableId": "T19",
+            "amount": 10000,
+            "orderCount": 1
+          }
+        ],
+        "items": [
+          {
+            "tableId": "T19",
+            "itemId": "d6a41dda-4cd0-4390-a956-5540f9035ffe",
+            "name": "닭발",
+            "quantity": 1,
+            "lineTotal": 10000,
+            "status": "ACTIVE",
+            "preparationStatus": "PENDING",
+            "note": "QA synthetic",
+            "paymentMethod": "KRW",
+            "coinAmount": 0,
+            "coinReceived": false,
+            "preparationStation": "KITCHEN",
+            "preparationLocked": false
+          }
+        ],
+        "notes": [],
+        "call": null
+      }
+    }
+  },
+  {
+    "name": "admin overflow price rejected",
+    "result": "FAIL",
+    "actual": {
+      "response": [
+        200,
+        {
+          "success": true,
+          "data": null,
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "cfabcd54-10c6-4d8b-9ace-4dff65fec0dc",
+            "serverTime": "2026-09-22T09:20:37.964911Z"
+          }
+        }
+      ],
+      "saved_price": "0"
+    }
+  },
+  {
+    "name": "required clientRequestId omission rejected",
+    "result": "FAIL",
+    "actual": {
+      "first": [
+        200,
+        {
+          "success": true,
+          "data": {
+            "orderId": "a17ad573-bbd1-4ae9-ad85-f07848b0429e",
+            "displayNumber": 1062,
+            "displayCode": "A-1062",
+            "table": {
+              "tableId": "T19",
+              "displayName": "QA 19"
+            },
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "paymentStatus": "UNPAID",
+            "totalAmount": 10000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:38.011165Z",
+            "idempotentReplay": false,
+            "items": [
+              {
+                "lineNo": 1,
+                "menuId": "chicken-feet",
+                "name": "닭발",
+                "basePrice": 10000,
+                "unitPrice": 10000,
+                "quantity": 1,
+                "lineTotal": 10000,
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN",
+                "preparationStatus": "PENDING",
+                "status": "ACTIVE"
+              }
+            ]
+          },
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "cf6b3929-605a-4d5f-91cd-0bc48aa2d2f8",
+            "serverTime": "2026-09-22T09:20:38.024649Z"
+          }
+        }
+      ],
+      "second": [
+        200,
+        {
+          "success": true,
+          "data": {
+            "orderId": "8646b6da-d10c-4961-858a-5c5bcb9d7b59",
+            "displayNumber": 1063,
+            "displayCode": "A-1063",
+            "table": {
+              "tableId": "T19",
+              "displayName": "QA 19"
+            },
+            "status": "RECEIVED",
+            "publicStatus": "accepted",
+            "paymentStatus": "UNPAID",
+            "totalAmount": 10000,
+            "orderKind": "GUEST",
+            "paymentMethod": "KRW",
+            "coinTotal": 0,
+            "coinReceived": false,
+            "createdAt": "2026-09-22T09:20:38.027560Z",
+            "idempotentReplay": false,
+            "items": [
+              {
+                "lineNo": 1,
+                "menuId": "chicken-feet",
+                "name": "닭발",
+                "basePrice": 10000,
+                "unitPrice": 10000,
+                "quantity": 1,
+                "lineTotal": 10000,
+                "coinUnitPrice": 0,
+                "preparationStation": "KITCHEN",
+                "preparationStatus": "PENDING",
+                "status": "ACTIVE"
+              }
+            ]
+          },
+          "error": null,
+          "meta": {
+            "apiVersion": "v1",
+            "requestId": "4f47df15-b15a-405e-95da-4bd4f4ef80f4",
+            "serverTime": "2026-09-22T09:20:38.035220Z"
+          }
+        }
+      ]
+    }
+  },
+  {
+    "name": "settlement reopen",
+    "result": "PASS",
+    "actual": [
+      200,
+      {
+        "success": true,
+        "data": {
+          "staffId": "S-001",
+          "settlementStatus": "UNSETTLED"
+        },
+        "error": null,
+        "meta": {
+          "apiVersion": "v1",
+          "requestId": "6e69195c-1761-423f-b321-20ada45ac670",
+          "serverTime": "2026-09-22T09:20:38.045248Z"
+        }
+      }
+    ]
+  },
+  {
+    "name": "settlement reconfirm",
+    "result": "PASS",
+    "actual": [
+      200,
+      {
+        "success": true,
+        "data": {
+          "staffId": "S-001",
+          "name": "QA 직원",
+          "settlementStatus": "SETTLED",
+          "settledAmount": 8000,
+          "settledAt": "2026-09-22T09:20:38.049148Z"
+        },
+        "error": null,
+        "meta": {
+          "apiVersion": "v1",
+          "requestId": "2a8b9775-6e4d-4621-ae45-0b459e1c014a",
+          "serverTime": "2026-09-22T09:20:38.050683Z"
+        }
+      }
+    ]
+  }
+]

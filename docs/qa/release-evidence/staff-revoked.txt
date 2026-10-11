@@ -1,0 +1,17 @@
+- heading "운영 기기 인증" [level=1]
+- paragraph: 이 기기를 어느 스테이션으로 쓸지 고르고 passcode를 입력하세요. 인증은 14시간 유지됩니다.
+- paragraph: 스테이션
+- radiogroup "스테이션":
+  - radio "카운터"
+  - radio "주방"
+  - radio "서빙"
+  - radio "결제"
+- paragraph: passcode
+- textbox "passcode":
+  - /placeholder: passcode 입력
+- button "보기"
+- paragraph: 12자 이상 문구를 사용합니다. 숫자 4자리는 사용하지 않습니다.
+- button "인증하고 시작하기" [disabled]:
+  - generic: 인증하고 시작하기
+- paragraph: passcode는 기기별이 아니라 운영진 공용입니다. 기록에는 개인이 아니라 위에서 고른 스테이션이 남습니다.
+- paragraph: passcode가 샌 것 같으면 총괄에게 알려 주세요. Settings의 STAFF_TOKEN_EPOCH를 올리면 모든 기기 인증이 즉시 해제됩니다.
