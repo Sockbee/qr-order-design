@@ -1,0 +1,74 @@
+[
+  {
+    "scenario": "normal QR / missing or invalid QR",
+    "result": "PASS"
+  },
+  {
+    "scenario": "cart add2 => 20000 / reload / quantity1 => 10000",
+    "result": "PASS"
+  },
+  {
+    "scenario": "double click + real commit followed by synthetic502",
+    "result": "PASS"
+  },
+  {
+    "scenario": "reload and retry same order; T20 one order / 10000",
+    "result": "PASS"
+  },
+  {
+    "scenario": "staff wrong login / correct login / protected route",
+    "result": "PASS"
+  },
+  {
+    "scenario": "T20 kitchen start / ready / serving => customer served",
+    "result": "PASS"
+  },
+  {
+    "scenario": "20 percent discount / virtual payment8000 / empty customer history",
+    "result": "PASS"
+  },
+  {
+    "scenario": "customer call create / API acknowledgement while SSE503 / polling clears",
+    "result": "PASS"
+  },
+  {
+    "scenario": "coin cart9 / doubleclick / one9coin order separate new visit",
+    "result": "PASS"
+  },
+  {
+    "scenario": "admin price4294967296 => stored0",
+    "result": "FAIL"
+  },
+  {
+    "scenario": "EVENT_OPEN false no notice until final409",
+    "result": "FAIL"
+  },
+  {
+    "scenario": "T21 cart -> T22 empty -> T21 cart restored",
+    "result": "PASS"
+  },
+  {
+    "scenario": "all API503 / error / Retry after recovery",
+    "result": "PASS"
+  },
+  {
+    "scenario": "12.044s order delay / disabled buttons / successful response",
+    "result": "PASS"
+  },
+  {
+    "scenario": "unsaved settings description overwritten by different table order",
+    "result": "FAIL"
+  },
+  {
+    "scenario": "staff sold out => customer menu disabled",
+    "result": "PASS"
+  },
+  {
+    "scenario": "staff SSE503 => T30 order appears by polling",
+    "result": "PASS"
+  },
+  {
+    "scenario": "STAFF_TOKEN_EPOCH revocation => login redirect",
+    "result": "PASS"
+  }
+]

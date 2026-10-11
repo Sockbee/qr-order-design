@@ -1,0 +1,11 @@
+- banner:
+  - button "뒤로 가기":
+  - heading "장바구니" [level=1]
+- main:
+  - paragraph: 장바구니가 비어 있어요.
+  - button "메뉴 더 담기":
+    - generic: 메뉴 더 담기
+  - term: 총 결제금액
+  - definition: 0원
+- button "주문하기" [disabled]:
+  - generic: 주문하기

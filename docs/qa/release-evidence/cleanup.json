@@ -1,0 +1,13 @@
+{
+  "checkedAt": "2026-09-22T09:28:19.728700+00:00",
+  "userFiles": "all initial hashes match",
+  "credentialScan": "no raw fixture tokens in evidence",
+  "qaContainer": "stopped and removed with dedicated volume",
+  "browserTabs": "closed; viewport reset",
+  "browserLocalStorage": "not explicitly purged; synthetic credentials for removed DB only",
+  "generatedDist": "removed (QA-only API URL)",
+  "remainingDockerContainers": [
+    "wevo-postgres",
+    "wevo-redis"
+  ]
+}

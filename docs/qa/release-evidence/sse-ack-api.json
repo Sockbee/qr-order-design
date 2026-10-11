@@ -1,0 +1,24 @@
+[
+  {
+    "path": "/api/v1/staff/calls/acknowledge",
+    "method": "POST",
+    "request": {
+      "tableId": "T20"
+    },
+    "status": 200,
+    "response": {
+      "success": true,
+      "data": {
+        "tableId": "T20",
+        "acknowledgedCount": 1,
+        "acknowledgedAt": "2026-09-22T08:50:31.870295Z"
+      },
+      "error": null,
+      "meta": {
+        "apiVersion": "v1",
+        "requestId": "5841756c-d900-4269-ac5b-6736c8c79ed0",
+        "serverTime": "2026-09-22T08:50:31.873648Z"
+      }
+    }
+  }
+]
